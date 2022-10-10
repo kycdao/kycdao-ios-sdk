@@ -199,9 +199,9 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         Task {
             
             try await kycSession.acceptDisclaimer()
-            try await kycSession.updateUser(email: emailAddress,
-                                            residency: residency,
-                                            legalEntity: legalEntityStatusCheck.isSelected)
+            try await kycSession.savePersonalInfo(email: emailAddress,
+                                                  residency: residency,
+                                                  legalEntity: legalEntityStatusCheck.isSelected)
             
             Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
 //            Page.currentPage.send(.personaVerification(walletSession: walletSession, kycSession: kycSession))

@@ -196,7 +196,7 @@ public class KYCSession: Identifiable {
         
     }
     
-    public func updateUser(email: String, residency: String, legalEntity: Bool) async throws {
+    public func savePersonalInfo(email: String, residency: String, legalEntity: Bool) async throws {
         
         let userUpdateInput = UserUpdateInput(email: email,
                                               residency: residency,

@@ -13,6 +13,7 @@ import CombineExt
 
 var metamaskMode = true
 
+/// A WalletConnect V1 compatibility support class. Use this, if you want to connect the KYC flow to a Wallet through WalletConnect
 public class WalletConnectManager {
     
     public static var shared = WalletConnectManager()
