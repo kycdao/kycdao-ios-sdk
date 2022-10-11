@@ -1,0 +1,64 @@
+name: Generate DocC
+# This Github Action generates the DocC documentation for the current repo
+# Then pushes this newly generated `.doccarchive` to a second repo
+# Netlify is configured to pick up any changes to this second repo and serve the doc online!
+
+on:
+  push:
+    branches: [ main ]
+    # we'll start this action on every push to main
+
+jobs:
+  Build-Github-Actions:
+    runs-on: macos-latest
+    # we need to run eveything on macOS, as we need to have Xcode installed
+    
+    steps:
+    # 1st, the Action will clone this repo (that contains the code)
+    - name: Git Checkout
+      uses: actions/checkout@v3
+      with:
+        path: 'mainBranch'
+    # now we'll build the documentation
+    - name: Build Doc Bundle 📗
+      run: |
+          echo "🚀 Starting building Documentation"
+          
+          cd mainBranch
+          
+          # You can print out which version of Xcode is used in this GH Action with:
+          # xcodebuild -version
+          
+          # Build the documentation bundle
+          xcodebuild docbuild -scheme kycDAO-SDK -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 mini' > build_output.txt
+          
+          # I'm redirecting all output from building the project and docs to build_output.txt
+          # If you want to see it (or need to debug some problem), uncomment next line
+          # cat build_output.txt
+          
+          cd ..
+          
+    # Clone the docs repo
+    - name: Git Checkout
+      uses: actions/checkout@v3
+      with:
+        path: 'docsBranch'
+        ref: 'docs'
+          
+    # Generate static HTML docs
+    - name: Generate static HTML docs 📖
+      run: |
+      
+          rm -rf ./docsBranch/docs ./docsBranch/doc_archives
+      
+          # Doc is built, but it's inside docbuild, let's find it
+          DOCC_DIR=`find ./mainBranch/docbuild -type d -iname "KycDao.doccarchive"`
+          
+          echo "Copying DocC archives to doc_archives..."
+          mkdir ./docsBranch/doc_archives
+          cp -R "$DOCC_DIR" ./docsBranch/doc_archives
+          
+          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR/KycDao.doccarchive" --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs/KycDao
+          
+          cd docsBranch
+          git push origin
