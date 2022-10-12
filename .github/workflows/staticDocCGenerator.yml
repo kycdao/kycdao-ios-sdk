@@ -10,7 +10,7 @@ on:
 
 jobs:
   Build-Github-Actions:
-    runs-on: macos-latest
+    runs-on: macos-12
     # we need to run eveything on macOS, as we need to have Xcode installed
     
     steps:
