@@ -77,9 +77,14 @@ jobs:
           xcrun xcodebuild -version
           
           mkdir ./docsBranch/docs
-          mkdir ./docsBranch/docs/KycDao
           
           $(xcrun --find docc) process-archive transform-for-static-hosting ./docsBranch/doc_archives/KycDao.doccarchive --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs
+          
+          rm -rf ./docsBranch/docs/index.html
+          rm -rf ./docsBranch/docs/documentation/index.html
+          
+          cp ./docsBranch/RedirectPage/index.html ./docsBranch/docs/index.html
+          cp ./docsBranch/RedirectPage/index.html ./docsBranch/docs/documentation
           
           ls -l ./docsBranch
           ls -l ./docsBranch/doc_archives
