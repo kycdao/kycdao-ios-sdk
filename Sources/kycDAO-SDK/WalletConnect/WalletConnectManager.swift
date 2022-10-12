@@ -16,7 +16,10 @@ var metamaskMode = true
 /// A WalletConnect V1 compatibility support class. Use this, if you want to connect the KYC flow to a Wallet through WalletConnect
 public class WalletConnectManager {
     
+    /// WalletConnectManager singletion instance
     public static var shared = WalletConnectManager()
+    
+    private var isListening = false
     
     private typealias DAppInfo = WalletConnectSwift.Session.DAppInfo
     private typealias ClientMeta = WalletConnectSwift.Session.ClientMeta
@@ -53,21 +56,23 @@ public class WalletConnectManager {
     private var pendingSession: PendingSession?
     internal var sessionRepo = SessionRepository.shared
     
-    private(set) var currentURL = getNewURL()
+    private var nextURL: WCURL = getNewURL()
     
-    public var sessionStarted = PassthroughSubject<WalletSession, Never>()
-    
-    private init() {
-        
-        sessionRepo.sessionUpdates.filter {
-            guard case let .retrying(retries) = $0.state else { return false }
-            print("retrying to connect to \($0.url)\nretriesLeft: \(retries)")
-            return true
-        }.sink { session in
-            try? self.client.reconnect(to: session.wcSession)
-        }.store(in: &disposeBag)
+    /// Publisher that emits session objects when connections to wallets are established
+    public var sessionStarted: AnyPublisher<WalletSession, Never> {
+        sessionStartedSubject.eraseToAnyPublisher()
     }
     
+    /// Publisher that emits session URIs on which the WalletConnect component is currently awaiting new connections. Use this publisher when you want to display a QR code to your user. Keep the QR up to date with the URI value received from the publisher.
+    public var pendingSessionURI: AnyPublisher<String, Never> {
+        pendingSessionURISubject.compactMap { $0 }.eraseToAnyPublisher()
+    }
+    
+    private var sessionStartedSubject = PassthroughSubject<WalletSession, Never>()
+    private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
+    
+    /// Provides a list of usable wallets for WalletConnect services based on the WalletConnect V1 registry https://registry.walletconnect.com/api/v1/wallets
+    /// - Returns: The list of compatible mobile wallets
     public static func listWallets() async throws -> [Wallet] {
         // https://registry.walletconnect.com/api/v1/wallets?entries=5&page=1
         
@@ -116,49 +121,46 @@ public class WalletConnectManager {
         return wcWallets
     }
     
-    public func startListening() -> String {
+    
+    /// Start listening for incoming connections from wallets
+    public func startListening() {
         
-        restoreSessions()
-        return openNewConnection()
+        isListening = true
+        openNewConnection()
         
     }
     
-    //Returns the URL string we are listening on for new connections
+    //Returns the URI string we are listening on for new connections
+    @discardableResult
     func openNewConnection() -> String {
-        //Can only fail when next URL collides with an existing one
+        //Can only fail when next URI collides with an existing one
         //Theoretically near impossible. Booth the 32 byte key and the UUID had to match for this to happen
         do {
-            let nextURL = Self.getNewURL()
-            try client.connect(to: currentURL)
-            pendingSession = PendingSession(url: currentURL,
+            try client.connect(to: nextURL)
+            pendingSession = PendingSession(url: nextURL,
                                             wallet: nil,
                                             state: .initialised)
-            currentURL = nextURL
-            return nextURL.absoluteString
+            
+            pendingSessionURISubject.send(nextURL.absoluteString)
+            
+            let pendingURL = nextURL
+            nextURL = Self.getNewURL()
+            return pendingURL.absoluteString
         } catch let error {
             print("Congrats! You won the lottery with error:\n\(error)\nRetrying again...")
             return openNewConnection()
         }
     }
     
-    func restoreSessions() {
-        
-        //Consider for future: Automatically remove sessions that failed to connect.
-        //Reconnect can only fail here if session has nil wallet info
-        sessionRepo.wcSessions.forEach { session in
-            do {
-                try client.reconnect(to: session)
-            } catch let error {
-                print("Error restoring: \(error)")
-            }
-        }
-    }
-    
     public func connect(withWallet wallet: Wallet) throws {
         
-        if let savedSession = sessionRepo.sessions.first(where: { $0.walletId == wallet.id }),
-           client.openSessions().contains(where: { $0.url == savedSession.url }) == true {
-            sessionStarted.send(savedSession)
+        guard isListening else { throw KYCError.genericError }
+        
+        let savedSession = sessionRepo.getSession(walletId: wallet.id)
+        let savedSessionIsOpen = client.openSessions().contains(where: { $0.url == savedSession?.url }) == true
+        
+        if savedSessionIsOpen, let savedSession = savedSession {
+            sessionStartedSubject.send(savedSession)
         } else {
             try openWallet(wallet)
         }
@@ -347,20 +349,6 @@ public class WalletConnectManager {
         }
     }
     
-    func getReceipt(url: WCURL, txHash: String) {
-        try? client.getTransactionReceipt(url: url, transactionHash: txHash) { response in
-            do {
-                if let error = response.error {
-                    throw error
-                } else {
-                    print(try response.result(as: String.self))
-                }
-            } catch let error {
-                print("TxHash error \(txHash) \(error.localizedDescription)")
-            }
-        }
-    }
-    
     private static func getNewURL() -> WCURL {
         WCURL(topic: UUID().uuidString,
               bridgeURL: URL(string: "https://safe-walletconnect.gnosis.io/")!,
@@ -390,15 +378,8 @@ extension WalletConnectManager: ClientDelegate {
     
     public func client(_ client: Client, didFailToConnect url: WCURL) {
         print("didFail \(url)")
-        
-        let failedSession = sessionRepo.getSession(url: url)
-        
-        if failedSession != nil {
-            sessionRepo.setState(.failed, forSessionWithURL: url)
-        }
-        
-        if pendingSession?.url == url {
-                pendingSession?.state = .failed
+        if let pendingSession = pendingSession, pendingSession.url == url {
+            openNewConnection()
         }
     }
     
@@ -409,21 +390,21 @@ extension WalletConnectManager: ClientDelegate {
     public func client(_ client: Client, didConnect session: WCSession) {
         print("didConnect session \(session.url)")
         print("session: \(session)")
-        if let pendingSession = pendingSession,
-           pendingSession.url == session.url,
-           !sessionRepo.containsSession(withURL: session.url) {
+        
+        let newSessionSameAsPending = pendingSession?.url == session.url
+                                      && !sessionRepo.containsSession(withURL: session.url)
+        
+        if let pendingSession = pendingSession, newSessionSameAsPending {
             let walletSession = try? WalletSession(session: session,
                                                    wallet: pendingSession.wallet,
                                                    status: .active,
                                                    state: .connected)
-            if let walletSession = walletSession {
-                sessionRepo.saveSession(walletSession)
-                sessionStarted.send(walletSession)
-                self.pendingSession = nil
-            }
+            guard let walletSession = walletSession else { return }
+            
+            sessionRepo.addSession(walletSession)
+            sessionStartedSubject.send(walletSession)
+            openNewConnection()
         }
-        sessionRepo.setStatus(.active, forSessionWithURL: session.url)
-        sessionRepo.setState(.connected, forSessionWithURL: session.url)
     }
     
     public func client(_ client: Client, didDisconnect session: WCSession) {
@@ -433,18 +414,7 @@ extension WalletConnectManager: ClientDelegate {
     
     public func client(_ client: Client, didUpdate session: WCSession) {
         print("didUpdate \(session.url)")
-        sessionRepo.saveSession(session)
-    }
-    
-}
-
-extension Client {
-    
-    func getTransactionReceipt(url: WCURL,
-                               transactionHash hash: String,
-                               completion: @escaping RequestResponse) throws {
-        let request = try Request(url: url, method: "eth_getTransactionReceipt", params: [hash])
-        try send(request, completion: completion)
+        sessionRepo.updateSession(session)
     }
     
 }

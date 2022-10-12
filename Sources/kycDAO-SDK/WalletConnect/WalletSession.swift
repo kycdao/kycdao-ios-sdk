@@ -20,14 +20,14 @@ public protocol WalletSessionProtocol {
     
 }
 
-public struct WalletSession: Codable, Identifiable, WalletSessionProtocol {
+public class WalletSession: Codable, Identifiable, WalletSessionProtocol {
     
     public var id: String {
         url.absoluteString
     }
     
-    internal let wcSession: WalletConnectSwift.Session
-    private let walletInfo: WalletConnectSwift.Session.WalletInfo
+    internal var wcSession: WalletConnectSwift.Session
+    private var walletInfo: WalletConnectSwift.Session.WalletInfo
     
     let wallet: Wallet?
     
@@ -51,7 +51,7 @@ public struct WalletSession: Codable, Identifiable, WalletSessionProtocol {
         wcSession.url
     }
     
-    public let chainId: String
+    public private(set) var chainId: String
     
     var status: SessionStatus
     var state: ConnectionState
@@ -68,6 +68,17 @@ public struct WalletSession: Codable, Identifiable, WalletSessionProtocol {
         self.status = status
         self.state = state
         self.chainId = caip2Id
+    }
+    
+    internal func updateSession(_ session: WCSession) throws {
+        
+        guard let walletInfo = session.walletInfo else { throw KYCError.walletConnect(.sessionFailed) }
+        let caip2Id = "eip155:\(walletInfo.chainId)"
+        
+        self.wcSession = session
+        self.walletInfo = walletInfo
+        self.chainId = caip2Id
+        
     }
     
     public func personalSign(walletAddress: String, message: String) async throws -> String {

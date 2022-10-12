@@ -92,6 +92,12 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         toolbar.setItems([barItem], animated: false)
         
         qrCopyURI.addTarget(self, action: #selector(copyURITap(_:)), for: .touchUpInside)
+        
+        WalletConnectManager.shared.startListening()
+        
+        WalletConnectManager.shared.pendingSessionURI.sink { uri in
+            self.uri = uri
+        }.store(in: &disposeBag)
     }
     
     required init?(coder: NSCoder) {
@@ -197,8 +203,6 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         
         navigationController?.navigationBar.prefersLargeTitles = true
         qrContainer.transform = .init(translationX: view.frame.width, y: 0)
-        
-        self.uri = WalletConnectManager.shared.startListening()
         
         Task {
             let wallets = try await WalletConnectManager.listWallets()
