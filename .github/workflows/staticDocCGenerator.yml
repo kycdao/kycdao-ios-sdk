@@ -30,7 +30,7 @@ jobs:
           # xcodebuild -version
           
           # Build the documentation bundle
-          xcodebuild docbuild -scheme kycDAO-SDK -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 mini' -clonedSourcePackagesDirPath ./SPM/docbuild > build_output.txt
+          xcodebuild docbuild -scheme kycDAO-SDK -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 13 mini' -clonedSourcePackagesDirPath ./../SPM/docbuild > build_output.txt
           
           # I'm redirecting all output from building the project and docs to build_output.txt
           # If you want to see it (or need to debug some problem), uncomment next line
