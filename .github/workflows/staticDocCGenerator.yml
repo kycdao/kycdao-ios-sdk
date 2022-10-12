@@ -83,8 +83,8 @@ jobs:
           rm -rf ./docsBranch/docs/index.html
           rm -rf ./docsBranch/docs/documentation/index.html
           
-          cp ./docsBranch/RedirectPage/index.html ./docsBranch/docs/index.html
-          cp ./docsBranch/RedirectPage/index.html ./docsBranch/docs/documentation
+          cp ./docsBranch/RedirectPages/index.html ./docsBranch/docs/index.html
+          cp ./docsBranch/RedirectPages/index.html ./docsBranch/docs/documentation
           
           ls -l ./docsBranch
           ls -l ./docsBranch/doc_archives
