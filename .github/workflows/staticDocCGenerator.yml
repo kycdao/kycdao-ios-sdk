@@ -63,9 +63,9 @@ jobs:
           
           rm -rf ./mainBranch
           
-          echo "$DOCC_DIR/KycDao.doccarchive"
+          echo "$DOCC_DIR"
           
-          $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR/KycDao.doccarchive" --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs/KycDao
+          $(xcrun --find docc) process-archive transform-for-static-hosting ./docsBranch/doc_archives/KycDao.doccarchive --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs/KycDao
           
           cd docsBranch
           git push origin
