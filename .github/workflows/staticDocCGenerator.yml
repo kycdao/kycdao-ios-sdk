@@ -58,6 +58,13 @@ jobs:
           mkdir ./docsBranch/doc_archives
           cp -R "$DOCC_DIR" ./docsBranch/doc_archives
           
+          ls -l
+          ls -l ./docsBranch
+          
+          rm -rf ./mainBranch
+          
+          echo "$DOCC_DIR/KycDao.doccarchive"
+          
           $(xcrun --find docc) process-archive transform-for-static-hosting "$DOCC_DIR/KycDao.doccarchive" --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs/KycDao
           
           cd docsBranch
