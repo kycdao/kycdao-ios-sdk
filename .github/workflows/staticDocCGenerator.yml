@@ -60,12 +60,15 @@ jobs:
           
           ls -l
           ls -l ./docsBranch
+          ls -l ./docsBranch/doc_archives
           
           rm -rf ./mainBranch
           
           echo "$DOCC_DIR"
           
-          $(xcrun --find docc) process-archive transform-for-static-hosting ./docsBranch/doc_archives/KycDao.doccarchive --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs/KycDao
+          $(xcrun --find docc) process-archive transform-for-static-hosting --help
+          
+          $(xcrun --find docc) process-archive transform-for-static-hosting ./docsBranch/doc_archives/KycDao.doccarchive --output-path docsBranch/docs/KycDao --hosting-base-path kycdao-ios-sdk
           
           cd docsBranch
           git push origin
