@@ -83,7 +83,7 @@ jobs:
           
           ls -l ./docsBranch
           ls -l ./docsBranch/doc_archives
-          ls -l ./docsBranch/docs/KycDao
+          ls -l ./docsBranch/docs
           
           cd docsBranch
           
