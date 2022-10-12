@@ -81,5 +81,14 @@ jobs:
           
           $(xcrun --find docc) process-archive transform-for-static-hosting ./docsBranch/doc_archives/KycDao.doccarchive --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs/KycDao
           
+          ls -l ./docsBranch
+          ls -l ./docsBranch/doc_archives
+          ls -l ./docsBranch/docs/KycDao
+          
           cd docsBranch
+          
+          git add docs doc_archives
+          
+          git commit -m "Updated DocC documentation"
+          
           git push origin
