@@ -135,10 +135,7 @@ class MintNFTViewController: UIViewController {
     
     @objc func mintNFTTap(_ sender: Any) {
         
-        Task {
-            try await kycSession.mint()
-            Page.currentPage.send(.exit)
-        }
+        Page.currentPage.send(.mintingInProgress(walletSession: walletSession, kycSession: kycSession))
         
     }
     

@@ -15,7 +15,7 @@ private enum WalletListSection: Int, CaseIterable {
     case main
 }
 
-class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, UIToolbarDelegate {
+class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, UIToolbarDelegate, UIScrollViewDelegate {
     
     private var disposeBag = Set<AnyCancellable>()
     
@@ -65,6 +65,13 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         return UICollectionViewCompositionalLayout(section: section, configuration: config)
     }()
     
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        DispatchQueue.main.async {
+            print("wallet grid size: \(self.walletGrid.contentSize.height > 0) \(self.walletGrid.contentSize.height)")
+            self.contentHeightConstraint?.constant = self.walletGrid.contentSize.height > 0 ? self.walletGrid.contentSize.height : self.view.frame.height
+        }
+    }
+    
     public init() {
         
         walletGrid = UICollectionView(frame: .zero,
@@ -81,6 +88,7 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         
         super.init(nibName: nil, bundle: nil)
         
+        scrollView.delegate = self
         walletGrid.delegate = self
         
         segmentControl.selectedSegmentIndex = 0
@@ -224,7 +232,7 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
     
     func sessionStarted(_ walletSession: WalletSession) {
         let accounts = walletSession.accounts
-        if accounts.count > 0 {
+        if accounts.count > 1 {
             
             Page.currentPage.send(.accountSelector(accounts: accounts, walletSession: walletSession))
         
@@ -235,7 +243,30 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
                 let kycSession = try await KYCManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
                 
                 if kycSession.isLoggedIn {
-                    Page.currentPage.send(.informationRequest(walletSession: walletSession, kycSession: kycSession))
+                    
+                    if kycSession.requiredInformationProvided {
+                        
+                        if kycSession.emailConfirmed {
+                            
+                            switch kycSession.verificationStatus {
+                            case .verified:
+                                Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
+                            case .processing:
+                                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, kycSession: kycSession))
+                            case .notVerified:
+                                Page.currentPage.send(.personaVerification(walletSession: walletSession, kycSession: kycSession))
+                            }
+                            
+                        } else {
+                            
+                            Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
+                        }
+                        
+                    } else {
+                        
+                        Page.currentPage.send(.informationRequest(walletSession: walletSession, kycSession: kycSession))
+                    }
+                    
                 } else {
                     Page.currentPage.send(.createSignature(walletSession: walletSession, kycSession: kycSession))
                 }
@@ -305,28 +336,14 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
             } catch let error {
                 
             }
-            
-//            Task {
-//                do {
-//                    try Session.shared.connect(withWallet: wallet)
-//                    Task { @MainActor in
-////                        if connectedWallet.accounts.count > 1 {
-//                            Page.currentPage.send(.accountSelector(accounts: connectedWallet.accounts))
-////                        } else {
-////                            Page.currentPage.send(.createSignature)
-////                        }
-//                    }
-//                } catch {
-//
-//                }
-//            }
         }
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         DispatchQueue.main.async {
-            self.contentHeightConstraint?.constant = self.walletGrid.contentSize.height > 0 ? self.walletGrid.contentSize.height : 100
+            print("wallet grid size: \(self.walletGrid.contentSize.height > 0) \(self.walletGrid.contentSize.height)")
+            self.contentHeightConstraint?.constant = self.walletGrid.contentSize.height > 0 ? self.walletGrid.contentSize.height : self.view.frame.height
         }
     }
     

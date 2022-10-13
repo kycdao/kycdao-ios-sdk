@@ -147,12 +147,12 @@ class SelectAccountViewController: UIViewController, UITableViewDelegate {
         
         var snapshot = NSDiffableDataSourceSnapshot<AccountsSection, String>()
         snapshot.appendSections([.main])
-        snapshot.appendItems(accounts + ["0x6178268124124", "0x786147824", "0x788D87ADS",
+        snapshot.appendItems(accounts/* + ["0x6178268124124", "0x786147824", "0x788D87ADS",
                               "0x617826812412", "0x78614782", "0x788D87AD",
                               "0x6178268124121", "0x786147821", "0x788D87AD1",
                               "0x6178268124122", "0x786147822", "0x788D87AD2",
                               "0x6178268124123", "0x786147823", "0x788D87AD3",
-                             ])
+                             ]*/)
         dataSource?.apply(snapshot, animatingDifferences: false)
     }
     
