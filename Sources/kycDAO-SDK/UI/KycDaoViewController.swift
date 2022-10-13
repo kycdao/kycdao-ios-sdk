@@ -22,6 +22,7 @@ enum Page {
     case authorizeMinting(walletSession: WalletSession, kycSession: KYCSession, selectedImage: TokenImage)
     case selectNFTImage(walletSession: WalletSession, kycSession: KYCSession)
     case mintNFT(walletSession: WalletSession, kycSession: KYCSession, selectedImage: TokenImage)
+    case mintingInProgress(walletSession: WalletSession, kycSession: KYCSession)
     case startMinting(walletSession: WalletSession, kycSession: KYCSession)
     case back
     case exit
@@ -137,6 +138,8 @@ public class KycDaoViewController: UIViewController {
             navController.pushViewController(SelectNFTImageViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
         case .mintNFT(let walletSession, let kycSession, let selectedImage):
             navController.pushViewController(MintNFTViewController(walletSession: walletSession, kycSession: kycSession, selectedImage: selectedImage), animated: true)
+        case .mintingInProgress(let walletSession, let kycSession):
+            navController.pushViewController(MintingInProgressViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
         case let .startMinting(walletSession, kycSession):
             navController.pushViewController(StartMintingViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
         case .back:

@@ -73,6 +73,8 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
         
         imageTitle.font = .systemFont(ofSize: 20, weight: .semibold)
         
+        containerView.clipsToBounds = true
+        
         scrollView.bounces = false
         scrollView.alwaysBounceHorizontal = true
         

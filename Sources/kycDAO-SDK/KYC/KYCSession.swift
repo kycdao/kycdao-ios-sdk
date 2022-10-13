@@ -384,7 +384,8 @@ public class KYCSession: Identifiable {
                                   gasLimit: nil)
     }
     
-    public func mint() async throws {
+    @discardableResult
+    public func mint() async throws -> URL? {
         
         print("MINTING...")
         
@@ -407,6 +408,13 @@ public class KYCSession: Identifiable {
         try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txHash)
         
         self.authCode = nil
+        
+        guard let transactionURL = URL(string: networkMetadata.explorer.url.absoluteString + networkMetadata.explorer.transactionPath + txHash)
+        else {
+            return nil
+        }
+        
+        return transactionURL
         
     }
     

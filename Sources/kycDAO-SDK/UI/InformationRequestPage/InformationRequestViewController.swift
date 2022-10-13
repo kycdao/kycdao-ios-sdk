@@ -204,7 +204,6 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
                                                   legalEntity: legalEntityStatusCheck.isSelected)
             
             Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
-//            Page.currentPage.send(.personaVerification(walletSession: walletSession, kycSession: kycSession))
             
         }
         
