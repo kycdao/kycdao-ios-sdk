@@ -95,9 +95,11 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         
         WalletConnectManager.shared.startListening()
         
-        WalletConnectManager.shared.pendingSessionURI.sink { uri in
-            self.uri = uri
-        }.store(in: &disposeBag)
+        WalletConnectManager.shared.pendingSessionURI
+            .receive(on: DispatchQueue.main)
+            .sink { uri in
+                self.uri = uri
+            }.store(in: &disposeBag)
     }
     
     required init?(coder: NSCoder) {
