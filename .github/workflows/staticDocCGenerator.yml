@@ -14,10 +14,10 @@ jobs:
     # we need to run eveything on macOS, as we need to have Xcode installed
     
     steps:
-    - name: Use Xcode 13.4.1
+    - name: Use Xcode 14.0.1
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: '13.4.1'
+        xcode-version: '14.0.1'
     
     # 1st, the Action will clone this repo (that contains the code)
     - name: Git Checkout
