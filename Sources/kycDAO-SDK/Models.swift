@@ -452,11 +452,16 @@ public struct MintingTransactionResult {
     public let txHash: String
 }
 
+/// Data that describes a transaction used for minting
 public struct MintingProperties: Codable {
     
+    /// The address of the smart contract we want to call
     public let contractAddress: String
+    /// The ABI data of the smart contract
     public let contractABI: String
+    /// Amount of gas required for minting in hex
     public let gasAmount: String
+    /// Price of a gas unit in hex
     public let gasPrice: String
     
 }

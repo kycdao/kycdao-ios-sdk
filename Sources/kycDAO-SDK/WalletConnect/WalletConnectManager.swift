@@ -11,12 +11,10 @@ import UIKit
 import Combine
 import CombineExt
 
-var metamaskMode = true
-
-/// A WalletConnect V1 compatibility support class. Use this, if you want to connect the KYC flow to a Wallet through WalletConnect
+/// A WalletConnect V1 compatibility support class. Use this, if you want to connect the KYC flow to a wallet through WalletConnect
 public class WalletConnectManager {
     
-    /// WalletConnectManager singletion instance
+    /// WalletConnectManager singleton instance
     public static var shared = WalletConnectManager()
     
     private var isListening = false
@@ -63,7 +61,8 @@ public class WalletConnectManager {
         sessionStartedSubject.eraseToAnyPublisher()
     }
     
-    /// Publisher that emits session URIs on which the WalletConnect component is currently awaiting new connections. Use this publisher when you want to display a QR code to your user. Keep the QR up to date with the URI value received from the publisher.
+    /// Publisher that emits session URIs on which the WalletConnect component is currently awaiting new connections.
+    /// - Note: Use this publisher when you want to display a QR code to your user. Keep the QR up to date with the URI value received from the publisher.
     public var pendingSessionURI: AnyPublisher<String, Never> {
         pendingSessionURISubject.compactMap { $0 }.eraseToAnyPublisher()
     }
@@ -71,8 +70,10 @@ public class WalletConnectManager {
     private var sessionStartedSubject = PassthroughSubject<WalletSession, Never>()
     private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
     
-    /// Provides a list of usable wallets for WalletConnect services based on the WalletConnect V1 registry https://registry.walletconnect.com/api/v1/wallets
+    /// Provides a list of usable wallets for WalletConnect services based on the [WalletConnect V1 registry](https://registry.walletconnect.com/api/v1/wallets)
     /// - Returns: The list of compatible mobile wallets
+    ///
+    /// - Note: This is a filtered list of wallets, and may not contain every wallet the registry returns
     public static func listWallets() async throws -> [Wallet] {
         // https://registry.walletconnect.com/api/v1/wallets?entries=5&page=1
         
@@ -152,6 +153,14 @@ public class WalletConnectManager {
         }
     }
     
+    /// Used for connecting to a ***wallet app***.
+    /// If the wallet is installed, it will be opened with a connection request prompt.
+    /// If the wallet is not installed, it will launch the AppStore where the user can download it.
+    /// - Parameter wallet: The selected wallet you want to connect with
+    ///
+    /// - Note: This method should only be called from the **main thread**.
+    ///
+    /// When a wallet in the WalletConnect registry does not have an associated *universal link*, and only provides a *deep link*, if the user does not have the selected wallet installed, this method will do nothing
     public func connect(withWallet wallet: Wallet) throws {
         
         guard isListening else { throw KYCError.genericError }
@@ -172,11 +181,16 @@ public class WalletConnectManager {
             throw KYCError.genericError
         }
         
-//        if metamaskMode {
+        #warning("""
+            MetaMask's WalletConnect universal links are broken since months and they don't bother fixing them.
+            Remove this and use universal links when they fixed it.
+        """)
+        
+        if wallet.name.lowercased() == "metamask" {
             try openWalletDeepLinkFirst(wallet: wallet, connectionURL: connectionURL)
-//        } else {
-//            try openWalletUniversalLinkFirst(wallet: wallet, connectionURL: connectionURL)
-//        }
+        } else {
+            try openWalletUniversalLinkFirst(wallet: wallet, connectionURL: connectionURL)
+        }
         
     }
         
@@ -277,6 +291,7 @@ public class WalletConnectManager {
                     }
                 }
                 
+                #warning("Make sure the link URL is properly formatted here, with the / slashes having correct count")
 //                guard let link = wallet.universalLinkBase ?? wallet.deepLinkBase,
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
                       let linkURL = URL(string: "\(link)//wc") else {
@@ -334,6 +349,7 @@ public class WalletConnectManager {
                     }
                 }
                 
+                #warning("Make sure the link URL is properly formatted here, with the / slashes having correct count")
 //                guard let link = wallet.universalLinkBase ?? wallet.deepLinkBase,
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
                       let linkURL = URL(string: "\(link)/wc") else {

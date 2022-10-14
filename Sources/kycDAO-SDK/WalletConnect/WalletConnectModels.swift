@@ -35,12 +35,17 @@ struct MobileDTO: Decodable {
     let universal: String?
 }
 
+/// A model that describes a wallet for the SDK usable with WalletConnect.
+/// The data provided in the model is derived from the [WalletConnect V1 registry](https://registry.walletconnect.com/api/v1/wallets)
 public struct Wallet: Identifiable, Hashable, Codable {
+    /// A unique id of the wallet
     public let id: String
+    /// Name of the wallet app
     public let name: String
+    /// An url pointing to an icon image of the wallet app
     public let imageURL: URL?
-    public let universalLinkBase: String?
-    public let deepLinkBase: String?
+    internal let universalLinkBase: String?
+    internal let deepLinkBase: String?
 }
 
 struct PendingSession: Codable {

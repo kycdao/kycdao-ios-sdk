@@ -13,8 +13,10 @@ import Combine
 import web3
 import BigInt
 
+/// A KYC session object which contains session related data and session related operations
 public class KYCSession: Identifiable {
     
+    /// A unique identifier for the session
     public let id = UUID().uuidString
     private let personaInquiryTemplateId = "itmpl_bWGWAeN5fDcv5PLqLwFhKxP6"
     private let infuraProjectId = "8edae24121f74398b57da7ff5a3729a4"
@@ -23,6 +25,7 @@ public class KYCSession: Identifiable {
     
     private var sessionData: KYCSessionData
     
+    /// Wallet address used to create the session
     public var walletAddress: String
     
     public var kycConfig: SmartContractConfig?
@@ -32,10 +35,12 @@ public class KYCSession: Identifiable {
         "kycDAO-login-\(sessionData.nonce)"
     }
     
+    /// The login state of the user in this session
     public var isLoggedIn: Bool {
         sessionData.user != nil
     }
     
+    /// Email address associated with the user
     public var emailAddress: String? {
         sessionData.user?.email
     }
@@ -68,9 +73,20 @@ public class KYCSession: Identifiable {
         
     }
     
+    /// Country of residency of the user
+    ///
+    /// Contains the country of residency in [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) format.
+    /// ##### Example
+    /// ISO 3166-2 Code | Country name
+    /// --- | ---
+    /// `BE` | Belgium
+    /// `ES` | Spain
+    /// `FR` | France
+    /// `US` | United States of America
     public var residency: String? {
         sessionData.user?.residency
     }
+    
     
     public var residencyProvided: Bool {
         residency?.isEmpty == false
@@ -80,20 +96,24 @@ public class KYCSession: Identifiable {
         emailAddress?.isEmpty == false
     }
     
+    /// Disclaimer acceptance status of the user
     public var disclaimerAccepted: Bool {
         sessionData.user?.disclaimer_accepted?.isEmpty == false
     }
     
+    /// Legal entity status of the user
     public var legalEntityStatus: Bool {
         sessionData.user?.legal_entity == true
     }
     
+    /// Indicates that the user provided every information required to continue with identity verification
     public var requiredInformationProvided: Bool {
         residencyProvided && emailProvided && disclaimerAccepted && sessionData.user?.legal_entity != nil
     }
     
     private var authCode: String?
     
+    /// Verification status of the user
     public var verificationStatus: VerificationStatus {
         
         let statuses = sessionData.user?.verification_requests?.map { verificationRequest -> VerificationStatus in
@@ -114,9 +134,11 @@ public class KYCSession: Identifiable {
         return .notVerified
     }
     
+    /// A wallet session associated with this KYCSession
     public let walletSession: WalletSessionProtocol
     private let networkMetadata: NetworkMetadata
     
+    /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
     public var chainId: String {
         networkMetadata.caip2id
     }

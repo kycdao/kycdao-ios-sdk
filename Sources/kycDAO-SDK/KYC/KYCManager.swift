@@ -13,11 +13,13 @@ import Combine
 import web3
 import BigInt
 
+/// A class used for creating KYC sessions and querying KYC status for different wallets
 public class KYCManager {
     
+    /// KYCManager singleton instance
     public static let shared = KYCManager()
     
-    var networks: [NetworkMetadata] {
+    internal var networks: [NetworkMetadata] {
         get async throws {
             let result = try await KYCConnection.call(endPoint: .networks,
                                                       method: .GET,
@@ -28,6 +30,11 @@ public class KYCManager {
     
     private init() { }
     
+    /// Creates a ``KycDao/KYCSession`` which is used for implementing the KYC flow
+    /// - Parameters:
+    ///   - walletAddress: The address of the wallet we are creating the session for
+    ///   - walletSession: The ``KycDao/WalletSession`` that will be used for signing messages and minting
+    /// - Returns: The ``KycDao/KYCSession`` object
     public func createSession(walletAddress: String, walletSession: WalletSessionProtocol) async throws -> KYCSession {
         
         let networks = try await self.networks
