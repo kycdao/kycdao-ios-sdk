@@ -128,7 +128,7 @@ public class WalletConnectManager {
         
         isListening = true
         openNewConnection()
-        
+
     }
     
     //Returns the URI string we are listening on for new connections

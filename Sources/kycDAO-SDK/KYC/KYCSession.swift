@@ -157,6 +157,9 @@ public class KYCSession: Identifiable {
         self.networkMetadata = networkMetadata
     }
     
+    /// Logs in the user to the current session
+    ///
+    /// The user will be redirected to their wallet where they have to sign a session data to login
     public func login() async throws {
         
         let signature = try await walletSession.personalSign(walletAddress: walletAddress, message: loginProof)
@@ -189,6 +192,7 @@ public class KYCSession: Identifiable {
         
     }
     
+    /// Used for signaling that the logged in user accepts kycDAO's disclaimer
     public func acceptDisclaimer() async throws {
         
         do {
@@ -218,6 +222,11 @@ public class KYCSession: Identifiable {
         
     }
     
+    /// Used for saving user related personal information.
+    /// - Parameters:
+    ///   - email: Email address of the user
+    ///   - residency: Country of residency of the user in [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) format. Check ``KycDao/KYCSession/residency`` for more details.
+    ///   - legalEntity: Legal entity status of the user
     public func savePersonalInfo(email: String, residency: String, legalEntity: Bool) async throws {
         
         let userUpdateInput = UserUpdateInput(email: email,
@@ -233,13 +242,15 @@ public class KYCSession: Identifiable {
         
     }
     
+    /// Sends a confirmation email to the user's email address
     public func sendConfirmationEmail() async throws {
         try await KYCConnection.call(endPoint: .emailConfirmation, method: .POST)
     }
     
+    /// Suspends the current async task and continues execution when email address becomes confirmed.
     public func continueWhenEmailConfirmed() async {
         
-        var emailConfirmed = false
+        var emailConfirmed = self.emailConfirmed
         
         while !emailConfirmed {
             // Delay the task by 3 second
