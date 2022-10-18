@@ -28,20 +28,20 @@ public class KYCSession: Identifiable {
     /// Wallet address used to create the session
     public var walletAddress: String
     
-    public var kycConfig: SmartContractConfig?
-    public var accreditedConfig: SmartContractConfig?
+    private var kycConfig: SmartContractConfig?
+    private var accreditedConfig: SmartContractConfig?
     
-    public var loginProof: String {
+    private var loginProof: String {
         "kycDAO-login-\(sessionData.nonce)"
     }
     
     /// The login state of the user in this session
-    public var isLoggedIn: Bool {
+    public var loggedIn: Bool {
         sessionData.user != nil
     }
     
     /// Email address associated with the user
-    public var emailAddress: String? {
+    private var emailAddress: String? {
         sessionData.user?.email
     }
     
@@ -58,6 +58,7 @@ public class KYCSession: Identifiable {
         }
     }
     
+    /// Email confirmation status of the user
     public var emailConfirmed: Bool {
         
 //        //TODO: Nice to have, proper date format check, not just emptyness
@@ -83,16 +84,16 @@ public class KYCSession: Identifiable {
     /// `ES` | Spain
     /// `FR` | France
     /// `US` | United States of America
-    public var residency: String? {
+    private var residency: String? {
         sessionData.user?.residency
     }
     
     
-    public var residencyProvided: Bool {
+    private var residencyProvided: Bool {
         residency?.isEmpty == false
     }
     
-    public var emailProvided: Bool {
+    private var emailProvided: Bool {
         emailAddress?.isEmpty == false
     }
     
@@ -101,14 +102,9 @@ public class KYCSession: Identifiable {
         sessionData.user?.disclaimer_accepted?.isEmpty == false
     }
     
-    /// Legal entity status of the user
-    public var legalEntityStatus: Bool {
-        sessionData.user?.legal_entity == true
-    }
-    
     /// Indicates that the user provided every information required to continue with identity verification
     public var requiredInformationProvided: Bool {
-        residencyProvided && emailProvided && disclaimerAccepted && sessionData.user?.legal_entity != nil
+        residencyProvided && emailProvided && sessionData.user?.legal_entity != nil
     }
     
     private var authCode: String?
@@ -222,23 +218,24 @@ public class KYCSession: Identifiable {
         
     }
     
-    /// Used for saving user related personal information.
-    /// - Parameters:
-    ///   - email: Email address of the user
-    ///   - residency: Country of residency of the user in [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) format. Check ``KycDao/KYCSession/residency`` for more details.
-    ///   - legalEntity: Legal entity status of the user
-    public func savePersonalInfo(email: String, residency: String, legalEntity: Bool) async throws {
+    /// Used for setting user related personal information.
+    /// - Parameter personalData: Contains the personal data needed from the user
+    ///
+    ///  Disclaimer has to be accepted before you can set the personal data
+    ///
+    ///  After setting personal data a confirmation email will be sent out to the user
+    public func setPersonalData(_ personalData: PersonalData) async throws {
         
-        let userUpdateInput = UserUpdateInput(email: email,
-                                              residency: residency,
-                                              legalEntity: legalEntity)
+        //TODO: Fail if disclaimer not set, send confirm email
         
         let result = try await KYCConnection.call(endPoint: .user,
                                                   method: .PUT,
-                                                  input: userUpdateInput,
+                                                  input: personalData,
                                                   output: KYCUserDTO.self)
         
         sessionData.user = KYCUser(dto: result.data)
+        
+        try await sendConfirmationEmail()
         
     }
     
@@ -248,7 +245,7 @@ public class KYCSession: Identifiable {
     }
     
     /// Suspends the current async task and continues execution when email address becomes confirmed.
-    public func continueWhenEmailConfirmed() async {
+    public func resumeOnEmailConfirmed() async {
         
         var emailConfirmed = self.emailConfirmed
         
@@ -261,12 +258,20 @@ public class KYCSession: Identifiable {
         
     }
     
+    
+    /// Starts the identity verification process
+    /// - Parameter viewController: The view controller on top of which you want to present the identity verification flow
+    /// - Returns: The result of the identity verification flow. It only tells wether the user completed the identity flow or cancelled it. Information regarding the validity of the identity verification can be accessed at ``KycDao/KYCSession/verificationStatus``
     @MainActor
     public func startIdentification(fromViewController viewController: UIViewController) async throws -> IdentityFlowResult {
+        
+        //TODO: block if data needed
         
         guard let referenceId = sessionData.user?.ext_id else {
             throw KYCError.genericError
         }
+        
+        guard requiredInformationProvided else { throw KYCError.genericError }
         
         let personaStatus = try await personaStatus
         
@@ -293,7 +298,8 @@ public class KYCSession: Identifiable {
         
     }
     
-    public func continueWhenIdentified() async {
+    /// A function which awaits until the user's identity becomes successfuly verified
+    public func resumeWhenIdentified() async {
         
         var identified = false
         
@@ -311,6 +317,8 @@ public class KYCSession: Identifiable {
         }
     }
     
+    /// Provides the user selectable NFT images
+    /// - Returns: A list of image related data
     public func getNFTImages() -> [TokenImage] {
         print(sessionData.user?.availableImages ?? [:])
         
@@ -319,6 +327,10 @@ public class KYCSession: Identifiable {
         
     }
     
+    /// Requesting minting authorization for a selected image
+    /// - Parameter selectedImageId: The id of the image we want the user to mint
+    ///
+    /// You can get the list of available images from ``KycDao/KYCSession/getNFTImages()``
     public func requestMinting(selectedImageId: String) async throws {
         
         guard let accountId = sessionData.user?.blockchain_accounts?.first?.id
@@ -340,12 +352,12 @@ public class KYCSession: Identifiable {
         
         authCode = code
         
-        try await continueWhenTransactionFinished(txHash: txHash)
+        try await resumeWhenTransactionFinished(txHash: txHash)
         
     }
     
     @discardableResult
-    func continueWhenTransactionFinished(txHash: String) async throws -> EthereumTransactionReceipt {
+    func resumeWhenTransactionFinished(txHash: String) async throws -> EthereumTransactionReceipt {
         
         var transactionStatus: EthereumTransactionReceiptStatus = .notProcessed
         
@@ -378,7 +390,7 @@ public class KYCSession: Identifiable {
         
     }
     
-    public func getTransactionReceipt(txHash: String) async throws -> EthereumTransactionReceipt {
+    func getTransactionReceipt(txHash: String) async throws -> EthereumTransactionReceipt {
         
         let projectID = "8edae24121f74398b57da7ff5a3729a4"
         
@@ -417,12 +429,14 @@ public class KYCSession: Identifiable {
                                   gasLimit: nil)
     }
     
+    /// Used for minting the NFT image
+    /// - Returns: An URL for an explorer where the minting transaction can be viewed
+    ///
+    /// - Note: Can only be called after the user was authorized for minting with a selected image
     @discardableResult
     public func mint() async throws -> URL? {
         
         print("MINTING...")
-        
-        try await refreshUser()
         
         guard let authCode = authCode
         else { throw KYCError.unauthorizedMinting }
@@ -433,7 +447,7 @@ public class KYCSession: Identifiable {
         let mintingFunction = try kycMintingFunction(authCode: authCode)
         let props = try await transactionProperties(forFunction: mintingFunction)
         let txHash = try await walletSession.sendMintingTransaction(walletAddress: walletAddress, mintingProperties: props)
-        let receipt = try await continueWhenTransactionFinished(txHash: txHash)
+        let receipt = try await resumeWhenTransactionFinished(txHash: txHash)
         
         guard let event = receipt.lookForEvent(event: ERC721Events.Transfer.self)
         else { throw KYCError.genericError }
@@ -466,6 +480,8 @@ public class KYCSession: Identifiable {
         
     }
     
+    /// Used for estimating gas fees for the minting
+    /// - Returns: The gas fee estimation
     public func estimateGasForMinting() async throws -> GasEstimation {
         
         guard let authCode = authCode

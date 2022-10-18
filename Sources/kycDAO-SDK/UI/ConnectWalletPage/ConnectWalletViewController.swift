@@ -242,7 +242,7 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
                 
                 let kycSession = try await KYCManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
                 
-                if kycSession.isLoggedIn {
+                if kycSession.loggedIn {
                     
                     if kycSession.requiredInformationProvided {
                         

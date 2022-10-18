@@ -106,12 +106,12 @@ class ConfirmEmailViewController : UIViewController {
         
         titleLabel.text = "Confirm your email address"
         messageLabel.text = "We sent a confirmation email to you. Please check your inbox and open the link"
-        if let emailAddress = kycSession.emailAddress {
-            messageLabel.attributedText = "We sent a confirmation email to "
-            + "\(emailAddress)"
-                .font(size: 16, weight: .bold)
-            + ". Please check your inbox and open the link"
-        }
+//        if let emailAddress = kycSession.emailAddress {
+//            messageLabel.attributedText = "We sent a confirmation email to "
+//            + "\(emailAddress)"
+//                .font(size: 16, weight: .bold)
+//            + ". Please check your inbox and open the link"
+//        }
         
         notReceivingEmailLabel.text = "Not receiving email?"
         
@@ -122,7 +122,7 @@ class ConfirmEmailViewController : UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            await kycSession.continueWhenEmailConfirmed()
+            await kycSession.resumeOnEmailConfirmed()
             
             switch kycSession.verificationStatus {
             case .verified:

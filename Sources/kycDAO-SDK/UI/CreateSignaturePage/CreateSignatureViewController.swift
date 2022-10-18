@@ -41,7 +41,7 @@ class CreateSignatureViewController: UIViewController {
                     }
                 }
                 
-                dataLabel.text = kycSession.loginProof
+//                dataLabel.text = kycSession.loginProof
             } catch {
                 print("Failed to create session")
             }

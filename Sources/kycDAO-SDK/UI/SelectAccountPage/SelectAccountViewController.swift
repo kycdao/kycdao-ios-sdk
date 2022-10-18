@@ -191,7 +191,7 @@ class SelectAccountViewController: UIViewController, UITableViewDelegate {
                 throw error
             }
             
-            if kycSession.isLoggedIn {
+            if kycSession.loggedIn {
                 if kycSession.requiredInformationProvided {
                     if kycSession.emailConfirmed {
 

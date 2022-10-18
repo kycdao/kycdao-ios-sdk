@@ -64,19 +64,19 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
             self.emailAddress = text
         }.store(in: &disposeBag)
         
-        legalEntityStatusCheck.isSelected = kycSession.legalEntityStatus
+//        legalEntityStatusCheck.isSelected = kycSession.legalEntityStatus
         disclaimerAcceptance.isSelected = kycSession.disclaimerAccepted
-        emailField.text = kycSession.emailAddress
+//        emailField.text = kycSession.emailAddress
         
-        selectedCountry = countries.first { $0.isoCode == kycSession.residency }
+//        selectedCountry = countries.first { $0.isoCode == kycSession.residency }
         residencyField.text = selectedCountry?.name
         
-        guard let selectedIndex = countries.firstIndex(where: { $0.isoCode == kycSession.residency })
-        else {
-            return
-        }
-        
-        pickerView.selectRow(selectedIndex, inComponent: 0, animated: false)
+//        guard let selectedIndex = countries.firstIndex(where: { $0.isoCode == kycSession.residency })
+//        else {
+//            return
+//        }
+//
+//        pickerView.selectRow(selectedIndex, inComponent: 0, animated: false)
         
     }
     
@@ -199,9 +199,13 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         Task {
             
             try await kycSession.acceptDisclaimer()
-            try await kycSession.savePersonalInfo(email: emailAddress,
-                                                  residency: residency,
-                                                  legalEntity: legalEntityStatusCheck.isSelected)
+//            try await kycSession.savePersonalInfo(email: emailAddress,
+//                                                  residency: residency,
+//                                                  legalEntity: legalEntityStatusCheck.isSelected)
+            
+            try await kycSession.setPersonalData(PersonalData(email: emailAddress,
+                                                              residency: residency,
+                                                              legalEntity: legalEntityStatusCheck.isSelected))
             
             Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
             

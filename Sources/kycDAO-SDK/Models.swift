@@ -66,9 +66,18 @@ struct TokenImageDTO: Decodable {
     let url: String
 }
 
+/// Image related data
+///
+/// Can be used for
+/// - displaying the image via the URL on your UI
+/// - selecting an image and authorizing minting for it
+///     - ``KycDao/KYCSession/requestMinting(selectedImageId:)``
 public struct TokenImage: Equatable {
+    /// The id of this image
     public let id: String
+    /// The type of the image
     public let imageType: TokenImageType
+    /// URL pointing to the image
     public let url: URL?
 }
 
@@ -125,27 +134,27 @@ struct SignatureInputDTO: Encodable {
     let public_key: String?
 }
 
-public struct KYCSessionCreationResult {
+struct KYCSessionCreationResult {
     let dataToSign: String?
 }
 
-public struct SmartContractConfig: Codable, Equatable {
-    public let address: String
-    public let paymentDiscountPercent: Int
-    public let verificationType: VerificationType
-    public let network: String
+struct SmartContractConfig: Codable, Equatable {
+    let address: String
+    let paymentDiscountPercent: Int
+    let verificationType: VerificationType
+    let network: String
 }
 
-public struct ApiStatus: Codable {
+struct ApiStatus: Codable {
     let persona: PersonaStatus?
     let smartContractsInfo: [SmartContractConfig]
     
-    public enum ApiStatusKeys: String, CodingKey{
+    enum ApiStatusKeys: String, CodingKey{
         case persona = "persona"
         case smartContractsInfo = "smart_contracts_info"
     }
     
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ApiStatusKeys.self)
         self.persona = try container.decodeIfPresent(PersonaStatus.self, forKey: .persona)
         
@@ -188,7 +197,7 @@ public struct ApiStatus: Codable {
     }
 }
 
-public struct SmartContractConfigDTO: Codable {
+struct SmartContractConfigDTO: Codable {
     let address: String
     let payment_discount_percent: Int
 }
@@ -198,7 +207,7 @@ struct PersonaStatus: Codable {
     let sandbox: Bool?
 }
 
-public struct UserUpdateInput: Codable {
+struct UserUpdateInput: Codable {
     let email: String
     let residency: String
     let legal_entity: Bool
@@ -210,23 +219,23 @@ public struct UserUpdateInput: Codable {
     }
 }
 
-public struct EmailConfirmInput: Codable {
+struct EmailConfirmInput: Codable {
     let confirm_code: String
 }
 
-public struct BlockchainAccountDetails: Codable, Equatable {
+struct BlockchainAccountDetails: Codable, Equatable {
     let id: Int
     let blockchain: Blockchain?
     let address: String?
     let tokens: [Token]
 }
 
-public enum Blockchain: String, Codable {
+enum Blockchain: String, Codable {
     case ethereum = "Ethereum"
     case near = "Near"
 }
 
-public struct Token: Codable, Equatable {
+struct Token: Codable, Equatable {
     let id: Int
     let network: String
     let authorization_code: String?
@@ -342,7 +351,7 @@ public struct Token: Codable, Equatable {
 //    }
 //}
 
-public enum VerificationType: String, Codable, Hashable {
+enum VerificationType: String, Codable, Hashable {
     case kyc = "KYC"
     case accreditedInvestor = "AccreditedInvestor"
 }
@@ -361,9 +370,9 @@ struct MintRequestInput: Encodable {
     }
 }
 
-public struct MintAuthorization: Decodable {
-    public let code: String?
-    public let tx_hash: String?
+struct MintAuthorization: Decodable {
+    let code: String?
+    let tx_hash: String?
 }
 
 struct KYCErrorResponse: Decodable {
@@ -411,31 +420,37 @@ enum VerificationStatusDTO: String, Decodable {
     }
 }
 
-public enum NetworkCurrency: String {
-    
-    case eth = "ETH"
-    case matic = "MATIC"
-    case celo = "CELO"
-    
-    public var weiToNativeDivisor: BigUInt {
-        BigUInt(integerLiteral: 1_000_000_000).power(2)
-    }
-    
-    public var minimumPrice: BigUInt {
-        BigUInt(50).gwei
-    }
-}
+//enum NetworkCurrency: String {
+//
+//    case eth = "ETH"
+//    case matic = "MATIC"
+//    case celo = "CELO"
+//
+//    var weiToNativeDivisor: BigUInt {
+//        BigUInt(integerLiteral: 1_000_000_000).power(2)
+//    }
+//
+//    var minimumPrice: BigUInt {
+//        BigUInt(50).gwei
+//    }
+//}
 
+/// Contains gas fee estimation related data
 public struct GasEstimation: Codable {
     
+    /// The current gas price on the network
     public let price: BigUInt
+    /// The gas amount required to run the minting transaction
     public let amount: BigUInt
+    /// The currency used by the network
     public let gasCurrency: CurrencyData
     
+    /// Gas fee estimation
     public var fee: BigUInt {
         price * amount
     }
     
+    /// Gas fee estimation in an easy to display string representation
     public var feeInNative: String {
         fee.decimalText(divisor: gasCurrency.baseToNativeDivisor) + " \(gasCurrency.symbol)"
     }
@@ -448,8 +463,8 @@ public struct GasEstimation: Codable {
     
 }
 
-public struct MintingTransactionResult {
-    public let txHash: String
+struct MintingTransactionResult {
+    let txHash: String
 }
 
 /// Data that describes a transaction used for minting
@@ -480,7 +495,7 @@ struct MintResultInput: Codable {
     
 }
 
-public typealias MintingTransactionHandler = (MintingProperties) async throws -> (MintingTransactionResult)
+typealias MintingTransactionHandler = (MintingProperties) async throws -> (MintingTransactionResult)
 
 struct NetworkMetadata: Codable {
     
@@ -505,11 +520,20 @@ struct NetworkMetadata: Codable {
     
 }
 
+/// Currency information
 public struct CurrencyData: Codable {
+    /// Name of the currency
     public let name: String
+    /// Symbol of the currency
     public let symbol: String
+    /// Number of decimals required to represent 1 unit of the native currency with the base unit.
+    ///
+    /// For example 1 ETH is 10^18 Wei, in this case this field's value will be 18, ETH being the native currency and Wei being the base unit
     public let decimals: Int
     
+    /// Divisor to convert from the base unit to the native currency.
+    ///
+    /// For example 1 ETH is 10^18 Wei, in this case this field's value will be 10^18
     public var baseToNativeDivisor: BigUInt {
         BigUInt(integerLiteral: 10).power(decimals)
     }
@@ -525,4 +549,26 @@ struct ExplorerData: Codable {
         case url
         case transactionPath = "transaction_path"
     }
+}
+
+/// Personal data of the user
+public struct PersonalData: Codable {
+    
+    /// Email address of the user
+    public let email: String
+    
+    /// Country of residency of the user
+    ///
+    /// Contains the country of residency in [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) format.
+    /// ##### Example
+    /// ISO 3166-2 Code | Country name
+    /// --- | ---
+    /// `BE` | Belgium
+    /// `ES` | Spain
+    /// `FR` | France
+    /// `US` | United States of America
+    public let residency: String
+    
+    /// Legal entity status of the user
+    public let legalEntity: Bool
 }
