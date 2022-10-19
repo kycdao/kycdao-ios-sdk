@@ -367,8 +367,9 @@ public class WalletConnectManager {
     
     private static func getNewURL() -> WCURL {
         WCURL(topic: UUID().uuidString,
-              bridgeURL: URL(string: "https://safe-walletconnect.gnosis.io/")!,
+//              bridgeURL: URL(string: "https://safe-walletconnect.gnosis.io/")!,
 //              bridgeURL: URL(string: "https://bridge.walletconnect.org")!,
+              bridgeURL: URL(string: "https://safe-walletconnect.safe.global/")!,
               key: randomKey())
     }
     
