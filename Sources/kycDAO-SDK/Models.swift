@@ -351,7 +351,7 @@ struct Token: Codable, Equatable {
 //    }
 //}
 
-enum VerificationType: String, Codable, Hashable {
+public enum VerificationType: String, Codable, Hashable {
     case kyc = "KYC"
     case accreditedInvestor = "AccreditedInvestor"
 }
@@ -412,9 +412,9 @@ enum VerificationStatusDTO: String, Decodable {
         switch self {
         case .verified:
             return .verified
-        case .created, .inReview:
+        case .inReview:
             return .processing
-        case .notVerified, .failed:
+        case .notVerified, .failed, .created:
             return .notVerified
         }
     }
@@ -571,4 +571,21 @@ public struct PersonalData: Codable {
     
     /// Legal entity status of the user
     public let legalEntity: Bool
+}
+
+public struct NetworkOptions: Hashable, Identifiable {
+    
+    public var id: String {
+        chainId
+    }
+    
+    ///CAIP-2 Chain ID
+    public let chainId: String
+    ///RPC URL used for communicating with the chain
+    public let rpcURL: URL?
+    
+    public init(chainId: String, rpcURL: URL? = nil) {
+        self.chainId = chainId
+        self.rpcURL = rpcURL
+    }
 }

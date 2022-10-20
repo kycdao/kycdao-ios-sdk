@@ -37,3 +37,41 @@ struct KYCMintingFunction: ABIFunction {
     }
     
 }
+
+struct KYCHasValidTokenFunction: ABIFunction {
+    
+    public static let name = "hasValidToken"
+    public let gasPrice: BigUInt?
+    public let gasLimit: BigUInt?
+    public var contract: EthereumAddress
+    public let from: EthereumAddress?
+
+    public let address: EthereumAddress
+
+    public init(contract: EthereumAddress,
+                address: EthereumAddress,
+                from: EthereumAddress? = nil,
+                gasPrice: BigUInt? = nil,
+                gasLimit: BigUInt? = nil) {
+        self.contract = contract
+        self.from = from
+        self.gasPrice = gasPrice
+        self.gasLimit = gasLimit
+        
+        self.address = address
+    }
+
+    public func encode(to encoder: ABIFunctionEncoder) throws {
+        try encoder.encode(address)
+    }
+    
+}
+
+public struct KYCHasValidTokenResponse: ABIResponse, MulticallDecodableResponse {
+    public static var types: [ABIType.Type] = [ Bool.self ]
+    public let value: Bool
+
+    public init?(values: [ABIDecoder.DecodedValue]) throws {
+        self.value = try values[0].decoded()
+    }
+}

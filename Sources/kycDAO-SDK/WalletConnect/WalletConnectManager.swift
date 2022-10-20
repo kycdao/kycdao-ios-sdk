@@ -70,6 +70,8 @@ public class WalletConnectManager {
     private var sessionStartedSubject = PassthroughSubject<WalletSession, Never>()
     private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
     
+    private var networkOptions: Set<NetworkOptions> = Set()
+    
     /// Provides a list of usable wallets for WalletConnect services based on the [WalletConnect V1 registry](https://registry.walletconnect.com/api/v1/wallets)
     /// - Returns: The list of compatible mobile wallets
     ///
@@ -120,6 +122,10 @@ public class WalletConnectManager {
         }
         
         return wcWallets
+    }
+    
+    public func setRPCURL(_ rpcURL: URL, forChain chainId: String) {
+        self.networkOptions.insert(NetworkOptions(chainId: chainId, rpcURL: rpcURL))
     }
     
     
@@ -412,10 +418,19 @@ extension WalletConnectManager: ClientDelegate {
                                       && !sessionRepo.containsSession(withURL: session.url)
         
         if let pendingSession = pendingSession, newSessionSameAsPending {
+            
+            var rpcURL: URL? = nil
+            
+            if let chainId = session.walletInfo?.chainId {
+                rpcURL = networkOptions.first(where: {
+                    $0.chainId == "eip155:\(chainId)"
+                })?.rpcURL
+            }
+            
             let walletSession = try? WalletSession(session: session,
                                                    wallet: pendingSession.wallet,
-                                                   status: .active,
-                                                   state: .connected)
+                                                   rpcURL: rpcURL )
+            
             guard let walletSession = walletSession else { return }
             
             sessionRepo.addSession(walletSession)

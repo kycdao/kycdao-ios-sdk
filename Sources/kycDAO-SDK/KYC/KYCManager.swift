@@ -13,6 +13,13 @@ import Combine
 import web3
 import BigInt
 
+struct TokenCheckOptions {
+    let walletAddress: String
+    let chainId: String
+    let rpcURL: URL? = nil
+    let verificationType: VerificationType
+}
+
 /// A class used for creating KYC sessions and querying KYC status for different wallets
 public class KYCManager {
     
@@ -76,6 +83,57 @@ public class KYCManager {
         
         let result = try await KYCConnection.call(endPoint: .status, method: .GET, output: ApiStatus.self)
         return result.data
+        
+    }
+    
+    public func hasValidToken(
+        verificationType: VerificationType,
+        walletAddress: String,
+        walletSession: WalletSessionProtocol
+    ) async throws {
+        try await hasValidToken(verificationType: verificationType,
+                                walletAddress: walletAddress,
+                                networkOptions: NetworkOptions(chainId: walletSession.chainId,
+                                                               rpcURL: walletSession.rpcURL))
+    }
+    
+    public func hasValidToken(
+        verificationType: VerificationType,
+        walletAddress: String,
+        networkOptions: NetworkOptions
+    ) async throws -> Bool {
+        
+        let networks = try await self.networks
+        guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == networkOptions.chainId })
+        else {
+            throw KYCError.unsupportedNetwork
+        }
+        
+        let apiStatus = try await apiStatus()
+        
+        guard apiStatus.smartContractsInfo.contains(where: { $0.network == selectedNetworkMetadata.id })
+        else {
+            throw KYCError.unsupportedNetwork
+        }
+        
+        let contractConfig = apiStatus.smartContractsInfo.first {
+            $0.network == selectedNetworkMetadata.id
+            && $0.verificationType == verificationType
+        }
+        
+        guard let contractConfig = contractConfig
+        else {
+            throw KYCError.unsupportedNetwork
+        }
+        
+        let clientURL = networkOptions.rpcURL ?? URL(string: "https://polygon-mumbai.infura.io/v3/8edae24121f74398b57da7ff5a3729a4")!
+        let client = EthereumClient(url: clientURL)
+        let contractAddress = EthereumAddress(contractConfig.address)
+        let ethWalletAddress = EthereumAddress(walletAddress)
+        let mintingFunction = KYCHasValidTokenFunction(contract: contractAddress, address: ethWalletAddress)
+        let result = try await mintingFunction.call(withClient: client, responseType: KYCHasValidTokenResponse.self)
+        
+        return result.value
         
     }
     

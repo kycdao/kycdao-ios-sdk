@@ -23,6 +23,7 @@ public protocol WalletSessionProtocol {
     /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
     var chainId: String { get }
     
+    var rpcURL: URL? { get }
     
     /// A function used for signing a message with the wallet app
     /// - Parameters:
@@ -79,22 +80,20 @@ public class WalletSession: Codable, Identifiable, WalletSessionProtocol {
         wcSession.url
     }
     
+    public let rpcURL: URL?
+    
     public private(set) var chainId: String
     
-    var status: SessionStatus
-    var state: ConnectionState
-    
-    internal init(session: WalletConnectSwift.Session, wallet: Wallet?, status: SessionStatus, state: ConnectionState) throws {
+    internal init(session: WalletConnectSwift.Session, wallet: Wallet?, rpcURL: URL?) throws {
         
         guard let walletInfo = session.walletInfo else { throw KYCError.walletConnect(.sessionFailed) }
         
         let caip2Id = "eip155:\(walletInfo.chainId)"
         
+        self.rpcURL = rpcURL
         self.wcSession = session
         self.walletInfo = walletInfo
         self.wallet = wallet
-        self.status = status
-        self.state = state
         self.chainId = caip2Id
     }
     
