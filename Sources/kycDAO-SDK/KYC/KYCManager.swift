@@ -86,17 +86,29 @@ public class KYCManager {
         
     }
     
+    /// Checks on-chain whether the wallet has a valid token for the verification type
+    /// - Parameters:
+    ///   - verificationType: The type of verification we want to find a valid token for
+    ///   - walletAddress: The address of the wallet the token belongs to
+    ///   - walletSession: A WalletSession instance
+    /// - Returns: True, when the wallet has a valid token for the selected verification type on the wallet session's network
     public func hasValidToken(
         verificationType: VerificationType,
         walletAddress: String,
         walletSession: WalletSessionProtocol
-    ) async throws {
+    ) async throws -> Bool {
         try await hasValidToken(verificationType: verificationType,
                                 walletAddress: walletAddress,
                                 networkOptions: NetworkOptions(chainId: walletSession.chainId,
                                                                rpcURL: walletSession.rpcURL))
     }
     
+    /// Checks on-chain whether the wallet has a valid token for the verification type
+    /// - Parameters:
+    ///   - verificationType: The type of verification we want to find a valid token for
+    ///   - walletAddress: The address of the wallet the token belongs to
+    ///   - networkOptions: Network options for setting up the connection
+    /// - Returns: True, when the wallet has a valid token for the selected verification type on the given network
     public func hasValidToken(
         verificationType: VerificationType,
         walletAddress: String,

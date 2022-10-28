@@ -230,7 +230,7 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         
     }
     
-    func sessionStarted(_ walletSession: WalletSession) {
+    func sessionStarted(_ walletSession: WalletConnectSession) {
         let accounts = walletSession.accounts
         if accounts.count > 1 {
             

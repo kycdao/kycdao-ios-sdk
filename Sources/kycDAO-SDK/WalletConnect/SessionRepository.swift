@@ -12,7 +12,7 @@ import WalletConnectSwift
 class SessionRepository {
     
     static var shared = SessionRepository()
-    var sessions: [WalletSession] = []
+    var sessions: [WalletConnectSession] = []
     
     func containsSession(withURL url: WCURL) -> Bool {
         sessions.contains(where: { $0.url == url })
@@ -27,12 +27,12 @@ class SessionRepository {
         sessions.removeAll(where: { $0.url == session.url })
     }
     
-    func addSession(_ session: WalletSession) {
+    func addSession(_ session: WalletConnectSession) {
         sessions.removeAll(where: { $0.url == session.url })
         sessions.append(session)
     }
     
-    func getSession(walletId: String) -> WalletSession? {
+    func getSession(walletId: String) -> WalletConnectSession? {
         sessions
             .first(where: { $0.walletId == walletId })
     }

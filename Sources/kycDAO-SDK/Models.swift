@@ -573,15 +573,19 @@ public struct PersonalData: Codable {
     public let legalEntity: Bool
 }
 
+/// A set of options for any chain
 public struct NetworkOptions: Hashable, Identifiable {
     
+    /// ID of the network option, same as chainId
     public var id: String {
         chainId
     }
     
-    ///CAIP-2 Chain ID
+    /// CAIP-2 Chain ID
     public let chainId: String
-    ///RPC URL used for communicating with the chain
+    /// RPC URL used for communicating with the chain.
+    /// 
+    /// Leave it `nil` to use our default RPC URLs or provide your own RPC URL to use
     public let rpcURL: URL?
     
     public init(chainId: String, rpcURL: URL? = nil) {

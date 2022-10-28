@@ -87,9 +87,9 @@ class SelectAccountViewController: UIViewController, UITableViewDelegate {
         }
     }
     private var accounts: [String]
-    private var walletSession: WalletSession
+    private var walletSession: WalletConnectSession
     
-    init(accounts: [String], walletSession: WalletSession) {
+    init(accounts: [String], walletSession: WalletConnectSession) {
         self.accounts = accounts
         self.walletSession = walletSession
         super.init(nibName: nil, bundle: nil)

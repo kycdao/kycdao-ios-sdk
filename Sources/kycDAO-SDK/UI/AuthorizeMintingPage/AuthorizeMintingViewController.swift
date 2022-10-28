@@ -10,7 +10,7 @@ import UIKit
 
 class AuthorizeMintingViewController : UIViewController {
     
-    private var walletSession: WalletSession
+    private var walletSession: WalletConnectSession
     private var kycSession: KYCSession
     private let selectedImage: TokenImage
     
@@ -19,7 +19,7 @@ class AuthorizeMintingViewController : UIViewController {
     let messageLabel = UILabel()
     let activityIndicator = UIActivityIndicatorView()
     
-    init(walletSession: WalletSession, kycSession: KYCSession, selectedImage: TokenImage) {
+    init(walletSession: WalletConnectSession, kycSession: KYCSession, selectedImage: TokenImage) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         self.selectedImage = selectedImage

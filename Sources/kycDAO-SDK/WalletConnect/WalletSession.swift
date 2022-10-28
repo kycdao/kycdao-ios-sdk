@@ -23,6 +23,9 @@ public protocol WalletSessionProtocol {
     /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
     var chainId: String { get }
     
+    /// A custom RPC URL you whish to use during on-chain calls.
+    ///
+    /// When this value is `nil`, the library will default to RPC URLs provided by kycDAO
     var rpcURL: URL? { get }
     
     /// A function used for signing a message with the wallet app
@@ -42,7 +45,7 @@ public protocol WalletSessionProtocol {
 }
 
 /// A class representing a session with a WalletConnect wallet
-public class WalletSession: Codable, Identifiable, WalletSessionProtocol {
+public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol {
     
     /// A unique identifier of the session
     public var id: String {
@@ -140,9 +143,9 @@ public class WalletSession: Codable, Identifiable, WalletSessionProtocol {
     }
 }
 
-extension WalletSession: Equatable {
+extension WalletConnectSession: Equatable {
     
-    public static func == (lhs: WalletSession, rhs: WalletSession) -> Bool {
+    public static func == (lhs: WalletConnectSession, rhs: WalletConnectSession) -> Bool {
         return lhs.id == rhs.id
     }
     

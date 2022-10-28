@@ -15,10 +15,10 @@ class StartMintingViewController: UIViewController {
     let messageLabel = UILabel()
     let startMintingButton = SimpleButton()
     
-    let walletSession: WalletSession
+    let walletSession: WalletConnectSession
     let kycSession: KYCSession
     
-    init(walletSession: WalletSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

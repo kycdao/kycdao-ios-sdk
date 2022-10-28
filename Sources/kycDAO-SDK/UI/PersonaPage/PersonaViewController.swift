@@ -19,10 +19,10 @@ class PersonaViewController: UIViewController {
     let messageLabel = UILabel()
     let startPersonaButton = SimpleButton()
     
-    private var walletSession: WalletSession
+    private var walletSession: WalletConnectSession
     private var kycSession: KYCSession
     
-    init(walletSession: WalletSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

@@ -19,10 +19,10 @@ class CreateSignatureViewController: UIViewController {
     let createSignatureButton = SimpleButton()
     let containerView = UIView()
     
-    private var walletSession: WalletSession
+    private var walletSession: WalletConnectSession
     private var kycSession: KYCSession
     
-    init(walletSession: WalletSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

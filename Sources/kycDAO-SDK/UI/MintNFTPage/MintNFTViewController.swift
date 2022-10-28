@@ -20,11 +20,11 @@ class MintNFTViewController: UIViewController {
     let mintingFee = UILabel()
     let mintNFTButton = SimpleButton()
     
-    private var walletSession: WalletSession
+    private var walletSession: WalletConnectSession
     private var kycSession: KYCSession
     private let selectedImage: TokenImage
     
-    init(walletSession: WalletSession, kycSession: KYCSession, selectedImage: TokenImage) {
+    init(walletSession: WalletConnectSession, kycSession: KYCSession, selectedImage: TokenImage) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         self.selectedImage = selectedImage

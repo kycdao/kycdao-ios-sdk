@@ -57,17 +57,17 @@ public class WalletConnectManager {
     private var nextURL: WCURL = getNewURL()
     
     /// Publisher that emits session objects when connections to wallets are established
-    public var sessionStarted: AnyPublisher<WalletSession, Never> {
+    public var sessionStarted: AnyPublisher<WalletConnectSession, Never> {
         sessionStartedSubject.eraseToAnyPublisher()
     }
     
     /// Publisher that emits session URIs on which the WalletConnect component is currently awaiting new connections.
     /// - Note: Use this publisher when you want to display a QR code to your user. Keep the QR up to date with the URI value received from the publisher.
-    public var pendingSessionURI: AnyPublisher<String, Never> {
-        pendingSessionURISubject.compactMap { $0 }.eraseToAnyPublisher()
+    public var pendingSessionURI: AnyPublisher<String?, Never> {
+        pendingSessionURISubject.eraseToAnyPublisher()
     }
     
-    private var sessionStartedSubject = PassthroughSubject<WalletSession, Never>()
+    private var sessionStartedSubject = PassthroughSubject<WalletConnectSession, Never>()
     private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
     
     private var networkOptions: Set<NetworkOptions> = Set()
@@ -124,6 +124,10 @@ public class WalletConnectManager {
         return wcWallets
     }
     
+    /// Set a default RPC URL to be assigned to newly opened WalletConnect sessions with a given chain
+    /// - Parameters:
+    ///   - rpcURL: The RPC URL to use
+    ///   - chainId: The CAIP-2 chainId the RPC URL belongs to
     public func setRPCURL(_ rpcURL: URL, forChain chainId: String) {
         self.networkOptions.insert(NetworkOptions(chainId: chainId, rpcURL: rpcURL))
     }
@@ -427,9 +431,9 @@ extension WalletConnectManager: ClientDelegate {
                 })?.rpcURL
             }
             
-            let walletSession = try? WalletSession(session: session,
-                                                   wallet: pendingSession.wallet,
-                                                   rpcURL: rpcURL )
+            let walletSession = try? WalletConnectSession(session: session,
+                                                          wallet: pendingSession.wallet,
+                                                          rpcURL: rpcURL )
             
             guard let walletSession = walletSession else { return }
             
