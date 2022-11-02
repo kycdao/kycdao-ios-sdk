@@ -414,7 +414,7 @@ extension WalletConnectManager: ClientDelegate {
         print("didConnect wculr \(url)")
     }
     
-    public func client(_ client: Client, didConnect session: WCSession) {
+    public func client(_ client: Client, didConnect session: WalletConnectSwift.Session) {
         print("didConnect session \(session.url)")
         print("session: \(session)")
         
@@ -443,12 +443,12 @@ extension WalletConnectManager: ClientDelegate {
         }
     }
     
-    public func client(_ client: Client, didDisconnect session: WCSession) {
+    public func client(_ client: Client, didDisconnect session: WalletConnectSwift.Session) {
         print("didDisconnect \(session.url)")
         sessionRepo.deleteSession(session)
     }
     
-    public func client(_ client: Client, didUpdate session: WCSession) {
+    public func client(_ client: Client, didUpdate session: WalletConnectSwift.Session) {
         print("didUpdate \(session.url)")
         sessionRepo.updateSession(session)
     }

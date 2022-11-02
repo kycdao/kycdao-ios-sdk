@@ -122,7 +122,7 @@ class ConfirmEmailViewController : UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            await kycSession.resumeOnEmailConfirmed()
+            try await kycSession.resumeOnEmailConfirmed()
             
             switch kycSession.verificationStatus {
             case .verified:

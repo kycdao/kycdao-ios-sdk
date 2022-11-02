@@ -13,13 +13,6 @@ import Combine
 import web3
 import BigInt
 
-struct TokenCheckOptions {
-    let walletAddress: String
-    let chainId: String
-    let rpcURL: URL? = nil
-    let verificationType: VerificationType
-}
-
 /// A class used for creating KYC sessions and querying KYC status for different wallets
 public class KYCManager {
     

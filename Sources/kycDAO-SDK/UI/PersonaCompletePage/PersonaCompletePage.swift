@@ -82,7 +82,7 @@ class PersonaCompleteViewController: UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            await kycSession.resumeWhenIdentified()
+            try await kycSession.resumeWhenIdentified()
             Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
         }
     }

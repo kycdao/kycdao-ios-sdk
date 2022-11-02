@@ -67,11 +67,11 @@ struct KYCHasValidTokenFunction: ABIFunction {
     
 }
 
-public struct KYCHasValidTokenResponse: ABIResponse, MulticallDecodableResponse {
-    public static var types: [ABIType.Type] = [ Bool.self ]
-    public let value: Bool
+internal struct KYCHasValidTokenResponse: ABIResponse, MulticallDecodableResponse {
+    internal static var types: [ABIType.Type] = [ Bool.self ]
+    internal let value: Bool
 
-    public init?(values: [ABIDecoder.DecodedValue]) throws {
+    internal init?(values: [ABIDecoder.DecodedValue]) throws {
         self.value = try values[0].decoded()
     }
 }

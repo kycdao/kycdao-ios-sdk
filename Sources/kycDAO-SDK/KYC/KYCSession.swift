@@ -309,7 +309,7 @@ public class KYCSession: Identifiable {
             try? await Task.sleep(nanoseconds: 1_000_000_000 * 3)
             let user = try await refreshUser()
             
-            if let verificationRequests = user?.verification_requests {
+            if let verificationRequests = user.verification_requests {
                 identified = verificationRequests.contains {
                     $0.verification_type == .kyc && $0.status == .verified
                 }

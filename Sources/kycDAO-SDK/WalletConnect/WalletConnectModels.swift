@@ -9,7 +9,7 @@ import Foundation
 import WalletConnectSwift
 import BigInt
 
-public typealias WCSession = WalletConnectSwift.Session
+typealias WCSession = WalletConnectSwift.Session
 
 struct ListingsDTO: Decodable {
     let listings: [String: ListingDTO]?
