@@ -245,15 +245,15 @@ public class KYCSession: Identifiable {
     }
     
     /// Suspends the current async task and continues execution when email address becomes confirmed.
-    public func resumeOnEmailConfirmed() async {
+    public func resumeOnEmailConfirmed() async throws {
         
-        var emailConfirmed = self.emailConfirmed
+        var emailConfirmed = false
         
         while !emailConfirmed {
             // Delay the task by 3 second
             try? await Task.sleep(nanoseconds: 1_000_000_000 * 3)
-            let user = try? await refreshUser()
-            emailConfirmed = user?.email_confirmed?.isEmpty == false
+            let user = try await refreshUser()
+            emailConfirmed = user.email_confirmed?.isEmpty == false
         }
         
     }
@@ -299,7 +299,7 @@ public class KYCSession: Identifiable {
     }
     
     /// A function which awaits until the user's identity becomes successfuly verified
-    public func resumeWhenIdentified() async {
+    public func resumeWhenIdentified() async throws {
         
         var identified = false
         
@@ -307,7 +307,7 @@ public class KYCSession: Identifiable {
             
             // Delay the task by 3 second
             try? await Task.sleep(nanoseconds: 1_000_000_000 * 3)
-            let user = try? await refreshUser()
+            let user = try await refreshUser()
             
             if let verificationRequests = user?.verification_requests {
                 identified = verificationRequests.contains {
@@ -440,9 +440,6 @@ public class KYCSession: Identifiable {
         
         guard let authCode = authCode
         else { throw KYCError.unauthorizedMinting }
-        
-        guard let accountId = sessionData.user?.blockchain_accounts?.first?.id
-        else { throw KYCError.genericError }
         
         let mintingFunction = try kycMintingFunction(authCode: authCode)
         let props = try await transactionProperties(forFunction: mintingFunction)
