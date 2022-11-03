@@ -301,12 +301,16 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         let filter = CIFilter.qrCodeGenerator()
         filter.setValue(data, forKey: "inputMessage")
 
-        let outputImage = filter.outputImage!
-        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 4, y: 4))
-        let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent)!
+        guard let outputImage = filter.outputImage else {
+            return
+        }
         
-        qrImageView.layer.magnificationFilter = CALayerContentsFilter.nearest
-        qrImageView.image = UIImage(cgImage: cgImage)
+        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 4, y: 4))
+        
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            qrImageView.layer.magnificationFilter = CALayerContentsFilter.nearest
+            qrImageView.image = UIImage(cgImage: cgImage)
+        }
     }
     
     func showAppGrid() {
