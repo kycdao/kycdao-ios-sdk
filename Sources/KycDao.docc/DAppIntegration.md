@@ -1,6 +1,5 @@
 # DApp and Web2 Integration
-
-
+DApp and Web2 integration guide
 
 ## Overview
 
@@ -9,7 +8,7 @@ This article provides a guide for integrating the SDK into an app that is not a 
 Three main topics will be discussed here:
 - Connecting to a wallet
 - Checking the KYC status of an address
-- Implementing the KYC flow from identity verification till minting
+- Initializing a KYC flow
 
 ## Connecting to a wallet
 
@@ -24,8 +23,8 @@ The ``WalletConnectManager`` will keep waiting for new connections and emit ``Wa
 ```swift
 WalletConnectManager.shared.sessionStarted
     .receive(on: DispatchQueue.main)
-    .sink { [weak self] walletSession in
-        //Do something with walletSession
+    .sink { [weak self] walletConnectSession in
+        //Do something with walletConnectSession
     }.store(in: &disposeBag)
 ```
 
@@ -91,9 +90,9 @@ If you already obtained the user's wallet address and know the chain they possib
 
 If the user's wallet address is unknown, you can get a connection through WalletConnectManager to their wallet and use the WalletConnectSession object to ask for their KYC status.
 
-### Use WalletConnectSession
+### Using WalletConnectSession
 
-``WalletConnectSession`` contains a blockchain account list (wallet addresses), with all the accounts returned by WalletConnect for the connection with the wallet app. The user should select their address from ``WalletConnectSession/accounts`` if there are more than one available, otherwise the one available address can be used.
+``WalletConnectSession`` contains a blockchain account list (wallet addresses), with all the accounts returned by WalletConnect for the connection with the wallet app. The user should select their address from ``WalletConnectSession/accounts`` if there are more than one, otherwise the one available address can be used.
 
 Once we obtained the wallet address, we can call
 
@@ -112,4 +111,92 @@ let networkOptions = NetworkOptions(chainId: "eip155:80001")
 let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
                                                               walletAddress: walletAddress,
                                                               networkOptions: networkOptions)
+```
+
+## Starting the KYC flow
+
+First you need to have a ``WalletConnectSession`` and a selected wallet address from ``WalletConnectSession/accounts``. 
+
+```swift
+let kycSession = try await KYCManager.shared.createSession(walletAddress: selectedAccount,
+                                                           walletSession: walletConnectSession)
+```
+
+## Implementing the KYC flow
+
+The KYC flow is the same for DApps and Wallets. It is covered in a common article:
+
+<doc:KYCFlow>
+
+## Summary
+
+An implementation of this article's content should look similar to this in terms of the logical flow of things:
+
+```swift
+
+init() {
+
+    let walletConnectManager = WalletConnectManager.shared
+
+    walletConnectManager.pendingSessionURI
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] uri in
+            self?.setQR(uri)
+        }.store(in: &disposeBag)
+
+    walletConnectManager.sessionStarted
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] walletConnectSession in
+            self?.sessionReceived(walletConnectSession)
+        }.store(in: &disposeBag)
+
+    Task {
+        let wallets = try await WalletConnectManager.listWallets()
+        //Add wallets to your datasource, populate the UI
+    }
+
+    walletConnectManager.startListening()
+
+}
+
+func selectWallet(wallet: Wallet) {
+
+    try WalletConnectManager.shared.connect(withWallet: wallet)
+
+}
+
+func sessionReceived(_ walletConnectSession: WalletConnectSession) {
+
+    //Accounts array technically should never be empty
+    guard !walletConnectSession.accounts.isEmpty else { 
+        return
+    }
+
+    var walletAddress: String
+
+    if walletConnectSession.accounts.count == 1,
+       let account = walletConnectSession.accounts.first {
+        //Use the only available account
+        walletAddress = account
+    } else {
+        //Obtain the account from user selection
+        walletAddress = ...
+    }
+
+    Task {
+        let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
+                                                                      walletAddress: walletAddress,
+                                                                      walletSession: walletConnectSession)
+
+        if hasValidToken {
+            //continue with your logic, let the user access your service etc...
+        } else {
+            let kycSession = try await KYCManager.shared.createSession(walletAddress: walletAddress,
+                                                                       walletSession: walletConnectSession)
+            //Use KYCSession to coordinate the KYC flow...
+        }
+    }
+
+}
+
 ```

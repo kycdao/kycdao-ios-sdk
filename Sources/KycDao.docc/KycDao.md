@@ -19,6 +19,7 @@ The SDK can be used by
 
 - <doc:Installation>
 - <doc:DAppIntegration>
+- <doc:KYCFlow>
 
 ### KYC flow
 
