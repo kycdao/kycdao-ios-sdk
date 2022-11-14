@@ -175,14 +175,14 @@ public class WalletConnectManager {
         
         guard isListening else { throw KYCError.genericError }
         
-        let savedSession = sessionRepo.getSession(walletId: wallet.id)
-        let savedSessionIsOpen = client.openSessions().contains(where: { $0.url == savedSession?.url }) == true
-        
-        if savedSessionIsOpen, let savedSession = savedSession {
-            sessionStartedSubject.send(savedSession)
-        } else {
+//        let savedSession = sessionRepo.getSession(walletId: wallet.id)
+//        let savedSessionIsOpen = client.openSessions().contains(where: { $0.url == savedSession?.url }) == true
+//
+//        if savedSessionIsOpen, let savedSession = savedSession {
+//            sessionStartedSubject.send(savedSession)
+//        } else {
             try openWallet(wallet)
-        }
+//        }
     }
     
     func openWallet(_ wallet: Wallet) throws {

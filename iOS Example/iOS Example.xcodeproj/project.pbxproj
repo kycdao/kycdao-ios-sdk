@@ -63,8 +63,8 @@
 				D95C08BB277D8AA20016A10F /* Assets.xcassets */,
 				D95C08BD277D8AA20016A10F /* Preview Content */,
 				BE4844F8285C976800B3A6F7 /* AppDelegate.swift */,
-				BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */,
 				BE4844FD285C9A2A00B3A6F7 /* MainViewController.swift */,
+				BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";

@@ -25,10 +25,6 @@ class ConfirmEmailViewController : UIViewController {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)
-        
-        Task {
-            try await kycSession.sendConfirmationEmail()
-        }
     }
     
     required init?(coder: NSCoder) {

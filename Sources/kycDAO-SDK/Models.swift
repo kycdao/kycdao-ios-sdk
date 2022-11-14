@@ -571,6 +571,12 @@ public struct PersonalData: Codable {
     
     /// Legal entity status of the user
     public let legalEntity: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case email
+        case residency
+        case legalEntity = "legal_entity"
+    }
 }
 
 /// A set of options for any chain
