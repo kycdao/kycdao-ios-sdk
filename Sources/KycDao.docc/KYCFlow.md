@@ -10,11 +10,11 @@ The process consists of the following steps:
 2. Make the user accept the disclaimer
 3. Gather some personal information from the user
 4. Confirm email
-5. Persona verification
+5. KYC verification
 6. Select NFT image to mint
 7. Mint NFT
 
-The user can end up at almost any point of the KYC process. It is important to manage that users may interrupt the KYC process and return later to complete the flow. You can determine the next step of the user using various state properties of the ``KYCSession``, for example ``KYCSession/disclaimerAccepted`` or ``KYCSession/requiredInformationProvided``. Keep in mind that y
+The user can end up at almost any point of the KYC process. It is important to manage that users may interrupt the KYC process and return later to complete the flow. You can determine the next step of the user using various state properties of the ``KYCSession``, for example ``KYCSession/disclaimerAccepted``. Keep in mind that these values may change for an existing user. For example the disclaimer acceptance will be reseted if the contents of the disclaimer change and a new user consent is required.
 
 ### Requirements
 
@@ -53,4 +53,139 @@ if !kycSession.requiredInformationProvided {
 }
 ```
 
-### 
+> Note: Calling ``KYCSession/setPersonalData(_:)`` will send a confirmation email to the provided email address automatically, you are not required to call ``KYCSession/sendConfirmationEmail()`` manually
+
+## Confirm email
+
+After you ``KYCSession/setPersonalData(_:)``, you only need to wait for the email to be confirmed by the user to continue. 
+
+If the user did not receive or lost the email, they may want to resend the confirmation email. You can use ``KYCSession/sendConfirmationEmail()`` in this case.
+
+```swift
+try await kycSession.sendConfirmationEmail()
+```
+
+To wait for email confirmation, call ``KYCSession/resumeOnEmailConfirmed()``. It suspends the Task and resumes when the email becomes confirmed.
+
+```swift
+if !kycSession.emailConfirmed {
+    try await kycSession.resumeOnEmailConfirmed()
+}
+```
+
+## KYC verification
+
+KYC is currently done through Persona. You can check whether the user already has an accepted verification using the property ``KYCSession/verificationStatus``.
+
+``KYCSession/verificationStatus`` | Meaning
+--- | ---
+`verified` | The user was successfully verified
+`processing` | The user is under verification
+`notVerified` | The user is not verified (missing or rejected verification)
+
+The Persona identity verification process will launch a modal, which has to be attached to a `UIViewController`. You can launch the identity process by calling
+
+```swift
+let status = try await kycSession.startIdentification(fromViewController: self)
+switch status {
+case .completed:
+    //User completed Persona
+case .cancelled:
+    //Persona was cancelled by the user
+}
+```
+
+> Note: The result of ``KYCSession/startIdentification(fromViewController:)`` does not indicate whether the KYC verification is successful or not. It merely signals that the user completed the Persona identity process (or not). 
+
+To wait for the identity verification to complete, use ``KYCSession/resumeWhenIdentified()``, which suspends the Task and resumes when the user becomes verified.
+
+### Logical flow for the KYC verification
+
+```swift
+if kycSession.verificationStatus == .processing {
+    
+    try await kycSession.resumeWhenIdentified()
+    
+} else if kycSession.verificationStatus == .notVerified {
+    
+    let identityFlow = try await kycSession.startIdentification(fromViewController: self)
+    
+    if identityFlow == .completed {
+        try await kycSession.resumeWhenIdentified()
+    }
+}
+```
+
+## Select NFT image to mint
+
+First you should obtain the possible NFT images by calling ``KYCSession/getNFTImages()``. This returns an array of ``TokenImage``s, which has an ``TokenImage/url`` field usable to preview the NFT images. 
+
+It is recommended to use `WKWebView` to display these images. They are SVGs, but they could be GIFs, PNGs, JPGs or other formats in the future.
+
+After the user selected their image of choice, the minting has to be authorized for that particular image with ``KYCSession/requestMinting(selectedImageId:)``
+
+```swift
+let nftImages = kycSession.getNFTImages()
+guard let selectedImage = nftImages.first else { return }
+try await kycSession.requestMinting(selectedImageId: selectedImage.id)
+```
+
+## Mint NFT
+
+### Display gas fee estimation to user
+
+```swift
+let gasEstimation = try await kycSession.estimateGasForMinting()
+//Here mintinFee is an UILabel
+mintingFee.text = gasEstimation.feeInNative
+```
+### Mint
+
+The returned txURL can be used to let the user view their transaction on the explorer linked by the URL.
+
+```swift
+let txURL = try await kycSession.mint()
+```
+
+## Flow summary
+
+```swift
+
+try await kycSession.login()
+
+if !kycSession.disclaimerAccepted {
+    try await kycSession.acceptDisclaimer()
+}
+
+if !kycSession.requiredInformationProvided {
+    //Residency is in ISO 3166-2
+    let personalData = PersonalData(email: "example@email.com",
+                                    residency: "US",
+                                    legalEntity: false)
+    try await kycSession.setPersonalData(personalData)
+}
+
+if !kycSession.emailConfirmed {
+    try await kycSession.resumeOnEmailConfirmed()
+}
+
+if kycSession.verificationStatus == .processing {
+    
+    try await kycSession.resumeWhenIdentified()
+    
+} else if kycSession.verificationStatus == .notVerified {
+    
+    let identityFlow = try await kycSession.startIdentification(fromViewController: self)
+    
+    if identityFlow == .completed {
+        try await kycSession.resumeWhenIdentified()
+    }
+}
+
+let nftImages = kycSession.getNFTImages()
+guard let selectedImage = nftImages.first else { return }
+try await kycSession.requestMinting(selectedImageId: selectedImage.id)
+
+let txURL = try await kycSession.mint()
+
+```

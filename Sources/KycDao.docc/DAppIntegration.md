@@ -104,7 +104,7 @@ let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: 
 
 ### Using existing wallet information
 
-A ``NetworkOptions`` object have to be constructed specifying the chain in CAIP-2 format and an RPC URL can be optionally provided, read more about it **here**.
+A ``NetworkOptions`` object have to be constructed specifying the chain in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) format and an RPC URL can be optionally provided, read more about it **here**.
 
 ```swift
 let networkOptions = NetworkOptions(chainId: "eip155:80001")
