@@ -11,14 +11,14 @@ import UIKit
 class PersonaCompleteViewController: UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: KYCSession
+    private var kycSession: VerificationSession
     
     let containerView = UIView()
     let titleLabel = UILabel()
     let messageLabel = UILabel()
     let activityIndicator = UIActivityIndicatorView()
     
-    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

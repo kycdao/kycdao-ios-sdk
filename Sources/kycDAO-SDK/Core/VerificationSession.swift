@@ -13,8 +13,8 @@ import Combine
 import web3
 import BigInt
 
-/// A KYC session object which contains session related data and session related operations
-public class KYCSession: Identifiable {
+/// A verification session object which contains session related data and session related operations
+public class VerificationSession: Identifiable {
     
     /// A unique identifier for the session
     public let id = UUID().uuidString
@@ -23,7 +23,7 @@ public class KYCSession: Identifiable {
     
     private var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
     
-    private var sessionData: KYCSessionData
+    private var sessionData: BackendSessionData
     
     /// Wallet address used to create the session
     public var walletAddress: String
@@ -47,11 +47,11 @@ public class KYCSession: Identifiable {
     
     private var personaStatus: PersonaStatus {
         get async throws {
-            let apiStatus = try await KYCManager.shared.apiStatus()
+            let apiStatus = try await VerificationManager.shared.apiStatus()
             
             guard let personaStatus = apiStatus.persona
             else {
-                throw KYCError.genericError
+                throw KycDaoError.genericError
             }
             
             return personaStatus
@@ -130,7 +130,7 @@ public class KYCSession: Identifiable {
         return .notVerified
     }
     
-    /// A wallet session associated with this KYCSession
+    /// A wallet session associated with this VerificationSession
     public let walletSession: WalletSessionProtocol
     private let networkMetadata: NetworkMetadata
     
@@ -143,7 +143,7 @@ public class KYCSession: Identifiable {
          walletSession: WalletSessionProtocol,
          kycConfig: SmartContractConfig?,
          accreditedConfig: SmartContractConfig?,
-         data: KYCSessionData,
+         data: BackendSessionData,
          networkMetadata: NetworkMetadata) {
         self.walletAddress = walletAddress
         self.sessionData = data
@@ -167,22 +167,22 @@ public class KYCSession: Identifiable {
         let signatureInput = SignatureInputDTO(signature: signature,
                                                public_key: nil)
         
-        let result = try await KYCConnection.call(endPoint: .user,
+        let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .POST,
                                                   input: signatureInput,
-                                                  output: KYCUserDTO.self)
+                                                  output: UserDTO.self)
         
-        sessionData.user = KYCUser(dto: result.data)
+        sessionData.user = User(dto: result.data)
         
     }
     
     @discardableResult
-    private func refreshUser() async throws -> KYCUser {
+    private func refreshUser() async throws -> User {
         
-        let result = try await KYCConnection.call(endPoint: .user,
+        let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .GET,
-                                                  output: KYCUserDTO.self)
-        let updatedUser = KYCUser(dto: result.data)
+                                                  output: UserDTO.self)
+        let updatedUser = User(dto: result.data)
         sessionData.user = updatedUser
         return updatedUser
         
@@ -193,14 +193,14 @@ public class KYCSession: Identifiable {
         
         do {
         
-            let _ = try await KYCConnection.call(endPoint: .disclaimer, method: .POST)
+            let _ = try await ApiConnection.call(endPoint: .disclaimer, method: .POST)
         
-        } catch KYCError.httpStatusCode(_, let data) {
+        } catch KycDaoError.httpStatusCode(_, let data) {
         
-            let serverError = try JSONDecoder().decode(KYCErrorResponse.self, from: data)
+            let serverError = try JSONDecoder().decode(BackendErrorResponse.self, from: data)
             
             guard let errorCode = serverError.error_code else {
-                throw KYCError.genericError
+                throw KycDaoError.genericError
             }
             
             switch errorCode {
@@ -208,7 +208,7 @@ public class KYCSession: Identifiable {
                 return
             }
             
-            throw KYCError.genericError
+            throw KycDaoError.genericError
             
         } catch let error {
             throw error
@@ -228,12 +228,12 @@ public class KYCSession: Identifiable {
         
         //TODO: Fail if disclaimer not set, send confirm email
         
-        let result = try await KYCConnection.call(endPoint: .user,
+        let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .PUT,
                                                   input: personalData,
-                                                  output: KYCUserDTO.self)
+                                                  output: UserDTO.self)
         
-        sessionData.user = KYCUser(dto: result.data)
+        sessionData.user = User(dto: result.data)
         
         try await sendConfirmationEmail()
         
@@ -241,7 +241,7 @@ public class KYCSession: Identifiable {
     
     /// Sends a confirmation email to the user's email address
     public func sendConfirmationEmail() async throws {
-        try await KYCConnection.call(endPoint: .emailConfirmation, method: .POST)
+        try await ApiConnection.call(endPoint: .emailConfirmation, method: .POST)
     }
     
     /// Suspends the current async task and continues execution when email address becomes confirmed.
@@ -259,25 +259,25 @@ public class KYCSession: Identifiable {
     }
     
     
-    /// Starts the identity verification process
+    /// Starts the identity verification process, uses [Persona](https://withpersona.com/)
     /// - Parameter viewController: The view controller on top of which you want to present the identity verification flow
-    /// - Returns: The result of the identity verification flow. It only tells wether the user completed the identity flow or cancelled it. Information regarding the validity of the identity verification can be accessed at ``KycDao/KYCSession/verificationStatus``
+    /// - Returns: The result of the identity verification flow. It only tells wether the user completed the identity flow or cancelled it. Information regarding the validity of the identity verification can be accessed at ``KycDao/VerificationSession/verificationStatus``
     @MainActor
     public func startIdentification(fromViewController viewController: UIViewController) async throws -> IdentityFlowResult {
         
         //TODO: block if data needed
         
         guard let referenceId = sessionData.user?.ext_id else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
-        guard requiredInformationProvided else { throw KYCError.genericError }
+        guard requiredInformationProvided else { throw KycDaoError.genericError }
         
         let personaStatus = try await personaStatus
         
         guard let templateId = personaStatus.template_id
         else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         let environment = personaStatus.sandbox == false ? Environment.production : Environment.sandbox
@@ -317,7 +317,7 @@ public class KYCSession: Identifiable {
         }
     }
     
-    /// Provides the user selectable NFT images
+    /// Provides the selectable NFT images
     /// - Returns: A list of image related data
     public func getNFTImages() -> [TokenImage] {
         print(sessionData.user?.availableImages ?? [:])
@@ -330,24 +330,24 @@ public class KYCSession: Identifiable {
     /// Requesting minting authorization for a selected image
     /// - Parameter selectedImageId: The id of the image we want the user to mint
     ///
-    /// You can get the list of available images from ``KycDao/KYCSession/getNFTImages()``
+    /// You can get the list of available images from ``KycDao/VerificationSession/getNFTImages()``
     public func requestMinting(selectedImageId: String) async throws {
         
         guard let accountId = sessionData.user?.blockchain_accounts?.first?.id
-        else { throw KYCError.genericError }
+        else { throw KycDaoError.genericError }
         
         let mintAuthInput = MintRequestInput(accountId: accountId,
                                              network: networkMetadata.id,
                                              selectedImageId: selectedImageId)
         
-        let result = try await KYCConnection.call(endPoint: .authorizeMinting,
+        let result = try await ApiConnection.call(endPoint: .authorizeMinting,
                                                   method: .POST,
                                                   input: mintAuthInput,
                                                   output: MintAuthorization.self)
         let mintAuth = result.data
         
         guard let code = mintAuth.code, let txHash = mintAuth.tx_hash else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         authCode = code
@@ -386,7 +386,7 @@ public class KYCSession: Identifiable {
             print("while end")
         }
         
-        throw KYCError.genericError
+        throw KycDaoError.genericError
         
     }
     
@@ -397,7 +397,7 @@ public class KYCSession: Identifiable {
         print("getTransactionReceipt")
         
         guard let clientUrl = URL(string: "https://polygon-mumbai.infura.io/v3/\(projectID)") else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         print("will init client")
@@ -416,7 +416,7 @@ public class KYCSession: Identifiable {
         guard let authCodeNumber = UInt32(authCode),
               let resolvedContractAddress = kycConfig?.address
         else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         let contractAddress = EthereumAddress(resolvedContractAddress)
@@ -439,7 +439,7 @@ public class KYCSession: Identifiable {
         print("MINTING...")
         
         guard let authCode = authCode
-        else { throw KYCError.unauthorizedMinting }
+        else { throw KycDaoError.unauthorizedMinting }
         
         let mintingFunction = try kycMintingFunction(authCode: authCode)
         let props = try await transactionProperties(forFunction: mintingFunction)
@@ -447,7 +447,7 @@ public class KYCSession: Identifiable {
         let receipt = try await resumeWhenTransactionFinished(txHash: txHash)
         
         guard let event = receipt.lookForEvent(event: ERC721Events.Transfer.self)
-        else { throw KYCError.genericError }
+        else { throw KycDaoError.genericError }
         
         try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txHash)
         
@@ -467,7 +467,7 @@ public class KYCSession: Identifiable {
         let estimation = try await estimateGas(forFunction: function)
         guard let transactionData = try function.transaction().data?.web3.hexString
         else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         return MintingProperties(contractAddress: function.contract.value,
@@ -482,7 +482,7 @@ public class KYCSession: Identifiable {
     public func estimateGasForMinting() async throws -> GasEstimation {
         
         guard let authCode = authCode
-        else { throw KYCError.unauthorizedMinting }
+        else { throw KycDaoError.unauthorizedMinting }
         
         let mintingFunction = try kycMintingFunction(authCode: authCode)
         
@@ -495,7 +495,7 @@ public class KYCSession: Identifiable {
         print("estimateGas")
         
         guard let clientUrl = URL(string: "https://polygon-mumbai.infura.io/v3/\(infuraProjectId)") else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         print("will init client")
@@ -533,13 +533,13 @@ public class KYCSession: Identifiable {
                                               tokenId: tokenId,
                                               txHash: txHash)
         
-        try await KYCConnection.call(endPoint: .token, method: .POST, input: mintResultInput)
+        try await ApiConnection.call(endPoint: .token, method: .POST, input: mintResultInput)
         
     }
     
 }
 
-extension KYCSession: InquiryDelegate {
+extension VerificationSession: InquiryDelegate {
     
     public func inquiryComplete(inquiryId: String, status: String, fields: [String : InquiryField]) {
         print("Persona completed")
@@ -555,7 +555,7 @@ extension KYCSession: InquiryDelegate {
     
     public func inquiryError(_ error: Error) {
         print("Inquiry error")
-        identificationContinuation?.resume(throwing: KYCError.persona(error))
+        identificationContinuation?.resume(throwing: KycDaoError.persona(error))
         identificationContinuation = nil
     }
     

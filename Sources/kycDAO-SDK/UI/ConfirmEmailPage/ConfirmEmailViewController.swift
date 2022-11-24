@@ -11,7 +11,7 @@ import UIKit
 class ConfirmEmailViewController : UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: KYCSession
+    private var kycSession: VerificationSession
     
     let containerView = UIView()
     let titleLabel = UILabel()
@@ -21,7 +21,7 @@ class ConfirmEmailViewController : UIViewController {
     let notReceivingEmailLabel = UILabel()
     let resendEmailButton = SimpleButton(style: .outline)
     
-    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

@@ -14,16 +14,16 @@ enum Page {
     
     case walletSelector(animated: Bool = false)
     case accountSelector(accounts: [String], walletSession: WalletConnectSession)
-    case createSignature(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case informationRequest(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case confirmEmail(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case personaVerification(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case personaCompletePage(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case authorizeMinting(walletSession: WalletConnectSession, kycSession: KYCSession, selectedImage: TokenImage)
-    case selectNFTImage(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case mintNFT(walletSession: WalletConnectSession, kycSession: KYCSession, selectedImage: TokenImage)
-    case mintingInProgress(walletSession: WalletConnectSession, kycSession: KYCSession)
-    case startMinting(walletSession: WalletConnectSession, kycSession: KYCSession)
+    case createSignature(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case informationRequest(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case confirmEmail(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case personaVerification(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case personaCompletePage(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case authorizeMinting(walletSession: WalletConnectSession, kycSession: VerificationSession, selectedImage: TokenImage)
+    case selectNFTImage(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case mintNFT(walletSession: WalletConnectSession, kycSession: VerificationSession, selectedImage: TokenImage)
+    case mintingInProgress(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case startMinting(walletSession: WalletConnectSession, kycSession: VerificationSession)
     case back
     case exit
 }

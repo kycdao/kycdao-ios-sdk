@@ -16,9 +16,9 @@ class StartMintingViewController: UIViewController {
     let startMintingButton = SimpleButton()
     
     let walletSession: WalletConnectSession
-    let kycSession: KYCSession
+    let kycSession: VerificationSession
     
-    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

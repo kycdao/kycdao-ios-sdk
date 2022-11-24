@@ -32,3 +32,12 @@ Then run the following command:
 $ pod install
 ```
 
+## Importing to source file
+
+Add an import at the top of your source file
+
+```swift
+import KycDao
+```
+
+That's it. You can start coding.

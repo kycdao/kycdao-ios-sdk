@@ -240,7 +240,7 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
             
             Task {
                 
-                let kycSession = try await KYCManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
+                let kycSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
                 
                 if kycSession.loggedIn {
                     

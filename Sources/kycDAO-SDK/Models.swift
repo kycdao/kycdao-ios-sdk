@@ -8,7 +8,7 @@
 import Foundation
 import BigInt
 
-public enum KYCError: Error {
+public enum KycDaoError: Error {
     case walletConnect(WalletConnectError)
     case keyGeneration
     case persona(Error)
@@ -29,27 +29,22 @@ public enum IdentityFlowResult {
     case cancelled
 }
 
-enum KYCIdentificationState {
-    case accepted
-    case refused
-}
-
-struct KYCSessionDataDTO: Decodable {
+struct BackendSessionDataDTO: Decodable {
     let id: String
     let nonce: String
-    var user: KYCUserDTO?
+    var user: UserDTO?
 }
 
-struct KYCSessionData: Equatable {
+struct BackendSessionData: Equatable {
     let id: String
     let nonce: String
-    var user: KYCUser?
+    var user: User?
     
-    init(dto: KYCSessionDataDTO) {
+    init(dto: BackendSessionDataDTO) {
         self.id = dto.id
         self.nonce = dto.nonce
         if let dtoUser = dto.user {
-            self.user = KYCUser(dto: dtoUser)
+            self.user = User(dto: dtoUser)
         }
     }
 }
@@ -71,7 +66,7 @@ struct TokenImageDTO: Decodable {
 /// Can be used for
 /// - displaying the image via the URL on your UI
 /// - selecting an image and authorizing minting for it
-///     - ``KycDao/KYCSession/requestMinting(selectedImageId:)``
+///     - ``KycDao/VerificationSession/requestMinting(selectedImageId:)``
 public struct TokenImage: Equatable {
     /// The id of this image
     public let id: String
@@ -81,7 +76,7 @@ public struct TokenImage: Equatable {
     public let url: URL?
 }
 
-struct KYCUserDTO: Decodable {
+struct UserDTO: Decodable {
     let id: Int
     let ext_id: String?
     let email: String?
@@ -94,7 +89,7 @@ struct KYCUserDTO: Decodable {
     let available_images: [String: TokenImageDTO]
 }
 
-struct KYCUser: Equatable {
+struct User: Equatable {
     let id: Int
     let ext_id: String?
     let email: String?
@@ -106,7 +101,7 @@ struct KYCUser: Equatable {
     let verification_requests: [VerificationRequestData]?
     let availableImages: [TokenImage]
     
-    init(dto: KYCUserDTO) {
+    init(dto: UserDTO) {
         self.id = dto.id
         self.ext_id = dto.ext_id
         self.email = dto.email
@@ -132,10 +127,6 @@ struct ChainAndAddressDTO: Encodable {
 struct SignatureInputDTO: Encodable {
     let signature: String
     let public_key: String?
-}
-
-struct KYCSessionCreationResult {
-    let dataToSign: String?
 }
 
 struct SmartContractConfig: Codable, Equatable {
@@ -375,14 +366,14 @@ struct MintAuthorization: Decodable {
     let tx_hash: String?
 }
 
-struct KYCErrorResponse: Decodable {
+struct BackendErrorResponse: Decodable {
     let reference_id: String?
     let status_code: Int?
     let `internal`: Bool?
-    let error_code: KYCErrorCode?
+    let error_code: BackendErrorCode?
 }
 
-enum KYCErrorCode: String, Decodable {
+enum BackendErrorCode: String, Decodable {
     case disclaimerAlreadyAccepted = "DisclaimerAlreadyAccepted"
 }
 
@@ -440,7 +431,7 @@ public struct GasEstimation: Codable {
     
     /// The current gas price on the network
     public let price: BigUInt
-    /// The gas amount required to run the minting transaction
+    /// The gas amount required to run the transaction
     public let amount: BigUInt
     /// The currency used by the network
     public let gasCurrency: CurrencyData

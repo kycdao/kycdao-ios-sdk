@@ -180,11 +180,11 @@ class SelectAccountViewController: UIViewController, UITableViewDelegate {
         
         Task {
             
-            var kycSession: KYCSession
+            var kycSession: VerificationSession
             
             do {
             
-                kycSession = try await KYCManager.shared.createSession(walletAddress: selectedAccount, walletSession: walletSession)
+                kycSession = try await VerificationManager.shared.createSession(walletAddress: selectedAccount, walletSession: walletSession)
             
             } catch let error {
                 print(error)

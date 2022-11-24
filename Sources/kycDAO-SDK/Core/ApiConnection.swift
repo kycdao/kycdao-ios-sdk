@@ -27,7 +27,7 @@ enum HTTPMethod: String {
     case DELETE = "DELETE"
 }
 
-class KYCConnection {
+class ApiConnection {
     
     static let baseURL = "https://staging.kycdao.xyz/api/public/"
     
@@ -55,11 +55,11 @@ class KYCConnection {
         print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KYCError.httpStatusCode(response: httpResponse, data: data)
+            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
         }
         
         return (httpResponse, try JSONDecoder().decode(O.self, from: data))
@@ -90,11 +90,11 @@ class KYCConnection {
         print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KYCError.httpStatusCode(response: httpResponse, data: data)
+            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
         }
         
         return (httpResponse, data)
@@ -118,11 +118,11 @@ class KYCConnection {
         print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KYCError.httpStatusCode(response: httpResponse, data: data)
+            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
         }
         
         return (httpResponse, try JSONDecoder().decode(O.self, from: data))
@@ -146,11 +146,11 @@ class KYCConnection {
         print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KYCError.httpStatusCode(response: httpResponse, data: data)
+            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
         }
         
         return (httpResponse, data)

@@ -8,10 +8,10 @@
 import Foundation
 import WalletConnectSwift
 
-/// The protocol describes a communication session with a wallet that can be used during the KYC process.
+/// The protocol describes a communication session with a wallet that can be used during the verification process.
 ///
 /// #### Wallets
-/// Use this protocol, when you want to integrate the kycDAO SDK to you wallet. Provide a concrete implementation of the protocol in a class. Learn more [here](https://google.com) about integrating the SDK to a wallet.
+/// Use this protocol, when you want to integrate the kycDAO SDK to you wallet. Provide a concrete implementation of the protocol in a class. Learn more at <doc:WalletIntegration> about integrating the SDK to a wallet.
 ///
 /// #### DApps
 /// For DApps integrating the kycDAO SDK, you will likely won't have to use this protocol. WalletConnect should be used to connect your DApp to a supported Wallet.
@@ -57,7 +57,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
     
     internal let wallet: Wallet?
     
-    /// ID of a ``KycDao/Wallet`` object belonging to the ``KycDao/WalletSession``
+    /// ID of a ``KycDao/Wallet`` object belonging to the ``KycDao/WalletSessionProtocol``
     /// - Note: If the session was established as a result of ``KycDao/WalletConnectManager/connect(withWallet:)``, it will contain the id, otherwise `nil`
     public var walletId: String? {
         wallet?.id
@@ -89,7 +89,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
     
     internal init(session: WalletConnectSwift.Session, wallet: Wallet?, rpcURL: URL?) throws {
         
-        guard let walletInfo = session.walletInfo else { throw KYCError.walletConnect(.sessionFailed) }
+        guard let walletInfo = session.walletInfo else { throw KycDaoError.walletConnect(.sessionFailed) }
         
         let caip2Id = "eip155:\(walletInfo.chainId)"
         
@@ -102,7 +102,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
     
     internal func updateSession(_ session: WCSession) throws {
         
-        guard let walletInfo = session.walletInfo else { throw KYCError.walletConnect(.sessionFailed) }
+        guard let walletInfo = session.walletInfo else { throw KycDaoError.walletConnect(.sessionFailed) }
         let caip2Id = "eip155:\(walletInfo.chainId)"
         
         self.wcSession = session

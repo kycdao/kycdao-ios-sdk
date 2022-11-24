@@ -28,7 +28,7 @@ WalletConnectManager.shared.setRPCURL(URL(string: "https://your.node/some/thing"
 
 #### Method 1: Use WalletSession
 
-Since you have two methods to check token validity, one of which accepts ``WalletSessionProtocol``, you can use the same ``WalletConnectManager/setRPCURL(_:forChain:)`` function discussed above to set the URL and then pass your ``WalletConnectSession`` as a parameter to ``KYCManager/hasValidToken(verificationType:walletAddress:walletSession:)``
+Since you have two methods to check token validity, one of which accepts ``WalletSessionProtocol``, you can use the same ``WalletConnectManager/setRPCURL(_:forChain:)`` function discussed above to set the URL and then pass your ``WalletConnectSession`` as a parameter to ``VerificationManager/hasValidToken(verificationType:walletAddress:walletSession:)``
 
 #### Method 2: Use NetworkOptions
 
@@ -36,9 +36,9 @@ Since you have two methods to check token validity, one of which accepts ``Walle
 let networkOptions = NetworkOptions(chainId: "eip155:80001", 
                                     rpcURL: URL(string: "https://your.node/some/thing")!)
 
-let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
-                                                              walletAddress: walletAddress,
-                                                              networkOptions: networkOptions)
+let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
+                                                                       walletAddress: walletAddress,
+                                                                       networkOptions: networkOptions)
 ```
 
 ## For Wallets
@@ -46,7 +46,7 @@ let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: 
 ### Custom RPC for the verification
 
 When conforming to ``WalletSessionProtocol``, you have the option to return an RPC URL with the ``WalletSessionProtocol/rpcURL`` property.
-``KYCSession`` will use your provided RPC after you create one with your `WalletSession` object.
+``VerificationSession`` will use your provided RPC after you create one with your `WalletSession` object.
 
 ### Custom RPC for token validity check
 
@@ -54,7 +54,7 @@ You have the same options here as during the DApp integration
 
 #### Method 1: Use WalletSession
 
-Call ``KYCManager/hasValidToken(verificationType:walletAddress:walletSession:)`` and pass your `WalletSession` object in, which should have a ``WalletSessionProtocol/rpcURL`` property having your RPC URL set.
+Call ``VerificationManager/hasValidToken(verificationType:walletAddress:walletSession:)`` and pass your `WalletSession` object in, which should have a ``WalletSessionProtocol/rpcURL`` property having your RPC URL set.
 
 #### Method 2: Use NetworkOptions
 
@@ -62,7 +62,7 @@ Call ``KYCManager/hasValidToken(verificationType:walletAddress:walletSession:)``
 let networkOptions = NetworkOptions(chainId: "eip155:80001", 
                                     rpcURL: URL(string: "https://your.node/some/thing")!)
 
-let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
-                                                              walletAddress: walletAddress,
-                                                              networkOptions: networkOptions)
+let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
+                                                                       walletAddress: walletAddress,
+                                                                       networkOptions: networkOptions)
 ```

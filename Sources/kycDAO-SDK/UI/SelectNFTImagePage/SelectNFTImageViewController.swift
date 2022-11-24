@@ -23,10 +23,10 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
     let selectNFTButton = SimpleButton()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: KYCSession
+    private var kycSession: VerificationSession
     private var nftImages: [TokenImage] = []
     
-    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)
@@ -46,7 +46,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
                 
                 nftImages = kycSession.getNFTImages()
                 
-                guard nftImages.count >= 3 else { throw KYCError.genericError }
+                guard nftImages.count >= 3 else { throw KycDaoError.genericError }
                 
                 let nftImage1 = nftImages[0]
                 let nftImage2 = nftImages[1]

@@ -11,7 +11,7 @@ import UIKit
 class MintingInProgressViewController: UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: KYCSession
+    private var kycSession: VerificationSession
     
     let containerView = UIView()
     let titleLabel = UILabel()
@@ -22,7 +22,7 @@ class MintingInProgressViewController: UIViewController {
     
     private var mintingResult: Result<URL?, Error>?
     
-    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
         self.walletSession = walletSession
         self.kycSession = kycSession
         super.init(nibName: nil, bundle: nil)

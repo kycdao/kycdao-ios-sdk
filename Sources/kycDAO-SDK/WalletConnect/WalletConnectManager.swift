@@ -11,7 +11,7 @@ import UIKit
 import Combine
 import CombineExt
 
-/// A WalletConnect V1 compatibility support class. Use this, if you want to connect the KYC flow to a wallet through WalletConnect
+/// A WalletConnect V1 compatibility support class. Use this, if you want to connect the verification flow to a wallet through WalletConnect
 public class WalletConnectManager {
     
     /// WalletConnectManager singleton instance
@@ -82,11 +82,11 @@ public class WalletConnectManager {
         let (data, response) = try await URLSession.shared.data(from: URL(string: "https://registry.walletconnect.com/api/v1/wallets?entries=100&page=1")!)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         let listingsDto = try JSONDecoder().decode(ListingsDTO.self, from: data)
@@ -127,7 +127,7 @@ public class WalletConnectManager {
     /// Set a default RPC URL to be assigned to newly opened WalletConnect sessions with a given chain
     /// - Parameters:
     ///   - rpcURL: The RPC URL to use
-    ///   - chainId: The CAIP-2 chainId the RPC URL belongs to
+    ///   - chainId: The [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chainId the RPC URL belongs to
     public func setRPCURL(_ rpcURL: URL, forChain chainId: String) {
         self.networkOptions.insert(NetworkOptions(chainId: chainId, rpcURL: rpcURL))
     }
@@ -173,7 +173,7 @@ public class WalletConnectManager {
     /// When a wallet in the WalletConnect registry does not have an associated *universal link*, and only provides a *deep link*, if the user does not have the selected wallet installed, this method will do nothing
     public func connect(withWallet wallet: Wallet) throws {
         
-        guard isListening else { throw KYCError.genericError }
+        guard isListening else { throw KycDaoError.genericError }
         
 //        let savedSession = sessionRepo.getSession(walletId: wallet.id)
 //        let savedSessionIsOpen = client.openSessions().contains(where: { $0.url == savedSession?.url }) == true
@@ -188,7 +188,7 @@ public class WalletConnectManager {
     func openWallet(_ wallet: Wallet) throws {
         guard let connectionURL = pendingSession?.url.absoluteString
         else {
-            throw KYCError.genericError
+            throw KycDaoError.genericError
         }
         
         #warning("""
@@ -226,7 +226,7 @@ public class WalletConnectManager {
 
         } else {
 
-            throw KYCError.genericError
+            throw KycDaoError.genericError
 
         }
     }
@@ -253,7 +253,7 @@ public class WalletConnectManager {
             pendingSession?.wallet = wallet
         } else {
             
-            throw KYCError.genericError
+            throw KycDaoError.genericError
             
         }
         
@@ -272,11 +272,11 @@ public class WalletConnectManager {
                             continuation.resume(returning: signature)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
                     }
                 }
             } catch let error {
-                continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
             }
         }
     }
@@ -284,7 +284,7 @@ public class WalletConnectManager {
     func sign(account: String, message: String, wallet: Wallet) async throws -> String {
         
         let session = sessionRepo.getSession(walletId: wallet.id)
-        guard let url = session?.url else { throw KYCError.genericError }
+        guard let url = session?.url else { throw KycDaoError.genericError }
         
         return try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<String, Error>) in
             do {
@@ -297,7 +297,7 @@ public class WalletConnectManager {
                             continuation.resume(returning: signature)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
                     }
                 }
                 
@@ -305,14 +305,14 @@ public class WalletConnectManager {
 //                guard let link = wallet.universalLinkBase ?? wallet.deepLinkBase,
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
                       let linkURL = URL(string: "\(link)//wc") else {
-                    throw KYCError.genericError
+                    throw KycDaoError.genericError
                 }
                 
                 Task { @MainActor in
                     UIApplication.shared.open(linkURL)
                 }
             } catch let error {
-                continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
             }
         }
     }
@@ -330,11 +330,11 @@ public class WalletConnectManager {
                             continuation.resume(returning: transactionResult)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
                     }
                 }
             } catch let error {
-                continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
             }
         }
     }
@@ -342,7 +342,7 @@ public class WalletConnectManager {
     func sendTransaction(transaction: Client.Transaction, wallet: Wallet) async throws -> String {
         
         let session = sessionRepo.getSession(walletId: wallet.id)
-        guard let url = session?.url else { throw KYCError.genericError }
+        guard let url = session?.url else { throw KycDaoError.genericError }
         
         return try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<String, Error>) in
             do {
@@ -355,7 +355,7 @@ public class WalletConnectManager {
                             continuation.resume(returning: transactionResult)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
                     }
                 }
                 
@@ -363,14 +363,14 @@ public class WalletConnectManager {
 //                guard let link = wallet.universalLinkBase ?? wallet.deepLinkBase,
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
                       let linkURL = URL(string: "\(link)/wc") else {
-                    throw KYCError.genericError
+                    throw KycDaoError.genericError
                 }
                 
                 Task { @MainActor in
                     UIApplication.shared.open(linkURL)
                 }
             } catch let error {
-                continuation.resume(throwing: KYCError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
             }
         }
     }

@@ -1,15 +1,14 @@
 # Wallet Integration
 Wallet integration guide
 
-
 ## Overview
 
 This article provides a guide for integrating the SDK into a wallet app. 
 
 Three main topics will be discussed here:
 - Handle wallet related tasks
-- Checking the KYC status of an address
-- Starting the KYC flow
+- Checking the verification status of an address
+- Initializing a verification flow
 
 ## Handle wallet related tasks
 
@@ -33,29 +32,41 @@ In the implementation of this function your wallet is expected to sign a message
 
 In the implementation of this function your wallet is expected to send a transaction (for EVM chains use eth_sendTransaction call), with the given wallet address using the minting properties.
 
-## Checking the KYC status of an address
+## Checking the verification status of an address
 
-A ``NetworkOptions`` object have to be constructed specifying the chain in CAIP-2 format and an RPC URL can be optionally provided, read more about it **here**.
+### Using your WalletSessionProtocol implementation
+
+You have to pass your `WalletSession` object to ``VerificationManager/hasValidToken(verificationType:walletAddress:walletSession:)`` along with a wallet address and verification type.
+
+```swift
+let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
+                                                                       walletAddress: selectedAddress,
+                                                                       walletSession: walletSession)
+```
+
+### Using existing wallet information
+
+A ``NetworkOptions`` object have to be constructed specifying the chain in CAIP-2 format and an RPC URL can be optionally provided, read more about it in <doc:BringYourOwnNode>.
 
 ```swift
 let networkOptions = NetworkOptions(chainId: "eip155:80001")
-let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
-                                                              walletAddress: walletAddress,
-                                                              networkOptions: networkOptions)
+let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
+                                                                       walletAddress: walletAddress,
+                                                                       networkOptions: networkOptions)
 ```
 
-## Starting the KYC flow
+## Initializing a verification flow
 
-First you need to have an instance of an object you created at the *'Conforming to WalletSessionProtocol'* section. Once you obtained your wallet session instance, pass it along with a wallet address to ``KYCManager/createSession(walletAddress:walletSession:)``
+First you need to have an instance of an object you created at the *'Conforming to WalletSessionProtocol'* section. Once you obtained your wallet session instance, pass it along with a wallet address to ``VerificationManager/createSession(walletAddress:walletSession:)``
 
 ```swift
 let walletSession: WalletSessionProtocol = ...
-let kycSession = try await KYCManager.shared.createSession(walletAddress: selectedAccount,
-                                                           walletSession: walletSession)
+let verificationSession = try await VerificationManager.shared.createSession(walletAddress: selectedAccount,
+                                                                             walletSession: walletSession)
 ```
 
-## Implementing the KYC flow
+## Implementing the verification flow
 
-The KYC flow is the same for DApps and Wallets. It is covered in a common article:
+The verification flow is the same for DApps and Wallets. It is covered in a common article:
 
-<doc:KYCFlow>
+<doc:Onboarding>

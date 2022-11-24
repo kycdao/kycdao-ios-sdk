@@ -5,8 +5,8 @@ On-chain KYC - Bridge IRL to web3
 ## Overview
 
 With the kycDAO iOS SDK you can 
-- check whether a wallet address have been verified and has a valid KYC NFT. 
-- go through the KYC process from identification till KYC NFT minting.
+- check whether a wallet address have been verified and has a valid token. 
+- go through the verification process from identification till kycDAO NFT minting.
 
 The SDK can be used by
 - Wallets
@@ -20,13 +20,13 @@ The SDK can be used by
 - <doc:Installation>
 - <doc:DAppIntegration>
 - <doc:WalletIntegration>
-- <doc:KYCFlow>
+- <doc:Onboarding>
 - <doc:BringYourOwnNode>
 
-### KYC flow
+### Verification
 
-- ``KYCManager``
-- ``KYCSession``
+- ``VerificationManager``
+- ``VerificationSession``
 - ``WalletSessionProtocol``
 
 ### WalletConnect

@@ -14,7 +14,7 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
     private var disposeBag = Set<AnyCancellable>()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: KYCSession
+    private var kycSession: VerificationSession
     
     private var countries: [Country]
     private var selectedCountry: Country? {
@@ -37,7 +37,7 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
     let disclaimerAcceptance = UIButton()
     let continueButton = SimpleButton()
     
-    init(walletSession: WalletConnectSession, kycSession: KYCSession) {
+    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
         
         self.walletSession = walletSession
         self.kycSession = kycSession

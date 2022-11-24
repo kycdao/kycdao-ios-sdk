@@ -1,5 +1,5 @@
 //
-//  KYCManager.swift
+//  VerificationManager.swift
 //  
 //
 //  Created by Vekety Robin on 2022. 06. 17..
@@ -13,15 +13,15 @@ import Combine
 import web3
 import BigInt
 
-/// A class used for creating KYC sessions and querying KYC status for different wallets
-public class KYCManager {
+/// A class used for verification related tasks, like querying verification status for different wallets or creating verification sessions
+public class VerificationManager {
     
-    /// KYCManager singleton instance
-    public static let shared = KYCManager()
+    /// VerificationManager singleton instance
+    public static let shared = VerificationManager()
     
     internal var networks: [NetworkMetadata] {
         get async throws {
-            let result = try await KYCConnection.call(endPoint: .networks,
+            let result = try await ApiConnection.call(endPoint: .networks,
                                                       method: .GET,
                                                       output: [NetworkMetadata].self)
             return result.data
@@ -30,24 +30,24 @@ public class KYCManager {
     
     private init() { }
     
-    /// Creates a ``KycDao/KYCSession`` which is used for implementing the KYC flow
+    /// Creates a ``KycDao/VerificationSession`` which is used for implementing the verification flow
     /// - Parameters:
     ///   - walletAddress: The address of the wallet we are creating the session for
-    ///   - walletSession: The ``KycDao/WalletSession`` that will be used for signing messages and minting
-    /// - Returns: The ``KycDao/KYCSession`` object
-    public func createSession(walletAddress: String, walletSession: WalletSessionProtocol) async throws -> KYCSession {
+    ///   - walletSession: The ``KycDao/WalletSessionProtocol`` that will be used for signing messages and minting
+    /// - Returns: The ``KycDao/VerificationSession`` object
+    public func createSession(walletAddress: String, walletSession: WalletSessionProtocol) async throws -> VerificationSession {
         
         let networks = try await self.networks
         guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == walletSession.chainId })
         else {
-            throw KYCError.unsupportedNetwork
+            throw KycDaoError.unsupportedNetwork
         }
         
         let apiStatus = try await apiStatus()
         
         guard apiStatus.smartContractsInfo.contains(where: { $0.network == selectedNetworkMetadata.id })
         else {
-            throw KYCError.unsupportedNetwork
+            throw KycDaoError.unsupportedNetwork
         }
         
         let kycContractConfig = apiStatus.smartContractsInfo.first { $0.network == selectedNetworkMetadata.id && $0.verificationType == .kyc }
@@ -56,14 +56,14 @@ public class KYCManager {
         let chainAndAddress = ChainAndAddressDTO(blockchain: selectedNetworkMetadata.blockchain,
                                                  address: walletAddress)
 
-        let result = try await KYCConnection.call(endPoint: .session,
+        let result = try await ApiConnection.call(endPoint: .session,
                                                   method: .POST,
                                                   input: chainAndAddress,
-                                                  output: KYCSessionDataDTO.self)
+                                                  output: BackendSessionDataDTO.self)
         
-        let sessionData = KYCSessionData(dto: result.data)
+        let sessionData = BackendSessionData(dto: result.data)
         
-        return KYCSession(walletAddress: walletAddress,
+        return VerificationSession(walletAddress: walletAddress,
                           walletSession: walletSession,
                           kycConfig: kycContractConfig,
                           accreditedConfig: accreditedInvestorContractConfig,
@@ -74,7 +74,7 @@ public class KYCManager {
     
     func apiStatus() async throws -> ApiStatus {
         
-        let result = try await KYCConnection.call(endPoint: .status, method: .GET, output: ApiStatus.self)
+        let result = try await ApiConnection.call(endPoint: .status, method: .GET, output: ApiStatus.self)
         return result.data
         
     }
@@ -111,14 +111,14 @@ public class KYCManager {
         let networks = try await self.networks
         guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == networkOptions.chainId })
         else {
-            throw KYCError.unsupportedNetwork
+            throw KycDaoError.unsupportedNetwork
         }
         
         let apiStatus = try await apiStatus()
         
         guard apiStatus.smartContractsInfo.contains(where: { $0.network == selectedNetworkMetadata.id })
         else {
-            throw KYCError.unsupportedNetwork
+            throw KycDaoError.unsupportedNetwork
         }
         
         let contractConfig = apiStatus.smartContractsInfo.first {
@@ -128,7 +128,7 @@ public class KYCManager {
         
         guard let contractConfig = contractConfig
         else {
-            throw KYCError.unsupportedNetwork
+            throw KycDaoError.unsupportedNetwork
         }
         
         let clientURL = networkOptions.rpcURL ?? URL(string: "https://polygon-mumbai.infura.io/v3/8edae24121f74398b57da7ff5a3729a4")!
