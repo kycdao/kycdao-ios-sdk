@@ -70,8 +70,6 @@ public class WalletConnectManager {
     private var sessionStartedSubject = PassthroughSubject<WalletConnectSession, Never>()
     private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
     
-    private var networkOptions: Set<NetworkOptions> = Set()
-    
     /// Provides a list of usable wallets for WalletConnect services based on the [WalletConnect V1 registry](https://registry.walletconnect.com/api/v1/wallets)
     /// - Returns: The list of compatible mobile wallets
     ///
@@ -122,14 +120,6 @@ public class WalletConnectManager {
         }
         
         return wcWallets
-    }
-    
-    /// Set a default RPC URL to be assigned to newly opened WalletConnect sessions with a given chain
-    /// - Parameters:
-    ///   - rpcURL: The RPC URL to use
-    ///   - chainId: The [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chainId the RPC URL belongs to
-    public func setRPCURL(_ rpcURL: URL, forChain chainId: String) {
-        self.networkOptions.insert(NetworkOptions(chainId: chainId, rpcURL: rpcURL))
     }
     
     
@@ -423,17 +413,8 @@ extension WalletConnectManager: ClientDelegate {
         
         if let pendingSession = pendingSession, newSessionSameAsPending {
             
-            var rpcURL: URL? = nil
-            
-            if let chainId = session.walletInfo?.chainId {
-                rpcURL = networkOptions.first(where: {
-                    $0.chainId == "eip155:\(chainId)"
-                })?.rpcURL
-            }
-            
             let walletSession = try? WalletConnectSession(session: session,
-                                                          wallet: pendingSession.wallet,
-                                                          rpcURL: rpcURL )
+                                                          wallet: pendingSession.wallet)
             
             guard let walletSession = walletSession else { return }
             

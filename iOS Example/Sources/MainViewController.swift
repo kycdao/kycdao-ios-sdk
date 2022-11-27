@@ -224,9 +224,9 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             return
         }
         Task {
-            let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
+            let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                           walletAddress: address,
-                                                                          networkOptions: NetworkOptions(chainId: "eip155:80001"))
+                                                                          chainId: "eip155:80001")
             hasValidTokenLabel.text = hasValidToken ? "Wallet has a valid KYC token" : "Wallet does NOT have a valid KYC token"
             print("hasValidToken: \(hasValidToken)")
         }
@@ -250,7 +250,7 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             return
         }
         Task {
-            let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
+            let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                           walletAddress: firstAccount,
                                                                           walletSession: walletSession)
             hasValidTokenLabel2.text = hasValidToken ? "Wallet has a valid KYC token" : "Wallet does NOT have a valid KYC token"

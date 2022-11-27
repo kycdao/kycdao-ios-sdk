@@ -20,11 +20,11 @@ class PersonaViewController: UIViewController {
     let startPersonaButton = SimpleButton()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
         startPersonaButton.addTarget(self, action: #selector(personaButtonTap(_:)), for: .touchUpInside)
     }
@@ -92,10 +92,10 @@ class PersonaViewController: UIViewController {
     @objc func personaButtonTap(_ sender: Any) {
         
         Task { @MainActor in
-            let status = try await kycSession.startIdentification(fromViewController: self)
+            let status = try await verificationSession.startIdentification(fromViewController: self)
             switch status {
             case .completed:
-                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, kycSession: kycSession))
+                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
             case .cancelled:
                 print("Persona flow cancelled")
             }

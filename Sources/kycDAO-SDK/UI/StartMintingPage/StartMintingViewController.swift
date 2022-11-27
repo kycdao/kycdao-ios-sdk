@@ -16,11 +16,11 @@ class StartMintingViewController: UIViewController {
     let startMintingButton = SimpleButton()
     
     let walletSession: WalletConnectSession
-    let kycSession: VerificationSession
+    let verificationSession: VerificationSession
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
         startMintingButton.addTarget(self, action: #selector(startMintingButtonTap(_:)), for: .touchUpInside)
     }
@@ -88,16 +88,16 @@ class StartMintingViewController: UIViewController {
     @objc func startMintingButtonTap(_ sender: Any) {
         
 //        Task {
-//            let authorization = try await kycSession.requestMinting()
+//            let authorization = try await verificationSession.requestMinting()
 //            print(authorization)
 //            guard let txHash = authorization.tx_hash else {
 //                print("No tx hash")
 //                return
 //            }
 //            walletSession.getTransactionReceipt(txHash: "0x80360bfe05fcb0aa05cefe88834abb133b0f14b38b0a459cc67ad79e88a280be")
-//            try await kycSession.getTransactionReceipt(hash: "0x80360bfe05fcb0aa05cefe88834abb133b0f14b38b0a459cc67ad79e88a280be")
+//            try await verificationSession.getTransactionReceipt(hash: "0x80360bfe05fcb0aa05cefe88834abb133b0f14b38b0a459cc67ad79e88a280be")
 //        }
-        Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
+        Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession))
         
     }
     

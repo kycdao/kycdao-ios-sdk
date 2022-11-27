@@ -570,8 +570,19 @@ public struct PersonalData: Codable {
     }
 }
 
+public protocol NetworkConfigProtocol: Hashable, Identifiable {
+    var chainId: String { get }
+    var rpcURL: URL? { get }
+}
+
+public extension NetworkConfigProtocol {
+    var id: String {
+        chainId
+    }
+}
+
 /// A set of options for any chain
-public struct NetworkOptions: Hashable, Identifiable {
+public struct NetworkConfig: NetworkConfigProtocol {
     
     /// ID of the network option, same as chainId
     public var id: String {
@@ -581,12 +592,117 @@ public struct NetworkOptions: Hashable, Identifiable {
     /// CAIP-2 Chain ID
     public let chainId: String
     /// RPC URL used for communicating with the chain.
-    /// 
+    ///
     /// Leave it `nil` to use our default RPC URLs or provide your own RPC URL to use
     public let rpcURL: URL?
     
     public init(chainId: String, rpcURL: URL? = nil) {
         self.chainId = chainId
         self.rpcURL = rpcURL
+    }
+}
+
+/*internal protocol AppliedNetworkConfigProtocol: Hashable, Identifiable {
+    var chainId: String { get }
+    var rpcURL: URL { get }
+}
+
+internal extension AppliedNetworkConfigProtocol {
+    var id: String {
+        chainId
+    }
+}*/
+
+internal enum DefaultNetworkConfig: Hashable, Identifiable, CaseIterable {
+    
+    var id: String {
+        chainId
+    }
+    
+    case celoMainnet
+    case celoAlfajores
+    case polygonMainnet
+    case polygonMumbai
+    
+    public var chainId: String {
+        switch self {
+        case .celoMainnet:
+            return "eip155:42220"
+        case .celoAlfajores:
+            return "eip155:44787"
+        case .polygonMainnet:
+            return "eip155:89"
+        case .polygonMumbai:
+            return "eip155:80001"
+        }
+    }
+    
+    public var rpcURL: URL {
+        switch self {
+        case .celoMainnet:
+            return URL(string: "https://forno.celo.org")!
+        case .celoAlfajores:
+            return URL(string: "https://alfajores-forno.celo-testnet.org")!
+        case .polygonMainnet:
+            return URL(string: "https://polygon-rpc.com")!
+        case .polygonMumbai:
+            return URL(string: "https://matic-mumbai.chainstacklabs.com")!
+        }
+    }
+    
+    var asAppliedNetworkConfig: AppliedNetworkConfig {
+        AppliedNetworkConfig(chainId: chainId,
+                             rpcURL: rpcURL)
+    }
+}
+
+/// A set of options for any chain
+internal struct AppliedNetworkConfig: Hashable, Identifiable {
+    
+    var id: String {
+        chainId
+    }
+    
+    let chainId: String
+    let rpcURL: URL
+    
+    init(chainId: String, rpcURL: URL) {
+        self.chainId = chainId
+        self.rpcURL = rpcURL
+    }
+}
+
+public enum KycDaoEnvironment {
+    case production
+    case dev
+    
+    var serverURL: URL {
+        switch self {
+        case .production:
+            return URL(string: "https://kycdao.xyz")!
+        case .dev:
+            return URL(string: "https://staging.kycdao.xyz")!
+        }
+    }
+    
+    var demoMode: Bool {
+        switch self {
+        case .production:
+            return false
+        case .dev:
+            return true
+        }
+    }
+}
+
+public struct Configuration {
+    let apiKey: String
+    let environment: KycDaoEnvironment
+    let networkConfigs: [any NetworkConfigProtocol]
+    
+    public init(apiKey: String, environment: KycDaoEnvironment, networkConfigs: [any NetworkConfigProtocol] = []) {
+        self.apiKey = apiKey
+        self.environment = environment
+        self.networkConfigs = networkConfigs
     }
 }

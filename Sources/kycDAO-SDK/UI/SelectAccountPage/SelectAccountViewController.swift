@@ -180,39 +180,39 @@ class SelectAccountViewController: UIViewController, UITableViewDelegate {
         
         Task {
             
-            var kycSession: VerificationSession
+            var verificationSession: VerificationSession
             
             do {
             
-                kycSession = try await VerificationManager.shared.createSession(walletAddress: selectedAccount, walletSession: walletSession)
+                verificationSession = try await VerificationManager.shared.createSession(walletAddress: selectedAccount, walletSession: walletSession)
             
             } catch let error {
                 print(error)
                 throw error
             }
             
-            if kycSession.loggedIn {
-                if kycSession.requiredInformationProvided {
-                    if kycSession.emailConfirmed {
+            if verificationSession.loggedIn {
+                if verificationSession.requiredInformationProvided {
+                    if verificationSession.emailConfirmed {
 
-                        switch kycSession.verificationStatus {
+                        switch verificationSession.verificationStatus {
                         case .verified:
-                            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
+                            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession))
                         case .processing:
-                            Page.currentPage.send(.personaCompletePage(walletSession: walletSession, kycSession: kycSession))
+                            Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
                         case .notVerified:
-                            Page.currentPage.send(.personaVerification(walletSession: walletSession, kycSession: kycSession))
+                            Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
                         }
 
                     } else {
-                        Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
+                        Page.currentPage.send(.confirmEmail(walletSession: walletSession, verificationSession: verificationSession))
                     }
 
                 } else {
-                    Page.currentPage.send(.informationRequest(walletSession: walletSession, kycSession: kycSession))
+                    Page.currentPage.send(.informationRequest(walletSession: walletSession, verificationSession: verificationSession))
                 }
             } else {
-                Page.currentPage.send(.createSignature(walletSession: walletSession, kycSession: kycSession))
+                Page.currentPage.send(.createSignature(walletSession: walletSession, verificationSession: verificationSession))
             }
             
         }

@@ -23,12 +23,12 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
     let selectNFTButton = SimpleButton()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     private var nftImages: [TokenImage] = []
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
         
         pageControl.numberOfPages = 3
@@ -44,7 +44,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
         Task { @MainActor in
             do {
                 
-                nftImages = kycSession.getNFTImages()
+                nftImages = verificationSession.getNFTImages()
                 
                 guard nftImages.count >= 3 else { throw KycDaoError.genericError }
                 
@@ -178,7 +178,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
             
             if nftImages.count >= pageControl.currentPage {
                 let selectedImage = nftImages[pageControl.currentPage]
-                Page.currentPage.send(.authorizeMinting(walletSession: walletSession, kycSession: kycSession, selectedImage: selectedImage))
+                Page.currentPage.send(.authorizeMinting(walletSession: walletSession, verificationSession: verificationSession, selectedImage: selectedImage))
             }
             
         }

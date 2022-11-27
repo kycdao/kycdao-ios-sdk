@@ -20,14 +20,14 @@ class CreateSignatureViewController: UIViewController {
     let containerView = UIView()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
         
-        accountAddress.text = kycSession.walletAddress
+        accountAddress.text = verificationSession.walletAddress
         createSignatureButton.addTarget(self, action: #selector(createSignatureTap(_:)), for: .touchUpInside)
         
         Task { @MainActor in
@@ -41,7 +41,7 @@ class CreateSignatureViewController: UIViewController {
                     }
                 }
                 
-//                dataLabel.text = kycSession.loginProof
+//                dataLabel.text = verificationSession.loginProof
             } catch {
                 print("Failed to create session")
             }
@@ -161,29 +161,29 @@ class CreateSignatureViewController: UIViewController {
         Task {
             do {
                 
-                try await kycSession.login()
+                try await verificationSession.login()
                 
-                if kycSession.requiredInformationProvided {
+                if verificationSession.requiredInformationProvided {
                     
-                    if kycSession.emailConfirmed {
+                    if verificationSession.emailConfirmed {
                         
-                        switch kycSession.verificationStatus {
+                        switch verificationSession.verificationStatus {
                         case .verified:
-                            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
+                            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession))
                         case .processing:
-                            Page.currentPage.send(.personaCompletePage(walletSession: walletSession, kycSession: kycSession))
+                            Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
                         case .notVerified:
-                            Page.currentPage.send(.personaVerification(walletSession: walletSession, kycSession: kycSession))
+                            Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
                         }
                         
                     } else {
                         
-                        Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
+                        Page.currentPage.send(.confirmEmail(walletSession: walletSession, verificationSession: verificationSession))
                     }
                     
                 } else {
                     
-                    Page.currentPage.send(.informationRequest(walletSession: walletSession, kycSession: kycSession))
+                    Page.currentPage.send(.informationRequest(walletSession: walletSession, verificationSession: verificationSession))
                 }
             } catch let error {
                 print("Failed KYC login \(error)")

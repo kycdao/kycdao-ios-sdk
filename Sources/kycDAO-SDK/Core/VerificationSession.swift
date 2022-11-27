@@ -1,5 +1,5 @@
 //
-//  KYCSession.swift
+//  VerificationSession.swift
 //  
 //
 //  Created by Vekety Robin on 2022. 08. 11..
@@ -18,8 +18,6 @@ public class VerificationSession: Identifiable {
     
     /// A unique identifier for the session
     public let id = UUID().uuidString
-    private let personaInquiryTemplateId = "itmpl_bWGWAeN5fDcv5PLqLwFhKxP6"
-    private let infuraProjectId = "8edae24121f74398b57da7ff5a3729a4"
     
     private var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
     
@@ -133,6 +131,7 @@ public class VerificationSession: Identifiable {
     /// A wallet session associated with this VerificationSession
     public let walletSession: WalletSessionProtocol
     private let networkMetadata: NetworkMetadata
+    private let networkConfig: AppliedNetworkConfig
     
     /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
     public var chainId: String {
@@ -144,13 +143,15 @@ public class VerificationSession: Identifiable {
          kycConfig: SmartContractConfig?,
          accreditedConfig: SmartContractConfig?,
          data: BackendSessionData,
-         networkMetadata: NetworkMetadata) {
+         networkMetadata: NetworkMetadata,
+         networkConfig: AppliedNetworkConfig) {
         self.walletAddress = walletAddress
         self.sessionData = data
         self.walletSession = walletSession
         self.kycConfig = kycConfig
         self.accreditedConfig = accreditedConfig
         self.networkMetadata = networkMetadata
+        self.networkConfig = networkConfig
     }
     
     /// Logs in the user to the current session
@@ -284,7 +285,6 @@ public class VerificationSession: Identifiable {
         
         Inquiry(
             config: InquiryConfiguration(
-//                templateId: personaInquiryTemplateId,
                 templateId: templateId,
                 referenceId: referenceId,
                 environment: environment
@@ -392,17 +392,9 @@ public class VerificationSession: Identifiable {
     
     func getTransactionReceipt(txHash: String) async throws -> EthereumTransactionReceipt {
         
-        let projectID = "8edae24121f74398b57da7ff5a3729a4"
-        
-        print("getTransactionReceipt")
-        
-        guard let clientUrl = URL(string: "https://polygon-mumbai.infura.io/v3/\(projectID)") else {
-            throw KycDaoError.genericError
-        }
-        
         print("will init client")
         
-        let client = EthereumClient(url: clientUrl)
+        let client = EthereumClient(url: networkConfig.rpcURL)
         
         print("getting receipt")
         let receipt = try await client.eth_getTransactionReceipt(txHash: txHash)
@@ -492,15 +484,9 @@ public class VerificationSession: Identifiable {
     
     func estimateGas(forFunction function: ABIFunction) async throws -> GasEstimation {
         
-        print("estimateGas")
-        
-        guard let clientUrl = URL(string: "https://polygon-mumbai.infura.io/v3/\(infuraProjectId)") else {
-            throw KycDaoError.genericError
-        }
-        
         print("will init client")
         
-        let client = EthereumClient(url: clientUrl)
+        let client = EthereumClient(url: networkConfig.rpcURL)
         
         print("getting price")
         //price in wei

@@ -11,7 +11,7 @@ import UIKit
 class AuthorizeMintingViewController : UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     private let selectedImage: TokenImage
     
     let containerView = UIView()
@@ -19,9 +19,9 @@ class AuthorizeMintingViewController : UIViewController {
     let messageLabel = UILabel()
     let activityIndicator = UIActivityIndicatorView()
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession, selectedImage: TokenImage) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession, selectedImage: TokenImage) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         self.selectedImage = selectedImage
         super.init(nibName: nil, bundle: nil)
     }
@@ -84,9 +84,9 @@ class AuthorizeMintingViewController : UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            try await kycSession.requestMinting(selectedImageId: selectedImage.id)
+            try await verificationSession.requestMinting(selectedImageId: selectedImage.id)
             
-            Page.currentPage.send(.mintNFT(walletSession: walletSession, kycSession: kycSession, selectedImage: selectedImage))
+            Page.currentPage.send(.mintNFT(walletSession: walletSession, verificationSession: verificationSession, selectedImage: selectedImage))
         }
     }
 }
