@@ -33,14 +33,18 @@ public class VerificationSession: Identifiable {
         "kycDAO-login-\(sessionData.nonce)"
     }
     
+    private var user: User? {
+        sessionData.user
+    }
+    
     /// The login state of the user in this session
     public var loggedIn: Bool {
-        sessionData.user != nil
+        user != nil
     }
     
     /// Email address associated with the user
     private var emailAddress: String? {
-        sessionData.user?.email
+        user?.email
     }
     
     private var personaStatus: PersonaStatus {
@@ -58,18 +62,7 @@ public class VerificationSession: Identifiable {
     
     /// Email confirmation status of the user
     public var emailConfirmed: Bool {
-        
-//        //TODO: Nice to have, proper date format check, not just emptyness
-//        get async throws {
-//
-//            let user = try await getUser()
-//            print(user.email_confirmed)
-//            return user.email_confirmed?.isEmpty == false
-//
-//        }
-        
-        sessionData.user?.email_confirmed?.isEmpty == false
-        
+        user?.email_confirmed?.isEmpty == false
     }
     
     /// Country of residency of the user
@@ -83,9 +76,12 @@ public class VerificationSession: Identifiable {
     /// `FR` | France
     /// `US` | United States of America
     private var residency: String? {
-        sessionData.user?.residency
+        user?.residency
     }
     
+    private var isLegalEntity: Bool? {
+        user?.legal_entity
+    }
     
     private var residencyProvided: Bool {
         residency?.isEmpty == false
@@ -97,12 +93,12 @@ public class VerificationSession: Identifiable {
     
     /// Disclaimer acceptance status of the user
     public var disclaimerAccepted: Bool {
-        sessionData.user?.disclaimer_accepted?.isEmpty == false
+        user?.disclaimer_accepted?.isEmpty == false
     }
     
     /// Indicates that the user provided every information required to continue with identity verification
     public var requiredInformationProvided: Bool {
-        residencyProvided && emailProvided && sessionData.user?.legal_entity != nil
+        residencyProvided && emailProvided && user?.legal_entity != nil
     }
     
     private var authCode: String?
@@ -110,7 +106,7 @@ public class VerificationSession: Identifiable {
     /// Verification status of the user
     public var verificationStatus: VerificationStatus {
         
-        let statuses = sessionData.user?.verification_requests?.map { verificationRequest -> VerificationStatus in
+        let statuses = user?.verification_requests?.map { verificationRequest -> VerificationStatus in
             if verificationRequest.verification_type != .kyc {
                 return VerificationStatus.notVerified
             }
@@ -235,9 +231,31 @@ public class VerificationSession: Identifiable {
                                                   output: UserDTO.self)
         
         sessionData.user = User(dto: result.data)
+    }
+    
+    public func updateEmail(_ email: String) async throws {
         
-        try await sendConfirmationEmail()
+        //Throw user not logged in error
+        guard user != nil else { throw KycDaoError.genericError }
         
+        //Proper error: email can only be updated after personal data have been set up
+        guard requiredInformationProvided,
+              let residency,
+              let isLegalEntity
+        else {
+            throw KycDaoError.genericError
+        }
+        
+        let personalData = PersonalData(email: email,
+                                        residency: residency,
+                                        legalEntity: isLegalEntity)
+        
+        let result = try await ApiConnection.call(endPoint: .user,
+                                                  method: .PUT,
+                                                  input: personalData,
+                                                  output: UserDTO.self)
+        
+        sessionData.user = User(dto: result.data)
     }
     
     /// Sends a confirmation email to the user's email address
