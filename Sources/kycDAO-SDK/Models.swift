@@ -712,3 +712,9 @@ public struct MintingResult {
     public let transactionId: String
     public let tokenId: String
 }
+
+internal struct PersonaSessionData {
+    let referenceId: String
+    let inquiryId: String
+    let sessionToken: String
+}

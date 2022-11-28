@@ -102,6 +102,7 @@ public class VerificationSession: Identifiable {
     }
     
     private var authCode: String?
+    private var personaSessionData: PersonaSessionData?
     
     /// Verification status of the user
     public var verificationStatus: VerificationStatus {
@@ -301,14 +302,28 @@ public class VerificationSession: Identifiable {
         
         let environment = personaStatus.sandbox == false ? Environment.production : Environment.sandbox
         
-        Inquiry(
-            config: InquiryConfiguration(
-                templateId: templateId,
-                referenceId: referenceId,
-                environment: environment
-            ),
-            delegate: self
-        ).start(from: viewController)
+        let config = InquiryConfiguration.build(inquiryId: personaSessionData?.inquiryId,
+                                                sessionToken: personaSessionData?.sessionToken,
+                                                environment: environment)
+        
+        if let personaSessionData,
+           let config,
+           personaSessionData.referenceId == referenceId {
+            
+            Inquiry(
+                config: config,
+                delegate: self
+            ).start(from: viewController)
+        } else {
+            Inquiry(
+                config: InquiryConfiguration(
+                    templateId: templateId,
+                    referenceId: referenceId,
+                    environment: environment
+                ),
+                delegate: self
+            ).start(from: viewController)
+        }
         
         return try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<IdentityFlowResult, Error>) in
             self?.identificationContinuation = continuation
@@ -549,18 +564,25 @@ extension VerificationSession: InquiryDelegate {
     
     public func inquiryComplete(inquiryId: String, status: String, fields: [String : InquiryField]) {
         print("Persona completed")
+        personaSessionData = nil
         identificationContinuation?.resume(returning: .completed)
         identificationContinuation = nil
     }
     
     public func inquiryCanceled(inquiryId: String?, sessionToken: String?) {
         print("Persona canceled")
+        
+        if let inquiryId, let sessionToken, let referenceId = sessionData.user?.ext_id {
+            personaSessionData = PersonaSessionData(referenceId: referenceId, inquiryId: inquiryId, sessionToken: sessionToken)
+        }
+        
         identificationContinuation?.resume(returning: .cancelled)
         identificationContinuation = nil
     }
     
     public func inquiryError(_ error: Error) {
         print("Inquiry error")
+        personaSessionData = nil
         identificationContinuation?.resume(throwing: KycDaoError.persona(error))
         identificationContinuation = nil
     }

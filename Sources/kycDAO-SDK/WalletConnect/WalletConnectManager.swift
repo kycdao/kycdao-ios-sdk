@@ -22,28 +22,30 @@ public class WalletConnectManager {
     private typealias DAppInfo = WalletConnectSwift.Session.DAppInfo
     private typealias ClientMeta = WalletConnectSwift.Session.ClientMeta
     
-    private static let dAppInfoKey = "kyc.dAppInfoKey"
+    private static let dAppPeerIdKey = "kyc.peerIdKey"
     private static var dAppInfo: DAppInfo {
         
-        if let dappInfoData = UserDefaults.standard.object(forKey: dAppInfoKey) as? Data,
-           let savedDappInfo = try? JSONDecoder().decode(DAppInfo.self, from: dappInfoData) {
-            return savedDappInfo
+        if let savedPeerId = UserDefaults.standard.string(forKey: dAppPeerIdKey) {
+            let info = DAppInfo(peerId: savedPeerId,
+                                peerMeta: Self.clientMeta)
+            return info
         }
         
-        let newInfo = DAppInfo(peerId: UUID().uuidString,
+        let newPeerId = UUID().uuidString
+        let newInfo = DAppInfo(peerId: newPeerId,
                                peerMeta: Self.clientMeta)
         
-        if let newInfoData = try? JSONEncoder().encode(newInfo) {
-            UserDefaults.standard.set(newInfoData, forKey: dAppInfoKey)
+        if let newPeerIdData = try? JSONEncoder().encode(newPeerId) {
+            UserDefaults.standard.set(newPeerIdData, forKey: dAppPeerIdKey)
         }
         
         return newInfo
     }
     
-    private static let clientMeta = ClientMeta(name: "TestProject",
-                                               description: "KYC Dao Test Project",
-                                               icons: [],
-                                               url: URL(string: "https://staging.kycdao.xyz")!)
+    private static let clientMeta = ClientMeta(name: "kycDAO",
+                                               description: nil,
+                                               icons: [URL(string: "https://avatars.githubusercontent.com/u/87816891?s=200&v=4")!],
+                                               url: URL(string: "https://kycdao.xyz")!)
     
     private lazy var client: Client = {
         return Client(delegate: self,
@@ -77,7 +79,7 @@ public class WalletConnectManager {
     public static func listWallets() async throws -> [Wallet] {
         // https://registry.walletconnect.com/api/v1/wallets?entries=5&page=1
         
-        let (data, response) = try await URLSession.shared.data(from: URL(string: "https://registry.walletconnect.com/api/v1/wallets?entries=100&page=1")!)
+        let (data, response) = try await URLSession.shared.data(from: URL(string: "https://registry.walletconnect.com/api/v1/wallets?entries=1000&page=1")!)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.genericError
@@ -99,7 +101,7 @@ public class WalletConnectManager {
                 $0.starts(with: "eip155:")
             } ?? false
             var mobileSupported = false
-            if $0.mobile?.universal != nil || $0.mobile?.native != nil {
+            if $0.mobile?.universal?.isEmpty == false || $0.mobile?.native?.isEmpty == false {
                 mobileSupported = true
             }
             return isEip155Supported && mobileSupported
