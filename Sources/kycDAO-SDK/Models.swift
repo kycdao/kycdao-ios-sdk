@@ -706,3 +706,9 @@ public struct Configuration {
         self.networkConfigs = networkConfigs
     }
 }
+
+public struct MintingResult {
+    public let explorerURL: URL?
+    public let transactionId: String
+    public let tokenId: String
+}

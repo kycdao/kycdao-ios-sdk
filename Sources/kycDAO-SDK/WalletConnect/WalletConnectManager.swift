@@ -95,9 +95,9 @@ public class WalletConnectManager {
         let listings = Array(listingValues)
         
         let wcWallets = listings.filter {
-            let isEip155Supported = true/*$0.chains?.contains {
+            let isEip155Supported = $0.chains?.contains {
                 $0.starts(with: "eip155:")
-            } ?? false*/
+            } ?? false
             var mobileSupported = false
             if $0.mobile?.universal != nil || $0.mobile?.native != nil {
                 mobileSupported = true
@@ -111,7 +111,7 @@ public class WalletConnectManager {
             }
             
             return Wallet(id: listing.id,
-                          name: listing.name ?? "",
+                          name: listing.metadata?.shortName ?? listing.name ?? "",
                           imageURL: imageURL,
                           universalLinkBase: listing.mobile?.universal,
                           deepLinkBase: listing.mobile?.native)
@@ -126,9 +126,30 @@ public class WalletConnectManager {
     /// Start listening for incoming connections from wallets
     public func startListening() {
         
-        isListening = true
-        openNewConnection()
+        if !isListening {
+            isListening = true
+            openNewConnection()
+        }
 
+    }
+    
+    public func stopListening() {
+        
+        if isListening {
+            isListening = false
+            pendingSessionURISubject.send(nil)
+            disconnectAll()
+        }
+        
+    }
+    
+    private func disconnectAll() {
+        
+        let openSessions = client.openSessions()
+        openSessions.forEach { session in
+            try? client.disconnect(from: session)
+        }
+        
     }
     
     //Returns the URI string we are listening on for new connections

@@ -115,7 +115,7 @@ class MintingInProgressViewController: UIViewController {
     func mintNFT() {
         Task { @MainActor in
             do {
-                let txURL = try await verificationSession.mint()
+                let result = try await verificationSession.mint()
                 activityIndicator.stopAnimating()
                 titleLabel.text = "Minting successful 🎉"
                 messageLabel.text = "Congratulations, your KYC NFT is ready!"
@@ -123,7 +123,7 @@ class MintingInProgressViewController: UIViewController {
                 bottomActionButton.isHidden = false
                 bottomActionButton.setTitle("Exit", for: .normal)
                 
-                guard let txURL = txURL else {
+                guard let txURL = result?.explorerURL else {
                     mintingResult = .success(nil)
                     return
                 }

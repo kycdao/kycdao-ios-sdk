@@ -22,6 +22,11 @@ struct ListingDTO: Decodable {
     let image_url: ImageURLDTO?
     let mobile: MobileDTO?
     let chains: [String]? //Format: "eip155:1"
+    let metadata: ListingMetadataDTO?
+}
+
+struct ListingMetadataDTO: Decodable {
+    let shortName: String?
 }
 
 struct ImageURLDTO: Decodable {

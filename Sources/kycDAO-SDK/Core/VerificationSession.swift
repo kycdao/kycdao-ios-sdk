@@ -377,7 +377,7 @@ public class VerificationSession: Identifiable {
     @discardableResult
     func resumeWhenTransactionFinished(txHash: String) async throws -> EthereumTransactionReceipt {
         
-        var transactionStatus: EthereumTransactionReceiptStatus = .notProcessed
+        let transactionStatus: EthereumTransactionReceiptStatus = .notProcessed
         
         print("continue block")
         
@@ -400,8 +400,6 @@ public class VerificationSession: Identifiable {
             } catch let error {
                 throw error
             }
-            
-            print("while end")
         }
         
         throw KycDaoError.genericError
@@ -444,7 +442,7 @@ public class VerificationSession: Identifiable {
     ///
     /// - Note: Can only be called after the user was authorized for minting with a selected image
     @discardableResult
-    public func mint() async throws -> URL? {
+    public func mint() async throws -> MintingResult? {
         
         print("MINTING...")
         
@@ -465,10 +463,14 @@ public class VerificationSession: Identifiable {
         
         guard let transactionURL = URL(string: networkMetadata.explorer.url.absoluteString + networkMetadata.explorer.transactionPath + txHash)
         else {
-            return nil
+            return MintingResult(explorerURL: nil,
+                                 transactionId: txHash,
+                                 tokenId: "\(event.tokenId)")
         }
         
-        return transactionURL
+        return MintingResult(explorerURL: transactionURL,
+                             transactionId: txHash,
+                             tokenId: "\(event.tokenId)")
         
     }
     
