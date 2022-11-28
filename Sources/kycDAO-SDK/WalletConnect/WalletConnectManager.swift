@@ -57,7 +57,7 @@ public class WalletConnectManager {
     private var nextURL: WCURL = getNewURL()
     
     /// Publisher that emits session objects when connections to wallets are established
-    public var sessionStarted: AnyPublisher<WalletConnectSession, Never> {
+    public var sessionStarted: AnyPublisher<Result<WalletConnectSession, WalletConnectError>, Never> {
         sessionStartedSubject.eraseToAnyPublisher()
     }
     
@@ -67,7 +67,7 @@ public class WalletConnectManager {
         pendingSessionURISubject.eraseToAnyPublisher()
     }
     
-    private var sessionStartedSubject = PassthroughSubject<WalletConnectSession, Never>()
+    private var sessionStartedSubject = PassthroughSubject<Result<WalletConnectSession, WalletConnectError>, Never>()
     private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
     
     /// Provides a list of usable wallets for WalletConnect services based on the [WalletConnect V1 registry](https://registry.walletconnect.com/api/v1/wallets)
@@ -417,6 +417,7 @@ extension WalletConnectManager: ClientDelegate {
     public func client(_ client: Client, didFailToConnect url: WCURL) {
         print("didFail \(url)")
         if let pendingSession = pendingSession, pendingSession.url == url {
+            sessionStartedSubject.send(.failure(.failedToConnect(wallet: pendingSession.wallet)))
             openNewConnection()
         }
     }
@@ -440,7 +441,7 @@ extension WalletConnectManager: ClientDelegate {
             guard let walletSession = walletSession else { return }
             
             sessionRepo.addSession(walletSession)
-            sessionStartedSubject.send(walletSession)
+            sessionStartedSubject.send(.success(walletSession))
             openNewConnection()
         }
     }

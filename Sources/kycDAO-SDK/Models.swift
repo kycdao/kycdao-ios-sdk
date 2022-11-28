@@ -19,7 +19,7 @@ public enum KycDaoError: Error {
 }
 
 public enum WalletConnectError: Error {
-    case failedToConnect
+    case failedToConnect(wallet: Wallet?)
     case sessionFailed
     case signingError(String)
 }

@@ -224,8 +224,15 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         
         WalletConnectManager.shared.sessionStarted
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] walletSession in
-                self?.sessionStarted(walletSession)
+            .sink { [weak self] result in
+                switch result {
+                case .success(let walletSession):
+                    self?.sessionStarted(walletSession)
+                case .failure(WalletConnectError.failedToConnect(let wallet)):
+                    print("Could not connect to \(wallet?.name ?? "unkown wallet")")
+                default:
+                    break
+                }
             }.store(in: &disposeBag)
         
     }
