@@ -82,7 +82,7 @@ class PersonaCompleteViewController: UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            try await verificationSession.resumeWhenIdentified()
+            try await verificationSession.resumeOnVerificationCompleted()
             Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession))
         }
     }

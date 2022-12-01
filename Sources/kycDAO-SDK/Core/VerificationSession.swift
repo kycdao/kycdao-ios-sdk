@@ -332,7 +332,7 @@ public class VerificationSession: Identifiable {
     }
     
     /// A function which awaits until the user's identity becomes successfuly verified
-    public func resumeWhenIdentified() async throws {
+    public func resumeOnVerificationCompleted() async throws {
         
         var identified = false
         

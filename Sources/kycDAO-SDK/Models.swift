@@ -8,7 +8,7 @@
 import Foundation
 import BigInt
 
-public enum KycDaoError: Error {
+public enum KycDaoError: LocalizedError {
     case walletConnect(WalletConnectError)
     case keyGeneration
     case persona(Error)
@@ -16,6 +16,42 @@ public enum KycDaoError: Error {
     case unsupportedNetwork
     case genericError
     case unauthorizedMinting
+    
+//    public var errorDescription: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
+//
+//    public var failureReason: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
+//
+//    public var recoverySuggestion: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
+//
+//    public var helpAnchor: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
 }
 
 public enum WalletConnectError: Error {
@@ -568,9 +604,15 @@ public struct PersonalData: Codable {
         case residency
         case legalEntity = "legal_entity"
     }
+    
+    public init(email: String, residency: String, legalEntity: Bool) {
+        self.email = email
+        self.residency = residency
+        self.legalEntity = legalEntity
+    }
 }
 
-public protocol NetworkConfigProtocol: Hashable, Identifiable {
+public protocol NetworkConfigProtocol: Hashable, Identifiable, Decodable {
     var chainId: String { get }
     var rpcURL: URL? { get }
 }
@@ -672,7 +714,7 @@ internal struct AppliedNetworkConfig: Hashable, Identifiable {
     }
 }
 
-public enum KycDaoEnvironment {
+public enum KycDaoEnvironment: Decodable {
     case production
     case dev
     
@@ -707,7 +749,7 @@ public struct Configuration {
     }
 }
 
-public struct MintingResult {
+public struct MintingResult: Encodable {
     public let explorerURL: URL?
     public let transactionId: String
     public let tokenId: String
