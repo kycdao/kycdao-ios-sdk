@@ -11,7 +11,7 @@ import BigInt
 
 struct KYCMintingFunction: ABIFunction {
     
-    public static let name = "mint"
+    public static let name = "mintWithCode"
     public let gasPrice: BigUInt?
     public let gasLimit: BigUInt?
     public var contract: EthereumAddress
@@ -70,6 +70,118 @@ struct KYCHasValidTokenFunction: ABIFunction {
 internal struct KYCHasValidTokenResponse: ABIResponse, MulticallDecodableResponse {
     internal static var types: [ABIType.Type] = [ Bool.self ]
     internal let value: Bool
+
+    internal init?(values: [ABIDecoder.DecodedValue]) throws {
+        self.value = try values[0].decoded()
+    }
+}
+
+struct KYCGetSubscriptionCostPerYearUSDFunction: ABIFunction {
+    
+    public static let name = "getSubscriptionCostPerYearUSD"
+    public let gasPrice: BigUInt?
+    public let gasLimit: BigUInt?
+    public var contract: EthereumAddress
+    public let from: EthereumAddress?
+
+    public init(contract: EthereumAddress,
+                from: EthereumAddress? = nil,
+                gasPrice: BigUInt? = nil,
+                gasLimit: BigUInt? = nil) {
+        self.contract = contract
+        self.from = from
+        self.gasPrice = gasPrice
+        self.gasLimit = gasLimit
+    }
+
+    public func encode(to encoder: ABIFunctionEncoder) throws {
+    }
+    
+}
+
+internal struct KYCGetSubscriptionCostPerYearUSDResponse: ABIResponse, MulticallDecodableResponse {
+    internal static var types: [ABIType.Type] = [ BigUInt.self ]
+    internal let value: BigUInt
+
+    internal init?(values: [ABIDecoder.DecodedValue]) throws {
+        self.value = try values[0].decoded()
+    }
+}
+
+struct KYCGetRequiredMintCostForCodeFunction: ABIFunction {
+    
+    public static let name = "getRequiredMintCostForCode"
+    public let gasPrice: BigUInt?
+    public let gasLimit: BigUInt?
+    public var contract: EthereumAddress
+    public let from: EthereumAddress?
+
+    public let authCode: UInt32
+    public let destination: EthereumAddress
+
+    public init(contract: EthereumAddress,
+                authCode: UInt32,
+                destination: EthereumAddress,
+                from: EthereumAddress? = nil,
+                gasPrice: BigUInt? = nil,
+                gasLimit: BigUInt? = nil) {
+        self.contract = contract
+        self.from = from
+        self.gasPrice = gasPrice
+        self.gasLimit = gasLimit
+        
+        self.authCode = authCode
+        self.destination = destination
+    }
+
+    public func encode(to encoder: ABIFunctionEncoder) throws {
+        try encoder.encode(authCode)
+        try encoder.encode(destination)
+    }
+    
+}
+
+internal struct KYCGetRequiredMintCostForCodeResponse: ABIResponse, MulticallDecodableResponse {
+    internal static var types: [ABIType.Type] = [ BigUInt.self ]
+    internal let value: BigUInt
+
+    internal init?(values: [ABIDecoder.DecodedValue]) throws {
+        self.value = try values[0].decoded()
+    }
+}
+
+struct KYCGetRequiredMintCostForSecondsFunction: ABIFunction {
+    
+    public static let name = "getRequiredMintCostForSeconds"
+    public let gasPrice: BigUInt?
+    public let gasLimit: BigUInt?
+    public var contract: EthereumAddress
+    public let from: EthereumAddress?
+
+    public let seconds: UInt32
+
+    public init(contract: EthereumAddress,
+                seconds: UInt32,
+                from: EthereumAddress? = nil,
+                gasPrice: BigUInt? = nil,
+                gasLimit: BigUInt? = nil) {
+        self.contract = contract
+        self.from = from
+        self.gasPrice = gasPrice
+        self.gasLimit = gasLimit
+        
+        self.seconds = seconds
+    }
+
+    public func encode(to encoder: ABIFunctionEncoder) throws {
+        try encoder.encode(seconds)
+    }
+    
+}
+
+internal struct KYCGetRequiredMintCostForSecondsResponse: ABIResponse, MulticallDecodableResponse {
+    internal static var types: [ABIType.Type] = [ BigUInt.self ]
+    internal let value: BigUInt
 
     internal init?(values: [ABIDecoder.DecodedValue]) throws {
         self.value = try values[0].decoded()

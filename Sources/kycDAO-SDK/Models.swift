@@ -69,12 +69,14 @@ struct BackendSessionDataDTO: Decodable {
     let id: String
     let nonce: String
     var user: UserDTO?
+    let discount_years: UInt32?
 }
 
 struct BackendSessionData: Equatable {
     let id: String
     let nonce: String
     var user: User?
+    let discountYears: UInt32?
     
     init(dto: BackendSessionDataDTO) {
         self.id = dto.id
@@ -82,6 +84,7 @@ struct BackendSessionData: Equatable {
         if let dtoUser = dto.user {
             self.user = User(dto: dtoUser)
         }
+        self.discountYears = dto.discount_years
     }
 }
 
@@ -388,12 +391,15 @@ struct MintRequestInput: Encodable {
     let network: String
     let selected_image_id: String
     let verification_type: VerificationType
+    let subscription_duration: String
     
-    init(accountId: Int, network: String, selectedImageId: String, verificationType: VerificationType = .kyc) {
+    init(accountId: Int, network: String, selectedImageId: String, subscriptionDuration: UInt, verificationType: VerificationType = .kyc) {
         self.blockchain_account_id = accountId
         self.network = network
         self.selected_image_id = selectedImageId
         self.verification_type = verificationType
+        //ISO 8601 formatted single year input 'PnY' where 'n' is the number of years
+        self.subscription_duration = "P\(subscriptionDuration)Y"
     }
 }
 
@@ -478,7 +484,7 @@ public struct GasEstimation: Codable {
     }
     
     /// Gas fee estimation in an easy to display string representation
-    public var feeInNative: String {
+    public var feeText: String {
         fee.decimalText(divisor: gasCurrency.baseToNativeDivisor) + " \(gasCurrency.symbol)"
     }
     
@@ -486,6 +492,56 @@ public struct GasEstimation: Codable {
         self.price = max(price, BigUInt(50).gwei)
         self.amount = amount
         self.gasCurrency = gasCurrency
+    }
+    
+}
+
+public struct PaymentEstimation: Codable {
+    public let paymentAmount: BigUInt
+    public let discountYears: UInt32
+    public let currency: CurrencyData
+    
+    public var paymentAmountText: String {
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return paymentAmount.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+}
+
+/// Contains gas fee estimation related data
+public struct PriceEstimation: Codable {
+    
+    public let paymentAmount: BigUInt
+    public let gasFee: BigUInt?
+    public let currency: CurrencyData
+    
+    public var finalPrice: BigUInt {
+        paymentAmount * (gasFee ?? 0)
+    }
+    
+    public var paymentAmountText: String {
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return paymentAmount.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+    
+    public var gasFeeText: String? {
+        guard let gasFee else { return nil }
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return gasFee.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+    
+    public var finalPriceText: String {
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return finalPrice.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+    
+    init(paymentAmount: BigUInt, gasFee: BigUInt, currency: CurrencyData) {
+        self.paymentAmount = paymentAmount
+        self.gasFee = gasFee
+        self.currency = currency
     }
     
 }
@@ -505,6 +561,8 @@ public struct MintingProperties: Codable {
     public let gasAmount: String
     /// Price of a gas unit
     public let gasPrice: String
+    
+    public let paymentAmount: String?
     
 }
 

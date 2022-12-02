@@ -360,18 +360,35 @@ public class VerificationSession: Identifiable {
         
     }
     
+    public func getSubscriptionFeePerYear() async throws -> BigUInt {
+        
+        guard let resolvedContractAddress = kycConfig?.address
+        else {
+            throw KycDaoError.genericError
+        }
+        
+        let client = EthereumClient(url: networkConfig.rpcURL)
+        let contractAddress = EthereumAddress(resolvedContractAddress)
+        let ethWalletAddress = EthereumAddress(walletAddress)
+        let getSubscriptionCostFunction = KYCGetSubscriptionCostPerYearUSDFunction(contract: contractAddress)
+        let result = try await getSubscriptionCostFunction.call(withClient: client, responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
+        
+        return result.value
+    }
+    
     /// Requesting minting authorization for a selected image
     /// - Parameter selectedImageId: The id of the image we want the user to mint
     ///
     /// You can get the list of available images from ``KycDao/VerificationSession/getNFTImages()``
-    public func requestMinting(selectedImageId: String) async throws {
+    public func requestMinting(selectedImageId: String, membershipDuration: UInt) async throws {
         
         guard let accountId = sessionData.user?.blockchain_accounts?.first?.id
         else { throw KycDaoError.genericError }
         
         let mintAuthInput = MintRequestInput(accountId: accountId,
                                              network: networkMetadata.id,
-                                             selectedImageId: selectedImageId)
+                                             selectedImageId: selectedImageId,
+                                             subscriptionDuration: membershipDuration)
         
         let result = try await ApiConnection.call(endPoint: .authorizeMinting,
                                                   method: .POST,
@@ -452,6 +469,63 @@ public class VerificationSession: Identifiable {
                                   gasLimit: nil)
     }
     
+    private func getRawRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
+        
+        guard let authCodeNumber = UInt32(authCode),
+              let resolvedContractAddress = kycConfig?.address
+        else {
+            throw KycDaoError.genericError
+        }
+        
+        let client = EthereumClient(url: networkConfig.rpcURL)
+        let contractAddress = EthereumAddress(resolvedContractAddress)
+        let ethWalletAddress = EthereumAddress(walletAddress)
+        let getRequiredMintingCostFunction = KYCGetRequiredMintCostForCodeFunction(contract: contractAddress,
+                                                                                    authCode: authCodeNumber,
+                                                                                    destination: ethWalletAddress)
+        
+        let result = try await getRequiredMintingCostFunction.call(withClient: client,
+                                                                   responseType: KYCGetRequiredMintCostForCodeResponse.self)
+        
+        return result.value
+    }
+    
+    private func getRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
+        let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
+        
+        //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
+        let result = mintingCost.quotientAndRemainder(dividingBy: 10)
+        let slippage = result.quotient
+        
+        return mintingCost + slippage
+    }
+    
+    private func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
+        
+        //Would be nice: throw different error for less than 1 year
+        guard let resolvedContractAddress = kycConfig?.address, years > 1
+        else {
+            throw KycDaoError.genericError
+        }
+        
+        let discountYears = sessionData.discountYears ?? 0
+        let yearsToPayFor = years - discountYears
+        let yearsInSeconds = yearsToPayFor * 365 * 24 * 60 * 60
+        
+        let client = EthereumClient(url: networkConfig.rpcURL)
+        let contractAddress = EthereumAddress(resolvedContractAddress)
+        let ethWalletAddress = EthereumAddress(walletAddress)
+        let getRequiredMintingCostFunction = KYCGetRequiredMintCostForSecondsFunction(contract: contractAddress,
+                                                                                      seconds: yearsInSeconds)
+        
+        let result = try await getRequiredMintingCostFunction.call(withClient: client,
+                                                                   responseType: KYCGetRequiredMintCostForSecondsResponse.self)
+        
+        return result.value
+        
+    }
+    
+    
     /// Used for minting the NFT image
     /// - Returns: An URL for an explorer where the minting transaction can be viewed
     ///
@@ -464,8 +538,10 @@ public class VerificationSession: Identifiable {
         guard let authCode = authCode
         else { throw KycDaoError.unauthorizedMinting }
         
+        let requiredMintCost = try await getRequiredMintCostForCode(authCode: authCode)
         let mintingFunction = try kycMintingFunction(authCode: authCode)
-        let props = try await transactionProperties(forFunction: mintingFunction)
+        let mintingTransaction = try mintingFunction.transaction(value: requiredMintCost)
+        let props = try await transactionProperties(forTransaction: mintingTransaction)
         let txHash = try await walletSession.sendMintingTransaction(walletAddress: walletAddress, mintingProperties: props)
         let receipt = try await resumeWhenTransactionFinished(txHash: txHash)
         
@@ -489,35 +565,49 @@ public class VerificationSession: Identifiable {
         
     }
     
-    func transactionProperties(forFunction function: ABIFunction) async throws -> MintingProperties {
+    func transactionProperties(forTransaction transaction: EthereumTransaction) async throws -> MintingProperties {
         
-        let estimation = try await estimateGas(forFunction: function)
-        guard let transactionData = try function.transaction().data?.web3.hexString
+        let estimation = try await estimateGas(forTransaction: transaction)
+        guard let transactionData = transaction.data?.web3.hexString
         else {
             throw KycDaoError.genericError
         }
         
-        return MintingProperties(contractAddress: function.contract.value,
+        return MintingProperties(contractAddress: transaction.to.value,
                                  contractABI: transactionData,
                                  gasAmount: estimation.amount.web3.hexString,
-                                 gasPrice: estimation.price.web3.hexString)
+                                 gasPrice: estimation.price.web3.hexString,
+                                 paymentAmount: transaction.value?.web3.hexString)
         
     }
     
     /// Used for estimating gas fees for the minting
     /// - Returns: The gas fee estimation
-    public func estimateGasForMinting() async throws -> GasEstimation {
+    public func mintingPrice() async throws -> PriceEstimation {
         
         guard let authCode = authCode
         else { throw KycDaoError.unauthorizedMinting }
         
         let mintingFunction = try kycMintingFunction(authCode: authCode)
+        let requiredMintCost = try await getRequiredMintCostForCode(authCode: authCode)
+        let mintingTransaction = try mintingFunction.transaction(value: requiredMintCost)
+        let gasEstimation = try await estimateGas(forTransaction: mintingTransaction)
         
-        return try await estimateGas(forFunction: mintingFunction)
-        
+        return PriceEstimation(paymentAmount: requiredMintCost,
+                               gasFee: gasEstimation.fee,
+                               currency: networkMetadata.nativeCurrency)
     }
     
-    func estimateGas(forFunction function: ABIFunction) async throws -> GasEstimation {
+    public func paymentEstimation(yearsPurchased: UInt32) async throws -> PaymentEstimation {
+        let membershipPayment = try await getRequiredMintCostForYears(yearsPurchased)
+        let discountYears = sessionData.discountYears ?? 0
+        
+        return PaymentEstimation(paymentAmount: membershipPayment,
+                                 discountYears: discountYears,
+                                 currency: networkMetadata.nativeCurrency)
+    }
+    
+    func estimateGas(forTransaction transaction: EthereumTransaction) async throws -> GasEstimation {
         
         print("will init client")
         
@@ -534,7 +624,7 @@ public class VerificationSession: Identifiable {
         print("price \(price)")
         
         
-        let amount = try await client.eth_estimateGas(function.transaction())
+        let amount = try await client.eth_estimateGas(transaction)
         
         print("amount: \(amount)")
         

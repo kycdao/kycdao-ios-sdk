@@ -84,7 +84,7 @@ class AuthorizeMintingViewController : UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            try await verificationSession.requestMinting(selectedImageId: selectedImage.id)
+            try await verificationSession.requestMinting(selectedImageId: selectedImage.id, membershipDuration: 3)
             
             Page.currentPage.send(.mintNFT(walletSession: walletSession, verificationSession: verificationSession, selectedImage: selectedImage))
         }

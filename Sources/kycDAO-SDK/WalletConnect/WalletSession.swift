@@ -118,7 +118,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
                                                                  data: mintingProperties.contractABI,
                                                                  gas: mintingProperties.gasAmount,
                                                                  gasPrice: mintingProperties.gasPrice,
-                                                                 value: nil,
+                                                                 value: mintingProperties.paymentAmount,
                                                                  nonce: nil,
                                                                  type: nil,
                                                                  accessList: nil,
