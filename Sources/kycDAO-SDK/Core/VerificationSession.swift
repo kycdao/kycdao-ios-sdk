@@ -125,6 +125,10 @@ public class VerificationSession: Identifiable {
         return .notVerified
     }
     
+    public let disclaimerText = Constants.disclaimerText
+    public let termsOfService = URL(string: "https://kycdao.xyz/terms-and-conditions")!
+    public let privacyPolicy = URL(string: "https://kycdao.xyz/privacy-policy")!
+    
     /// A wallet session associated with this VerificationSession
     public let walletSession: WalletSessionProtocol
     private let networkMetadata: NetworkMetadata
