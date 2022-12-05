@@ -204,7 +204,7 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
             throw KycDaoError.unsupportedNetwork
         }
         
-        let client = EthereumClient(url: rpcURL)
+        let client = EthereumHttpClient(url: rpcURL)
         let contractAddress = EthereumAddress(contractConfig.address)
         let ethWalletAddress = EthereumAddress(walletAddress)
         let mintingFunction = KYCHasValidTokenFunction(contract: contractAddress, address: ethWalletAddress)

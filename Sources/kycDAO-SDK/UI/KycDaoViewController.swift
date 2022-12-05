@@ -225,6 +225,7 @@ public class KycDaoViewController: UIViewController {
             
         case .exit:
             dismiss(animated: true)
+            Page.currentPage.send(.walletSelector())
             
         }
     }

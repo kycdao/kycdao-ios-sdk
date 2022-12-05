@@ -135,6 +135,8 @@ public class VerificationSession: Identifiable {
         networkMetadata.caip2id
     }
     
+    private let ethereumClient: EthereumHttpClient
+    
     init(walletAddress: String,
          walletSession: WalletSessionProtocol,
          kycConfig: SmartContractConfig?,
@@ -149,6 +151,7 @@ public class VerificationSession: Identifiable {
         self.accreditedConfig = accreditedConfig
         self.networkMetadata = networkMetadata
         self.networkConfig = networkConfig
+        self.ethereumClient = EthereumHttpClient(url: networkConfig.rpcURL)
     }
     
     /// Logs in the user to the current session
@@ -367,11 +370,10 @@ public class VerificationSession: Identifiable {
             throw KycDaoError.genericError
         }
         
-        let client = EthereumClient(url: networkConfig.rpcURL)
         let contractAddress = EthereumAddress(resolvedContractAddress)
         let ethWalletAddress = EthereumAddress(walletAddress)
         let getSubscriptionCostFunction = KYCGetSubscriptionCostPerYearUSDFunction(contract: contractAddress)
-        let result = try await getSubscriptionCostFunction.call(withClient: client, responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
+        let result = try await getSubscriptionCostFunction.call(withClient: ethereumClient, responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
         
         return result.value
     }
@@ -442,10 +444,8 @@ public class VerificationSession: Identifiable {
         
         print("will init client")
         
-        let client = EthereumClient(url: networkConfig.rpcURL)
-        
         print("getting receipt")
-        let receipt = try await client.eth_getTransactionReceipt(txHash: txHash)
+        let receipt = try await ethereumClient.eth_getTransactionReceipt(txHash: txHash)
         print("got receipt")
         return receipt
         
@@ -477,14 +477,13 @@ public class VerificationSession: Identifiable {
             throw KycDaoError.genericError
         }
         
-        let client = EthereumClient(url: networkConfig.rpcURL)
         let contractAddress = EthereumAddress(resolvedContractAddress)
         let ethWalletAddress = EthereumAddress(walletAddress)
         let getRequiredMintingCostFunction = KYCGetRequiredMintCostForCodeFunction(contract: contractAddress,
                                                                                     authCode: authCodeNumber,
                                                                                     destination: ethWalletAddress)
         
-        let result = try await getRequiredMintingCostFunction.call(withClient: client,
+        let result = try await getRequiredMintingCostFunction.call(withClient: ethereumClient,
                                                                    responseType: KYCGetRequiredMintCostForCodeResponse.self)
         
         return result.value
@@ -512,12 +511,11 @@ public class VerificationSession: Identifiable {
         let yearsToPayFor = years - discountYears
         let yearsInSeconds = yearsToPayFor * 365 * 24 * 60 * 60
         
-        let client = EthereumClient(url: networkConfig.rpcURL)
         let contractAddress = EthereumAddress(resolvedContractAddress)
         let getRequiredMintingCostFunction = KYCGetRequiredMintCostForSecondsFunction(contract: contractAddress,
                                                                                       seconds: yearsInSeconds)
         
-        let result = try await getRequiredMintingCostFunction.call(withClient: client,
+        let result = try await getRequiredMintingCostFunction.call(withClient: ethereumClient,
                                                                    responseType: KYCGetRequiredMintCostForSecondsResponse.self)
         
         return result.value
@@ -612,11 +610,9 @@ public class VerificationSession: Identifiable {
         
         print("will init client")
         
-        let client = EthereumClient(url: networkConfig.rpcURL)
-        
         print("getting price")
         //price in wei
-        let ethGasPrice = try await client.eth_gasPrice()
+        let ethGasPrice = try await ethereumClient.eth_gasPrice()
         let minGasPrice = BigUInt(50).gwei
         let price = max(ethGasPrice, minGasPrice)
         
@@ -625,7 +621,7 @@ public class VerificationSession: Identifiable {
         print("price \(price)")
         
         
-        let amount = try await client.eth_estimateGas(transaction)
+        let amount = try await ethereumClient.eth_estimateGas(transaction)
         
         print("amount: \(amount)")
         
