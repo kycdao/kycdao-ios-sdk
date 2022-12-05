@@ -14,7 +14,7 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
     private var disposeBag = Set<AnyCancellable>()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     
     private var countries: [Country]
     private var selectedCountry: Country? {
@@ -37,10 +37,10 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
     let disclaimerAcceptance = UIButton()
     let continueButton = SimpleButton()
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         
         self.countries = Locale.isoRegionCodes.compactMap { regionCode -> Country? in
             guard let name = Locale.current.localizedString(forRegionCode: regionCode) else {
@@ -64,14 +64,14 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
             self.emailAddress = text
         }.store(in: &disposeBag)
         
-//        legalEntityStatusCheck.isSelected = kycSession.legalEntityStatus
-        disclaimerAcceptance.isSelected = kycSession.disclaimerAccepted
-//        emailField.text = kycSession.emailAddress
+//        legalEntityStatusCheck.isSelected = verificationSession.legalEntityStatus
+        disclaimerAcceptance.isSelected = verificationSession.disclaimerAccepted
+//        emailField.text = verificationSession.emailAddress
         
-//        selectedCountry = countries.first { $0.isoCode == kycSession.residency }
+//        selectedCountry = countries.first { $0.isoCode == verificationSession.residency }
         residencyField.text = selectedCountry?.name
         
-//        guard let selectedIndex = countries.firstIndex(where: { $0.isoCode == kycSession.residency })
+//        guard let selectedIndex = countries.firstIndex(where: { $0.isoCode == verificationSession.residency })
 //        else {
 //            return
 //        }
@@ -198,16 +198,16 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         
         Task {
             
-            try await kycSession.acceptDisclaimer()
-//            try await kycSession.savePersonalInfo(email: emailAddress,
+            try await verificationSession.acceptDisclaimer()
+//            try await verificationSession.savePersonalInfo(email: emailAddress,
 //                                                  residency: residency,
 //                                                  legalEntity: legalEntityStatusCheck.isSelected)
             
-            try await kycSession.setPersonalData(PersonalData(email: emailAddress,
+            try await verificationSession.setPersonalData(PersonalData(email: emailAddress,
                                                               residency: residency,
                                                               legalEntity: legalEntityStatusCheck.isSelected))
             
-            Page.currentPage.send(.confirmEmail(walletSession: walletSession, kycSession: kycSession))
+            Page.currentPage.send(.confirmEmail(walletSession: walletSession, verificationSession: verificationSession))
             
         }
         

@@ -22,28 +22,30 @@ public class WalletConnectManager {
     private typealias DAppInfo = WalletConnectSwift.Session.DAppInfo
     private typealias ClientMeta = WalletConnectSwift.Session.ClientMeta
     
-    private static let dAppInfoKey = "kyc.dAppInfoKey"
+    private static let dAppPeerIdKey = "kyc.peerIdKey"
     private static var dAppInfo: DAppInfo {
         
-        if let dappInfoData = UserDefaults.standard.object(forKey: dAppInfoKey) as? Data,
-           let savedDappInfo = try? JSONDecoder().decode(DAppInfo.self, from: dappInfoData) {
-            return savedDappInfo
+        if let savedPeerId = UserDefaults.standard.string(forKey: dAppPeerIdKey) {
+            let info = DAppInfo(peerId: savedPeerId,
+                                peerMeta: Self.clientMeta)
+            return info
         }
         
-        let newInfo = DAppInfo(peerId: UUID().uuidString,
+        let newPeerId = UUID().uuidString
+        let newInfo = DAppInfo(peerId: newPeerId,
                                peerMeta: Self.clientMeta)
         
-        if let newInfoData = try? JSONEncoder().encode(newInfo) {
-            UserDefaults.standard.set(newInfoData, forKey: dAppInfoKey)
+        if let newPeerIdData = try? JSONEncoder().encode(newPeerId) {
+            UserDefaults.standard.set(newPeerIdData, forKey: dAppPeerIdKey)
         }
         
         return newInfo
     }
     
-    private static let clientMeta = ClientMeta(name: "TestProject",
-                                               description: "KYC Dao Test Project",
-                                               icons: [],
-                                               url: URL(string: "https://staging.kycdao.xyz")!)
+    private static let clientMeta = ClientMeta(name: "kycDAO",
+                                               description: nil,
+                                               icons: [URL(string: "https://avatars.githubusercontent.com/u/87816891?s=200&v=4")!],
+                                               url: URL(string: "https://kycdao.xyz")!)
     
     private lazy var client: Client = {
         return Client(delegate: self,
@@ -57,7 +59,7 @@ public class WalletConnectManager {
     private var nextURL: WCURL = getNewURL()
     
     /// Publisher that emits session objects when connections to wallets are established
-    public var sessionStarted: AnyPublisher<WalletConnectSession, Never> {
+    public var sessionStarted: AnyPublisher<Result<WalletConnectSession, WalletConnectError>, Never> {
         sessionStartedSubject.eraseToAnyPublisher()
     }
     
@@ -67,10 +69,8 @@ public class WalletConnectManager {
         pendingSessionURISubject.eraseToAnyPublisher()
     }
     
-    private var sessionStartedSubject = PassthroughSubject<WalletConnectSession, Never>()
+    private var sessionStartedSubject = PassthroughSubject<Result<WalletConnectSession, WalletConnectError>, Never>()
     private var pendingSessionURISubject = CurrentValueSubject<String?, Never>(nil)
-    
-    private var networkOptions: Set<NetworkOptions> = Set()
     
     /// Provides a list of usable wallets for WalletConnect services based on the [WalletConnect V1 registry](https://registry.walletconnect.com/api/v1/wallets)
     /// - Returns: The list of compatible mobile wallets
@@ -79,7 +79,7 @@ public class WalletConnectManager {
     public static func listWallets() async throws -> [Wallet] {
         // https://registry.walletconnect.com/api/v1/wallets?entries=5&page=1
         
-        let (data, response) = try await URLSession.shared.data(from: URL(string: "https://registry.walletconnect.com/api/v1/wallets?entries=100&page=1")!)
+        let (data, response) = try await URLSession.shared.data(from: URL(string: "https://registry.walletconnect.com/api/v1/wallets?entries=1000&page=1")!)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.genericError
@@ -97,11 +97,11 @@ public class WalletConnectManager {
         let listings = Array(listingValues)
         
         let wcWallets = listings.filter {
-            let isEip155Supported = true/*$0.chains?.contains {
+            let isEip155Supported = $0.chains?.contains {
                 $0.starts(with: "eip155:")
-            } ?? false*/
+            } ?? false
             var mobileSupported = false
-            if $0.mobile?.universal != nil || $0.mobile?.native != nil {
+            if $0.mobile?.universal?.isEmpty == false || $0.mobile?.native?.isEmpty == false {
                 mobileSupported = true
             }
             return isEip155Supported && mobileSupported
@@ -113,7 +113,7 @@ public class WalletConnectManager {
             }
             
             return Wallet(id: listing.id,
-                          name: listing.name ?? "",
+                          name: listing.metadata?.shortName ?? listing.name ?? "",
                           imageURL: imageURL,
                           universalLinkBase: listing.mobile?.universal,
                           deepLinkBase: listing.mobile?.native)
@@ -124,21 +124,34 @@ public class WalletConnectManager {
         return wcWallets
     }
     
-    /// Set a default RPC URL to be assigned to newly opened WalletConnect sessions with a given chain
-    /// - Parameters:
-    ///   - rpcURL: The RPC URL to use
-    ///   - chainId: The [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chainId the RPC URL belongs to
-    public func setRPCURL(_ rpcURL: URL, forChain chainId: String) {
-        self.networkOptions.insert(NetworkOptions(chainId: chainId, rpcURL: rpcURL))
-    }
-    
     
     /// Start listening for incoming connections from wallets
     public func startListening() {
         
-        isListening = true
-        openNewConnection()
+        if !isListening {
+            isListening = true
+            openNewConnection()
+        }
 
+    }
+    
+    public func stopListening() {
+        
+        if isListening {
+            isListening = false
+            pendingSessionURISubject.send(nil)
+            disconnectAll()
+        }
+        
+    }
+    
+    private func disconnectAll() {
+        
+        let openSessions = client.openSessions()
+        openSessions.forEach { session in
+            try? client.disconnect(from: session)
+        }
+        
     }
     
     //Returns the URI string we are listening on for new connections
@@ -406,6 +419,7 @@ extension WalletConnectManager: ClientDelegate {
     public func client(_ client: Client, didFailToConnect url: WCURL) {
         print("didFail \(url)")
         if let pendingSession = pendingSession, pendingSession.url == url {
+            sessionStartedSubject.send(.failure(.failedToConnect(wallet: pendingSession.wallet)))
             openNewConnection()
         }
     }
@@ -423,22 +437,13 @@ extension WalletConnectManager: ClientDelegate {
         
         if let pendingSession = pendingSession, newSessionSameAsPending {
             
-            var rpcURL: URL? = nil
-            
-            if let chainId = session.walletInfo?.chainId {
-                rpcURL = networkOptions.first(where: {
-                    $0.chainId == "eip155:\(chainId)"
-                })?.rpcURL
-            }
-            
             let walletSession = try? WalletConnectSession(session: session,
-                                                          wallet: pendingSession.wallet,
-                                                          rpcURL: rpcURL )
+                                                          wallet: pendingSession.wallet)
             
             guard let walletSession = walletSession else { return }
             
             sessionRepo.addSession(walletSession)
-            sessionStartedSubject.send(walletSession)
+            sessionStartedSubject.send(.success(walletSession))
             openNewConnection()
         }
     }

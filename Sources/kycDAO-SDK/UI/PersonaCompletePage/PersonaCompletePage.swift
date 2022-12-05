@@ -11,16 +11,16 @@ import UIKit
 class PersonaCompleteViewController: UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     
     let containerView = UIView()
     let titleLabel = UILabel()
     let messageLabel = UILabel()
     let activityIndicator = UIActivityIndicatorView()
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -82,8 +82,8 @@ class PersonaCompleteViewController: UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            try await kycSession.resumeWhenIdentified()
-            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
+            try await verificationSession.resumeOnVerificationCompleted()
+            Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
         }
     }
     

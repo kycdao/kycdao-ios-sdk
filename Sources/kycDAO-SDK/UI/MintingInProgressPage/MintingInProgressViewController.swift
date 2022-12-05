@@ -11,7 +11,7 @@ import UIKit
 class MintingInProgressViewController: UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     
     let containerView = UIView()
     let titleLabel = UILabel()
@@ -22,9 +22,9 @@ class MintingInProgressViewController: UIViewController {
     
     private var mintingResult: Result<URL?, Error>?
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
         
         topActionButton.addTarget(self, action: #selector(topActionButtonTapped(_:)), for: .touchUpInside)
@@ -115,7 +115,7 @@ class MintingInProgressViewController: UIViewController {
     func mintNFT() {
         Task { @MainActor in
             do {
-                let txURL = try await kycSession.mint()
+                let result = try await verificationSession.mint()
                 activityIndicator.stopAnimating()
                 titleLabel.text = "Minting successful 🎉"
                 messageLabel.text = "Congratulations, your KYC NFT is ready!"
@@ -123,7 +123,7 @@ class MintingInProgressViewController: UIViewController {
                 bottomActionButton.isHidden = false
                 bottomActionButton.setTitle("Exit", for: .normal)
                 
-                guard let txURL = txURL else {
+                guard let txURL = result?.explorerURL else {
                     mintingResult = .success(nil)
                     return
                 }

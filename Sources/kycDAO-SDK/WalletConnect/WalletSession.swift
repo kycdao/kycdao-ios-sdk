@@ -23,11 +23,6 @@ public protocol WalletSessionProtocol {
     /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
     var chainId: String { get }
     
-    /// A custom RPC URL you whish to use during on-chain calls.
-    ///
-    /// When this value is `nil`, the library will default to RPC URLs provided by kycDAO
-    var rpcURL: URL? { get }
-    
     /// A function used for signing a message with the wallet app
     /// - Parameters:
     ///   - walletAddress: The public address of the wallet we want to sign our data with
@@ -83,17 +78,14 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
         wcSession.url
     }
     
-    public let rpcURL: URL?
-    
     public private(set) var chainId: String
     
-    internal init(session: WalletConnectSwift.Session, wallet: Wallet?, rpcURL: URL?) throws {
+    internal init(session: WalletConnectSwift.Session, wallet: Wallet?) throws {
         
         guard let walletInfo = session.walletInfo else { throw KycDaoError.walletConnect(.sessionFailed) }
         
         let caip2Id = "eip155:\(walletInfo.chainId)"
         
-        self.rpcURL = rpcURL
         self.wcSession = session
         self.walletInfo = walletInfo
         self.wallet = wallet
@@ -126,7 +118,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
                                                                  data: mintingProperties.contractABI,
                                                                  gas: mintingProperties.gasAmount,
                                                                  gasPrice: mintingProperties.gasPrice,
-                                                                 value: nil,
+                                                                 value: mintingProperties.paymentAmount,
                                                                  nonce: nil,
                                                                  type: nil,
                                                                  accessList: nil,

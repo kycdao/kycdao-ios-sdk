@@ -14,8 +14,8 @@ class MainViewController: UIViewController, UITextFieldDelegate {
     
     private var disposeBag = Set<AnyCancellable>()
     
-    let kycSectionLabel = UILabel()
-    let kycFlowSeparator = UIView()
+    let verificationSectionLabel = UILabel()
+    let verificationFlowSeparator = UIView()
     
     let startDemo = SimpleButton()
     
@@ -46,8 +46,8 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         super.viewDidLoad()
         
         view.backgroundColor = .systemBackground
-        view.addSubview(kycSectionLabel)
-        view.addSubview(kycFlowSeparator)
+        view.addSubview(verificationSectionLabel)
+        view.addSubview(verificationFlowSeparator)
         view.addSubview(startDemo)
         view.addSubview(addressTokenCheckSectionLabel)
         view.addSubview(addressTokenCheckSeparator)
@@ -61,10 +61,10 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         view.addSubview(hasValidToken2)
         view.addSubview(hasValidTokenLabel2)
         
-        kycSectionLabel.translatesAutoresizingMaskIntoConstraints = false
+        verificationSectionLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        kycFlowSeparator.backgroundColor = .systemGray5
-        kycFlowSeparator.translatesAutoresizingMaskIntoConstraints = false
+        verificationFlowSeparator.backgroundColor = .systemGray5
+        verificationFlowSeparator.translatesAutoresizingMaskIntoConstraints = false
         
         startDemo.translatesAutoresizingMaskIntoConstraints = false
         
@@ -93,16 +93,16 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         hasValidTokenLabel2.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            kycSectionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            kycSectionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            kycSectionLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
+            verificationSectionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            verificationSectionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            verificationSectionLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
             
-            kycFlowSeparator.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -32),
-            kycFlowSeparator.topAnchor.constraint(equalTo: kycSectionLabel.bottomAnchor, constant: 4),
-            kycFlowSeparator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            kycFlowSeparator.heightAnchor.constraint(equalToConstant: 1),
+            verificationFlowSeparator.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -32),
+            verificationFlowSeparator.topAnchor.constraint(equalTo: verificationSectionLabel.bottomAnchor, constant: 4),
+            verificationFlowSeparator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            verificationFlowSeparator.heightAnchor.constraint(equalToConstant: 1),
             
-            startDemo.topAnchor.constraint(equalTo: kycFlowSeparator.topAnchor, constant: 20),
+            startDemo.topAnchor.constraint(equalTo: verificationFlowSeparator.topAnchor, constant: 20),
             startDemo.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             startDemo.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor),
             startDemo.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
@@ -168,10 +168,10 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             hasValidTokenLabel2.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
         ])
         
-        kycSectionLabel.text = "KYC flow"
-        kycSectionLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        verificationSectionLabel.text = "Verification flow"
+        verificationSectionLabel.font = .systemFont(ofSize: 18, weight: .semibold)
         
-        startDemo.setTitle("Start KYC Flow", for: .normal)
+        startDemo.setTitle("Start Verification Flow", for: .normal)
         startDemo.addTarget(self, action: #selector(startDemo(_:)), for: .touchUpInside)
         
         addressTokenCheckSectionLabel.text = "Check token for address"
@@ -207,15 +207,22 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         WalletConnectManager.shared.startListening()
         WalletConnectManager.shared.sessionStarted
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] walletSession in
-                self?.latestWalletSession = walletSession
+            .sink { [weak self] result in
+                switch result {
+                case .success(let walletSession):
+                    self?.latestWalletSession = walletSession
+                case .failure(WalletConnectError.failedToConnect(let wallet)):
+                    print("Could not connect to \(wallet?.name ?? "unkown wallet")")
+                default:
+                    break
+                }
             }.store(in: &disposeBag)
     }
     
     @objc func startDemo(_ sender: Any) {
-        let kycVC = KycDaoViewController()
-        //kycVC.modalPresentationStyle = .fullScreen
-        present(kycVC, animated: true)
+        let verificationVC = KycDaoViewController()
+        //verificationVC.modalPresentationStyle = .fullScreen
+        present(verificationVC, animated: true)
     }
     
     @objc func hasValidToken(_ sender: Any) {
@@ -224,10 +231,10 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             return
         }
         Task {
-            let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
+            let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                           walletAddress: address,
-                                                                          networkOptions: NetworkOptions(chainId: "eip155:80001"))
-            hasValidTokenLabel.text = hasValidToken ? "Wallet has a valid KYC token" : "Wallet does NOT have a valid KYC token"
+                                                                          chainId: "eip155:80001")
+            hasValidTokenLabel.text = hasValidToken ? "Wallet has a valid verification token" : "Wallet does NOT have a valid verification token"
             print("hasValidToken: \(hasValidToken)")
         }
     }
@@ -250,10 +257,10 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             return
         }
         Task {
-            let hasValidToken = try await KYCManager.shared.hasValidToken(verificationType: .kyc,
+            let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                           walletAddress: firstAccount,
                                                                           walletSession: walletSession)
-            hasValidTokenLabel2.text = hasValidToken ? "Wallet has a valid KYC token" : "Wallet does NOT have a valid KYC token"
+            hasValidTokenLabel2.text = hasValidToken ? "Wallet has a valid verification token" : "Wallet does NOT have a valid verification token"
             print("hasValidToken: \(hasValidToken)")
         }
     }

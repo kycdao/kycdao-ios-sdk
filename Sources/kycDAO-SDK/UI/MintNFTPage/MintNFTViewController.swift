@@ -21,12 +21,12 @@ class MintNFTViewController: UIViewController {
     let mintNFTButton = SimpleButton()
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     private let selectedImage: TokenImage
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession, selectedImage: TokenImage) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession, selectedImage: TokenImage) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         self.selectedImage = selectedImage
         super.init(nibName: nil, bundle: nil)
         
@@ -36,8 +36,8 @@ class MintNFTViewController: UIViewController {
         
         Task {
             do {
-                let gasEstimation = try await kycSession.estimateGasForMinting()
-                mintingFee.text = gasEstimation.feeInNative
+                let mintingPrice = try await verificationSession.mintingPrice()
+                mintingFee.text = mintingPrice.finalPriceText
             } catch let error {
                 print(error)
             }
@@ -135,7 +135,7 @@ class MintNFTViewController: UIViewController {
     
     @objc func mintNFTTap(_ sender: Any) {
         
-        Page.currentPage.send(.mintingInProgress(walletSession: walletSession, kycSession: kycSession))
+        Page.currentPage.send(.mintingInProgress(walletSession: walletSession, verificationSession: verificationSession))
         
     }
     

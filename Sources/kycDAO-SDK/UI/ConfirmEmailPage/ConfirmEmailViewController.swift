@@ -11,7 +11,7 @@ import UIKit
 class ConfirmEmailViewController : UIViewController {
     
     private var walletSession: WalletConnectSession
-    private var kycSession: VerificationSession
+    private var verificationSession: VerificationSession
     
     let containerView = UIView()
     let titleLabel = UILabel()
@@ -21,9 +21,9 @@ class ConfirmEmailViewController : UIViewController {
     let notReceivingEmailLabel = UILabel()
     let resendEmailButton = SimpleButton(style: .outline)
     
-    init(walletSession: WalletConnectSession, kycSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
-        self.kycSession = kycSession
+        self.verificationSession = verificationSession
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -102,7 +102,7 @@ class ConfirmEmailViewController : UIViewController {
         
         titleLabel.text = "Confirm your email address"
         messageLabel.text = "We sent a confirmation email to you. Please check your inbox and open the link"
-//        if let emailAddress = kycSession.emailAddress {
+//        if let emailAddress = verificationSession.emailAddress {
 //            messageLabel.attributedText = "We sent a confirmation email to "
 //            + "\(emailAddress)"
 //                .font(size: 16, weight: .bold)
@@ -118,22 +118,22 @@ class ConfirmEmailViewController : UIViewController {
         activityIndicator.startAnimating()
         
         Task {
-            try await kycSession.resumeOnEmailConfirmed()
+            try await verificationSession.resumeOnEmailConfirmed()
             
-            switch kycSession.verificationStatus {
+            switch verificationSession.verificationStatus {
             case .verified:
-                Page.currentPage.send(.selectNFTImage(walletSession: walletSession, kycSession: kycSession))
+                Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
             case .processing:
-                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, kycSession: kycSession))
+                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
             case .notVerified:
-                Page.currentPage.send(.personaVerification(walletSession: walletSession, kycSession: kycSession))
+                Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
             }
         }
     }
     
     @objc func resendEmailTap(_ sender: Any) {
         Task {
-            try await kycSession.sendConfirmationEmail()
+            try await verificationSession.sendConfirmationEmail()
         }
     }
 }

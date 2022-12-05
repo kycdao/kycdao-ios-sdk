@@ -19,6 +19,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         //let rootView = ContentView()
 
+        let config = Configuration(apiKey: "",
+                                   environment: .dev)
+        
+        VerificationManager.configure(config)
+        
         let window = UIWindow(windowScene: windowScene)
         window.rootViewController = MainViewController()//UIHostingController(rootView: rootView)
         self.window = window

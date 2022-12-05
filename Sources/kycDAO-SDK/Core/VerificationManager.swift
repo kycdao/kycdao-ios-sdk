@@ -19,13 +19,75 @@ public class VerificationManager {
     /// VerificationManager singleton instance
     public static let shared = VerificationManager()
     
-    internal var networks: [NetworkMetadata] {
+    private static var _configuration: Configuration?
+    
+    private static var configuration: Configuration {
+        if let _configuration {
+            return _configuration
+        }
+        fatalError(
+"""
+VerificationManager not configured before being used!
+Call VerificationManager.configure(_:) before you start using the SDK to resolve this issue
+"""
+        )
+    }
+    
+    internal static var apiKey: String {
+        configuration.apiKey
+    }
+    
+    internal static var environment: KycDaoEnvironment {
+        configuration.environment
+    }
+    
+    internal static var networks: [NetworkMetadata] {
         get async throws {
             let result = try await ApiConnection.call(endPoint: .networks,
                                                       method: .GET,
                                                       output: [NetworkMetadata].self)
             return result.data
         }
+    }
+    
+    //Currently not throwing neither async but once default RPC URLs will be provided from backend, it will require booth
+    internal static func networkConfig(forChainId chainId: String) async throws -> AppliedNetworkConfig {
+        
+        let defaultForCurrent = DefaultNetworkConfig.allCases.first {
+            $0.chainId == chainId
+        }
+        
+        let mergedConfig = defaultForCurrent.map { defaultConfig -> AppliedNetworkConfig in
+            
+            let thisConfig = configuration.networkConfigs.first {
+                $0.chainId == chainId
+            }
+            
+            let appliedConfig = thisConfig.map {
+                AppliedNetworkConfig(chainId: $0.chainId,
+                                     rpcURL: $0.rpcURL ?? defaultConfig.rpcURL)
+            }
+            
+            return appliedConfig ?? defaultConfig.asAppliedNetworkConfig
+        }
+        
+        guard let mergedConfig else {
+            //Replace with config error, missing default option set for selected chain, not supported by current SDK version
+            throw KycDaoError.genericError
+        }
+        
+        return mergedConfig
+        
+    }
+    
+    public static func configure(_ configuration: Configuration) {
+        guard _configuration == nil else {
+            //Disallow reconfiguration after initial configuration
+            print("Reconfiguration is not allowed!!!")
+            return
+        }
+        
+        Self._configuration = configuration
     }
     
     private init() { }
@@ -37,7 +99,7 @@ public class VerificationManager {
     /// - Returns: The ``KycDao/VerificationSession`` object
     public func createSession(walletAddress: String, walletSession: WalletSessionProtocol) async throws -> VerificationSession {
         
-        let networks = try await self.networks
+        let networks = try await Self.networks
         guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == walletSession.chainId })
         else {
             throw KycDaoError.unsupportedNetwork
@@ -50,8 +112,15 @@ public class VerificationManager {
             throw KycDaoError.unsupportedNetwork
         }
         
-        let kycContractConfig = apiStatus.smartContractsInfo.first { $0.network == selectedNetworkMetadata.id && $0.verificationType == .kyc }
-        let accreditedInvestorContractConfig = apiStatus.smartContractsInfo.first { $0.network == selectedNetworkMetadata.id && $0.verificationType == .accreditedInvestor }
+        let kycContractConfig = apiStatus.smartContractsInfo.first {
+            $0.network == selectedNetworkMetadata.id
+            && $0.verificationType == .kyc
+        }
+        
+        let accreditedInvestorContractConfig = apiStatus.smartContractsInfo.first {
+            $0.network == selectedNetworkMetadata.id
+            && $0.verificationType == .accreditedInvestor
+        }
         
         let chainAndAddress = ChainAndAddressDTO(blockchain: selectedNetworkMetadata.blockchain,
                                                  address: walletAddress)
@@ -63,16 +132,19 @@ public class VerificationManager {
         
         let sessionData = BackendSessionData(dto: result.data)
         
+        let networkConfig = try await Self.networkConfig(forChainId: selectedNetworkMetadata.caip2id)
+        
         return VerificationSession(walletAddress: walletAddress,
-                          walletSession: walletSession,
-                          kycConfig: kycContractConfig,
-                          accreditedConfig: accreditedInvestorContractConfig,
-                          data: sessionData,
-                          networkMetadata: selectedNetworkMetadata)
+                                   walletSession: walletSession,
+                                   kycConfig: kycContractConfig,
+                                   accreditedConfig: accreditedInvestorContractConfig,
+                                   data: sessionData,
+                                   networkMetadata: selectedNetworkMetadata,
+                                   networkConfig: networkConfig)
         
     }
     
-    func apiStatus() async throws -> ApiStatus {
+    internal func apiStatus() async throws -> ApiStatus {
         
         let result = try await ApiConnection.call(endPoint: .status, method: .GET, output: ApiStatus.self)
         return result.data
@@ -92,8 +164,7 @@ public class VerificationManager {
     ) async throws -> Bool {
         try await hasValidToken(verificationType: verificationType,
                                 walletAddress: walletAddress,
-                                networkOptions: NetworkOptions(chainId: walletSession.chainId,
-                                                               rpcURL: walletSession.rpcURL))
+                                chainId: walletSession.chainId)
     }
     
     /// Checks on-chain whether the wallet has a valid token for the verification type
@@ -105,11 +176,13 @@ public class VerificationManager {
     public func hasValidToken(
         verificationType: VerificationType,
         walletAddress: String,
-        networkOptions: NetworkOptions
+        chainId: String
     ) async throws -> Bool {
         
-        let networks = try await self.networks
-        guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == networkOptions.chainId })
+        let rpcURL = try await Self.networkConfig(forChainId: chainId).rpcURL
+
+        let networks = try await Self.networks
+        guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == chainId })
         else {
             throw KycDaoError.unsupportedNetwork
         }
@@ -131,8 +204,7 @@ public class VerificationManager {
             throw KycDaoError.unsupportedNetwork
         }
         
-        let clientURL = networkOptions.rpcURL ?? URL(string: "https://polygon-mumbai.infura.io/v3/8edae24121f74398b57da7ff5a3729a4")!
-        let client = EthereumClient(url: clientURL)
+        let client = EthereumHttpClient(url: rpcURL)
         let contractAddress = EthereumAddress(contractConfig.address)
         let ethWalletAddress = EthereumAddress(walletAddress)
         let mintingFunction = KYCHasValidTokenFunction(contract: contractAddress, address: ethWalletAddress)

@@ -8,7 +8,7 @@
 import Foundation
 import BigInt
 
-public enum KycDaoError: Error {
+public enum KycDaoError: LocalizedError {
     case walletConnect(WalletConnectError)
     case keyGeneration
     case persona(Error)
@@ -16,10 +16,46 @@ public enum KycDaoError: Error {
     case unsupportedNetwork
     case genericError
     case unauthorizedMinting
+    
+//    public var errorDescription: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
+//
+//    public var failureReason: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
+//
+//    public var recoverySuggestion: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
+//
+//    public var helpAnchor: String? {
+//        switch self {
+//        case .genericError:
+//            return "generic error"
+//        default:
+//            return nil
+//        }
+//    }
 }
 
 public enum WalletConnectError: Error {
-    case failedToConnect
+    case failedToConnect(wallet: Wallet?)
     case sessionFailed
     case signingError(String)
 }
@@ -33,12 +69,14 @@ struct BackendSessionDataDTO: Decodable {
     let id: String
     let nonce: String
     var user: UserDTO?
+    let discount_years: UInt32?
 }
 
 struct BackendSessionData: Equatable {
     let id: String
     let nonce: String
     var user: User?
+    let discountYears: UInt32?
     
     init(dto: BackendSessionDataDTO) {
         self.id = dto.id
@@ -46,6 +84,7 @@ struct BackendSessionData: Equatable {
         if let dtoUser = dto.user {
             self.user = User(dto: dtoUser)
         }
+        self.discountYears = dto.discount_years
     }
 }
 
@@ -352,12 +391,15 @@ struct MintRequestInput: Encodable {
     let network: String
     let selected_image_id: String
     let verification_type: VerificationType
+    let subscription_duration: String
     
-    init(accountId: Int, network: String, selectedImageId: String, verificationType: VerificationType = .kyc) {
+    init(accountId: Int, network: String, selectedImageId: String, subscriptionDuration: UInt32, verificationType: VerificationType = .kyc) {
         self.blockchain_account_id = accountId
         self.network = network
         self.selected_image_id = selectedImageId
         self.verification_type = verificationType
+        //ISO 8601 formatted single year input 'PnY' where 'n' is the number of years
+        self.subscription_duration = "P\(subscriptionDuration)Y"
     }
 }
 
@@ -442,7 +484,7 @@ public struct GasEstimation: Codable {
     }
     
     /// Gas fee estimation in an easy to display string representation
-    public var feeInNative: String {
+    public var feeText: String {
         fee.decimalText(divisor: gasCurrency.baseToNativeDivisor) + " \(gasCurrency.symbol)"
     }
     
@@ -450,6 +492,56 @@ public struct GasEstimation: Codable {
         self.price = max(price, BigUInt(50).gwei)
         self.amount = amount
         self.gasCurrency = gasCurrency
+    }
+    
+}
+
+public struct PaymentEstimation: Codable {
+    public let paymentAmount: BigUInt
+    public let discountYears: UInt32
+    public let currency: CurrencyData
+    
+    public var paymentAmountText: String {
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return paymentAmount.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+}
+
+/// Contains gas fee estimation related data
+public struct PriceEstimation: Codable {
+    
+    public let paymentAmount: BigUInt
+    public let gasFee: BigUInt?
+    public let currency: CurrencyData
+    
+    public var finalPrice: BigUInt {
+        paymentAmount + (gasFee ?? 0)
+    }
+    
+    public var paymentAmountText: String {
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return paymentAmount.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+    
+    public var gasFeeText: String? {
+        guard let gasFee else { return nil }
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return gasFee.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+    
+    public var finalPriceText: String {
+        let baseToNativeDivisor = currency.baseToNativeDivisor
+        let symbol = currency.symbol
+        return finalPrice.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+    }
+    
+    init(paymentAmount: BigUInt, gasFee: BigUInt, currency: CurrencyData) {
+        self.paymentAmount = paymentAmount
+        self.gasFee = gasFee
+        self.currency = currency
     }
     
 }
@@ -469,6 +561,8 @@ public struct MintingProperties: Codable {
     public let gasAmount: String
     /// Price of a gas unit
     public let gasPrice: String
+    
+    public let paymentAmount: String?
     
 }
 
@@ -568,10 +662,27 @@ public struct PersonalData: Codable {
         case residency
         case legalEntity = "legal_entity"
     }
+    
+    public init(email: String, residency: String, legalEntity: Bool) {
+        self.email = email
+        self.residency = residency
+        self.legalEntity = legalEntity
+    }
+}
+
+public protocol NetworkConfigProtocol: Hashable, Identifiable, Decodable {
+    var chainId: String { get }
+    var rpcURL: URL? { get }
+}
+
+public extension NetworkConfigProtocol {
+    var id: String {
+        chainId
+    }
 }
 
 /// A set of options for any chain
-public struct NetworkOptions: Hashable, Identifiable {
+public struct NetworkConfig: NetworkConfigProtocol {
     
     /// ID of the network option, same as chainId
     public var id: String {
@@ -581,7 +692,7 @@ public struct NetworkOptions: Hashable, Identifiable {
     /// CAIP-2 Chain ID
     public let chainId: String
     /// RPC URL used for communicating with the chain.
-    /// 
+    ///
     /// Leave it `nil` to use our default RPC URLs or provide your own RPC URL to use
     public let rpcURL: URL?
     
@@ -589,4 +700,151 @@ public struct NetworkOptions: Hashable, Identifiable {
         self.chainId = chainId
         self.rpcURL = rpcURL
     }
+}
+
+/*internal protocol AppliedNetworkConfigProtocol: Hashable, Identifiable {
+    var chainId: String { get }
+    var rpcURL: URL { get }
+}
+
+internal extension AppliedNetworkConfigProtocol {
+    var id: String {
+        chainId
+    }
+}*/
+
+internal enum DefaultNetworkConfig: Hashable, Identifiable, CaseIterable {
+    
+    var id: String {
+        chainId
+    }
+    
+    case celoMainnet
+    case celoAlfajores
+    case polygonMainnet
+    case polygonMumbai
+    
+    public var chainId: String {
+        switch self {
+        case .celoMainnet:
+            return "eip155:42220"
+        case .celoAlfajores:
+            return "eip155:44787"
+        case .polygonMainnet:
+            return "eip155:89"
+        case .polygonMumbai:
+            return "eip155:80001"
+        }
+    }
+    
+    public var rpcURL: URL {
+        switch self {
+        case .celoMainnet:
+            return URL(string: "https://forno.celo.org")!
+        case .celoAlfajores:
+            return URL(string: "https://alfajores-forno.celo-testnet.org")!
+        case .polygonMainnet:
+            return URL(string: "https://polygon-rpc.com")!
+        case .polygonMumbai:
+            return URL(string: "https://matic-mumbai.chainstacklabs.com")!
+        }
+    }
+    
+    var asAppliedNetworkConfig: AppliedNetworkConfig {
+        AppliedNetworkConfig(chainId: chainId,
+                             rpcURL: rpcURL)
+    }
+}
+
+/// A set of options for any chain
+internal struct AppliedNetworkConfig: Hashable, Identifiable {
+    
+    var id: String {
+        chainId
+    }
+    
+    let chainId: String
+    let rpcURL: URL
+    
+    init(chainId: String, rpcURL: URL) {
+        self.chainId = chainId
+        self.rpcURL = rpcURL
+    }
+}
+
+public enum KycDaoEnvironment: Decodable {
+    case production
+    case dev
+    
+    var serverURL: URL {
+        switch self {
+        case .production:
+            return URL(string: "https://kycdao.xyz")!
+        case .dev:
+            return URL(string: "https://staging.kycdao.xyz")!
+        }
+    }
+    
+    var demoMode: Bool {
+        switch self {
+        case .production:
+            return false
+        case .dev:
+            return true
+        }
+    }
+}
+
+public struct Configuration {
+    let apiKey: String
+    let environment: KycDaoEnvironment
+    let networkConfigs: [any NetworkConfigProtocol]
+    
+    public init(apiKey: String, environment: KycDaoEnvironment, networkConfigs: [any NetworkConfigProtocol] = []) {
+        self.apiKey = apiKey
+        self.environment = environment
+        self.networkConfigs = networkConfigs
+    }
+}
+
+public struct MintingResult: Encodable {
+    public let explorerURL: URL?
+    public let transactionId: String
+    public let tokenId: String
+    public let imageURL: URL?
+}
+
+internal struct PersonaSessionData {
+    let referenceId: String
+    let inquiryId: String
+    let sessionToken: String
+}
+
+internal struct TokenDetailsDTO: Decodable {
+    let image_url: String?
+}
+
+enum Constants {
+    static let disclaimerText = """
+Our Services allow individuals to obtain Know-Your-Customer (KYC)
+reports from recognized providers like our Partners, the
+verification proofs are represented in the unique kycDAO NFT
+provided to and maintained for the identified blockchain wallet
+address for each kycDAO User. kycDAO does not engage Third-Party
+Collaborators to perform any services and is not a party to any
+transaction or interaction between kycDAO Users and any Third-Party
+Collaborator. kycDAO has not vetted, makes no representations
+concerning, does not control, and has no liability for any of its
+kycDAO Users interactions with Third Party Collaborators. kycDAO
+does not control the services provided by Third Party Collaborators,
+nor does kycDAO assume any responsibility for the accuracy or
+reliability of any information provided by Third-Party
+Collaborators. If you are a kycDAO User, any transactions that you
+choose to engage in will be conducted through the blockchain network
+governing the cryptocurrency address holding the kycDAO NFT. We are
+not responsible for your blockchain address, wallet, their
+interaction with Third-Party Collaborators and other blockchain
+protocols, or the security of the private keys for your blockchain address.
+"""
+    
 }

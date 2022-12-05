@@ -179,6 +179,8 @@ if verificationSession.verificationStatus == .processing {
     
     if identityFlow == .completed {
         try await verificationSession.resumeWhenIdentified()
+    } else {
+        //Handle cancellation, provide the user the ability to relaunch the identity verification
     }
 }
 

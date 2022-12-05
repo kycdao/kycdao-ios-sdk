@@ -14,16 +14,28 @@ enum Page {
     
     case walletSelector(animated: Bool = false)
     case accountSelector(accounts: [String], walletSession: WalletConnectSession)
-    case createSignature(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case informationRequest(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case confirmEmail(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case personaVerification(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case personaCompletePage(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case authorizeMinting(walletSession: WalletConnectSession, kycSession: VerificationSession, selectedImage: TokenImage)
-    case selectNFTImage(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case mintNFT(walletSession: WalletConnectSession, kycSession: VerificationSession, selectedImage: TokenImage)
-    case mintingInProgress(walletSession: WalletConnectSession, kycSession: VerificationSession)
-    case startMinting(walletSession: WalletConnectSession, kycSession: VerificationSession)
+    case createSignature(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    case informationRequest(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    case confirmEmail(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    case personaVerification(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    case personaCompletePage(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    case selectMembership(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    
+    case selectNFTImage(walletSession: WalletConnectSession,
+                        verificationSession: VerificationSession,
+                        membershipDuration: UInt32)
+    
+    case authorizeMinting(walletSession: WalletConnectSession,
+                          verificationSession: VerificationSession,
+                          selectedImage: TokenImage,
+                          membershipDuration: UInt32)
+    
+    case mintNFT(walletSession: WalletConnectSession,
+                 verificationSession: VerificationSession,
+                 selectedImage: TokenImage)
+    
+    case mintingInProgress(walletSession: WalletConnectSession, verificationSession: VerificationSession)
+    case startMinting(walletSession: WalletConnectSession, verificationSession: VerificationSession)
     case back
     case exit
 }
@@ -70,34 +82,34 @@ public class KycDaoViewController: UIViewController {
 //        WalletConnectManager.shared.sessionStarted.sink { walletSession in
 //            Task {
 //
-//                let kycSession = try await KYCManager.shared.createSession(walletAddress: walletSession.accounts![0],
+//                let verificationSession = try await VerificationManager.shared.createSession(walletAddress: walletSession.accounts![0],
 //                                                                           network: Network(chainId: walletSession.chainId!)!)
 //
-//                let signature = try await walletSession.sign(account: walletSession.accounts![0], message: kycSession.loginProof)
+//                let signature = try await walletSession.sign(account: walletSession.accounts![0], message: verificationSession.loginProof)
 //
-//                if !kycSession.isLoggedIn {
-//                    try await kycSession.login(signature: signature)
+//                if !verificationSession.isLoggedIn {
+//                    try await verificationSession.login(signature: signature)
 //                }
 //
-//                if !kycSession.requiredInformationProvided {
-//                    try await kycSession.updateUser(email: "", residency: "hu-HU", legalEntity: false)
-//                    try await kycSession.acceptDisclaimer()
+//                if !verificationSession.requiredInformationProvided {
+//                    try await verificationSession.updateUser(email: "", residency: "hu-HU", legalEntity: false)
+//                    try await verificationSession.acceptDisclaimer()
 //                }
 //
-//                if !kycSession.emailProvided {
-//                    try await kycSession.sendConfirmationEmail()
-//                    try await kycSession.continueWhenEmailConfirmed()
+//                if !verificationSession.emailProvided {
+//                    try await verificationSession.sendConfirmationEmail()
+//                    try await verificationSession.continueWhenEmailConfirmed()
 //                }
 //
-//                try await kycSession.startIdentification(fromViewController: self)
-//                try await kycSession.continueWhenIdentified()
-//                let nftImages = try await kycSession.getNFTImages()
-//                let mintingAuth = try await kycSession.requestMinting(selectedImageId: nftImages.first!.id)
+//                try await verificationSession.startIdentification(fromViewController: self)
+//                try await verificationSession.continueWhenIdentified()
+//                let nftImages = try await verificationSession.getNFTImages()
+//                let mintingAuth = try await verificationSession.requestMinting(selectedImageId: nftImages.first!.id)
 //
 //                //Only for displaying on UI, use estimatedGas.feeInNative for displaying it in a readable format
-//                let estimatedGas = try await kycSession.estimateGasForMinting()
+//                let estimatedGas = try await verificationSession.estimateGasForMinting()
 //
-//                try await kycSession.mint(performTransaction: { mintingProperties in
+//                try await verificationSession.mint(performTransaction: { mintingProperties in
 //                    let txHash = try await walletSession.sendMintingTransaction(mintingProperties: mintingProperties)
 //                    return MintingTransactionResult(txHash: txHash)
 //                })
@@ -120,32 +132,101 @@ public class KycDaoViewController: UIViewController {
         switch page {
         case .walletSelector(animated: let animated):
             navController.popToRootViewController(animated: animated)
+            
         case let .accountSelector(accounts, walletSession):
-            navController.pushViewController(SelectAccountViewController(accounts: accounts, walletSession: walletSession), animated: true)
-        case let .createSignature(walletSession, kycSession):
-            navController.pushViewController(CreateSignatureViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case .informationRequest(walletSession: let walletSession, kycSession: let kycSession):
-            navController.pushViewController(InformationRequestViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case .confirmEmail(walletSession: let walletSession, kycSession: let kycSession):
-            navController.pushViewController(ConfirmEmailViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case let .personaVerification(walletSession, kycSession):
-            navController.pushViewController(PersonaViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case .personaCompletePage(walletSession: let walletSession, kycSession: let kycSession):
-            navController.pushViewController(PersonaCompleteViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case .authorizeMinting(walletSession: let walletSession, kycSession: let kycSession, let selectedImage):
-            navController.pushViewController(AuthorizeMintingViewController(walletSession: walletSession, kycSession: kycSession, selectedImage: selectedImage), animated: true)
-        case .selectNFTImage(let walletSession, let kycSession):
-            navController.pushViewController(SelectNFTImageViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case .mintNFT(let walletSession, let kycSession, let selectedImage):
-            navController.pushViewController(MintNFTViewController(walletSession: walletSession, kycSession: kycSession, selectedImage: selectedImage), animated: true)
-        case .mintingInProgress(let walletSession, let kycSession):
-            navController.pushViewController(MintingInProgressViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
-        case let .startMinting(walletSession, kycSession):
-            navController.pushViewController(StartMintingViewController(walletSession: walletSession, kycSession: kycSession), animated: true)
+            
+            navController.pushViewController(SelectAccountViewController(accounts: accounts,
+                                                                         walletSession: walletSession),
+                                             animated: true)
+            
+        case let .createSignature(walletSession, verificationSession):
+            
+            navController.pushViewController(CreateSignatureViewController(walletSession: walletSession,
+                                                                           verificationSession: verificationSession),
+                                             animated: true)
+            
+        case .informationRequest(walletSession: let walletSession,
+                                 verificationSession: let verificationSession):
+            
+            navController.pushViewController(InformationRequestViewController(walletSession: walletSession,
+                                                                              verificationSession: verificationSession),
+                                             animated: true)
+            
+        case .confirmEmail(walletSession: let walletSession, verificationSession: let verificationSession):
+            
+            navController.pushViewController(ConfirmEmailViewController(walletSession: walletSession,
+                                                                        verificationSession: verificationSession),
+                                             animated: true)
+            
+        case let .personaVerification(walletSession, verificationSession):
+            
+            navController.pushViewController(PersonaViewController(walletSession: walletSession,
+                                                                   verificationSession: verificationSession),
+                                             animated: true)
+            
+        case .personaCompletePage(walletSession: let walletSession,
+                                  verificationSession: let verificationSession):
+            
+            navController.pushViewController(PersonaCompleteViewController(walletSession: walletSession,
+                                                                           verificationSession: verificationSession),
+                                             animated: true)
+            
+        case .selectMembership(walletSession: let walletSession,
+                               verificationSession: let verificationSession):
+            
+            navController.pushViewController(SelectMembershipViewController(walletSession: walletSession,
+                                                                            verificationSession: verificationSession),
+                                             animated: true)
+            
+        case .selectNFTImage(let walletSession,
+                             let verificationSession,
+                             let membershipDuration):
+            
+            navController.pushViewController(SelectNFTImageViewController(walletSession: walletSession,
+                                                                          verificationSession: verificationSession,
+                                                                          membershipDuration: membershipDuration),
+                                             animated: true)
+        
+        case .authorizeMinting(walletSession: let walletSession,
+                               verificationSession: let verificationSession,
+                               let selectedImage,
+                               let membershipDuration):
+            
+            navController.pushViewController(AuthorizeMintingViewController(walletSession: walletSession,
+                                                                            verificationSession: verificationSession,
+                                                                            selectedImage: selectedImage,
+                                                                            membershipDuration: membershipDuration),
+                                             animated: true)
+            
+        case .mintNFT(let walletSession,
+                      let verificationSession,
+                      let selectedImage):
+            
+            navController.pushViewController(MintNFTViewController(walletSession: walletSession,
+                                                                   verificationSession: verificationSession,
+                                                                   selectedImage: selectedImage),
+                                             animated: true)
+            
+        case .mintingInProgress(let walletSession,
+                                let verificationSession):
+            
+            navController.pushViewController(MintingInProgressViewController(walletSession: walletSession,
+                                                                             verificationSession: verificationSession),
+                                             animated: true)
+            
+        case let .startMinting(walletSession, verificationSession):
+            
+            navController.pushViewController(StartMintingViewController(walletSession: walletSession,
+                                                                        verificationSession: verificationSession),
+                                             animated: true)
+            
         case .back:
             navController.popViewController(animated: true)
+            
         case .exit:
             dismiss(animated: true)
+            Page.currentPage.send(.walletSelector())
+            
         }
     }
     

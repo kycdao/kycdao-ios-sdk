@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/WalletConnect/WalletConnectSwift", .exact("1.7.0")),
 //        .package(path: "file:///Users/veketyrobin/Bitraptors/RelatedProjects/WalletConnectSwift"),
-        .package(url: "https://github.com/argentlabs/web3.swift", .exact("1.2.0")),
+        .package(url: "https://github.com/argentlabs/web3.swift", .exact("1.3.0")),
         .package(url: "https://github.com/persona-id/inquiry-ios-2", .exact("2.3.0")),
 //        .package(url: "https://github.com/CombineCommunity/CombineExt.git", .exact("1.7.0"))
         //Fixes building documentation
