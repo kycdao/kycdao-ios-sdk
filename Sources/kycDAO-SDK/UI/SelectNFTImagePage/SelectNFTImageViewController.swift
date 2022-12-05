@@ -25,10 +25,12 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
     private var walletSession: WalletConnectSession
     private var verificationSession: VerificationSession
     private var nftImages: [TokenImage] = []
+    private let membershipDuration: UInt32
     
-    init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
+    init(walletSession: WalletConnectSession, verificationSession: VerificationSession, membershipDuration: UInt32) {
         self.walletSession = walletSession
         self.verificationSession = verificationSession
+        self.membershipDuration = membershipDuration
         super.init(nibName: nil, bundle: nil)
         
         pageControl.numberOfPages = 3
@@ -178,7 +180,10 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
             
             if nftImages.count >= pageControl.currentPage {
                 let selectedImage = nftImages[pageControl.currentPage]
-                Page.currentPage.send(.authorizeMinting(walletSession: walletSession, verificationSession: verificationSession, selectedImage: selectedImage))
+                Page.currentPage.send(.authorizeMinting(walletSession: walletSession,
+                                                        verificationSession: verificationSession,
+                                                        selectedImage: selectedImage,
+                                                        membershipDuration: membershipDuration))
             }
             
         }

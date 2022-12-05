@@ -83,7 +83,7 @@ class PersonaCompleteViewController: UIViewController {
         
         Task {
             try await verificationSession.resumeOnVerificationCompleted()
-            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession))
+            Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
         }
     }
     

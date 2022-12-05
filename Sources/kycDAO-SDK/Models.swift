@@ -393,7 +393,7 @@ struct MintRequestInput: Encodable {
     let verification_type: VerificationType
     let subscription_duration: String
     
-    init(accountId: Int, network: String, selectedImageId: String, subscriptionDuration: UInt, verificationType: VerificationType = .kyc) {
+    init(accountId: Int, network: String, selectedImageId: String, subscriptionDuration: UInt32, verificationType: VerificationType = .kyc) {
         self.blockchain_account_id = accountId
         self.network = network
         self.selected_image_id = selectedImageId
@@ -516,7 +516,7 @@ public struct PriceEstimation: Codable {
     public let currency: CurrencyData
     
     public var finalPrice: BigUInt {
-        paymentAmount * (gasFee ?? 0)
+        paymentAmount + (gasFee ?? 0)
     }
     
     public var paymentAmountText: String {
@@ -811,10 +811,15 @@ public struct MintingResult: Encodable {
     public let explorerURL: URL?
     public let transactionId: String
     public let tokenId: String
+    public let imageURL: URL?
 }
 
 internal struct PersonaSessionData {
     let referenceId: String
     let inquiryId: String
     let sessionToken: String
+}
+
+internal struct TokenDetailsDTO: Decodable {
+    let image_url: String?
 }

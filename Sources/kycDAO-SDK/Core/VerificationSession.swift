@@ -360,7 +360,7 @@ public class VerificationSession: Identifiable {
         
     }
     
-    public func getSubscriptionFeePerYear() async throws -> BigUInt {
+    public func getMembershipCostPerYear() async throws -> BigUInt {
         
         guard let resolvedContractAddress = kycConfig?.address
         else {
@@ -380,7 +380,7 @@ public class VerificationSession: Identifiable {
     /// - Parameter selectedImageId: The id of the image we want the user to mint
     ///
     /// You can get the list of available images from ``KycDao/VerificationSession/getNFTImages()``
-    public func requestMinting(selectedImageId: String, membershipDuration: UInt) async throws {
+    public func requestMinting(selectedImageId: String, membershipDuration: UInt32) async throws {
         
         guard let accountId = sessionData.user?.blockchain_accounts?.first?.id
         else { throw KycDaoError.genericError }
@@ -503,7 +503,7 @@ public class VerificationSession: Identifiable {
     private func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
         
         //Would be nice: throw different error for less than 1 year
-        guard let resolvedContractAddress = kycConfig?.address, years > 1
+        guard let resolvedContractAddress = kycConfig?.address, years >= 1
         else {
             throw KycDaoError.genericError
         }
@@ -514,7 +514,6 @@ public class VerificationSession: Identifiable {
         
         let client = EthereumClient(url: networkConfig.rpcURL)
         let contractAddress = EthereumAddress(resolvedContractAddress)
-        let ethWalletAddress = EthereumAddress(walletAddress)
         let getRequiredMintingCostFunction = KYCGetRequiredMintCostForSecondsFunction(contract: contractAddress,
                                                                                       seconds: yearsInSeconds)
         
@@ -548,7 +547,7 @@ public class VerificationSession: Identifiable {
         guard let event = receipt.lookForEvent(event: ERC721Events.Transfer.self)
         else { throw KycDaoError.genericError }
         
-        try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txHash)
+        let tokenDetails = try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txHash)
         
         self.authCode = nil
         
@@ -556,12 +555,14 @@ public class VerificationSession: Identifiable {
         else {
             return MintingResult(explorerURL: nil,
                                  transactionId: txHash,
-                                 tokenId: "\(event.tokenId)")
+                                 tokenId: "\(event.tokenId)",
+                                 imageURL: tokenDetails.image_url?.asURL)
         }
         
         return MintingResult(explorerURL: transactionURL,
                              transactionId: txHash,
-                             tokenId: "\(event.tokenId)")
+                             tokenId: "\(event.tokenId)",
+                             imageURL: tokenDetails.image_url?.asURL)
         
     }
     
@@ -577,7 +578,7 @@ public class VerificationSession: Identifiable {
                                  contractABI: transactionData,
                                  gasAmount: estimation.amount.web3.hexString,
                                  gasPrice: estimation.price.web3.hexString,
-                                 paymentAmount: transaction.value?.web3.hexString)
+                                 paymentAmount: transaction.value == 0 ? nil : transaction.value?.web3.hexString)
         
     }
     
@@ -638,13 +639,18 @@ public class VerificationSession: Identifiable {
         
     }
     
-    func tokenMinted(authCode: String, tokenId: String, txHash: String) async throws {
+    func tokenMinted(authCode: String, tokenId: String, txHash: String) async throws -> TokenDetailsDTO {
         
         let mintResultInput = MintResultInput(authCode: authCode,
                                               tokenId: tokenId,
                                               txHash: txHash)
         
-        try await ApiConnection.call(endPoint: .token, method: .POST, input: mintResultInput)
+        let result = try await ApiConnection.call(endPoint: .token,
+                                                  method: .POST,
+                                                  input: mintResultInput,
+                                                  output: TokenDetailsDTO.self)
+        
+        return result.data
         
     }
     
