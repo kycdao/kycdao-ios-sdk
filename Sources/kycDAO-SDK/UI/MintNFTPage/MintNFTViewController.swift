@@ -36,8 +36,8 @@ class MintNFTViewController: UIViewController {
         
         Task {
             do {
-                let mintingPrice = try await verificationSession.mintingPrice()
-                mintingFee.text = mintingPrice.finalPriceText
+                let mintingPrice = try await verificationSession.getMintingPrice()
+                mintingFee.text = mintingPrice.fullPriceText
             } catch let error {
                 print(error)
             }

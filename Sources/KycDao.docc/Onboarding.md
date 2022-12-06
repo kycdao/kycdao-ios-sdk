@@ -48,7 +48,7 @@ if !verificationSession.requiredInformationProvided {
     //Residency is in ISO 3166-2
     let personalData = PersonalData(email: "example@email.com",
                                     residency: "US",
-                                    legalEntity: false)
+                                    isLegalEntity: false)
     try await verificationSession.setPersonalData(personalData)
 }
 ```
@@ -161,7 +161,7 @@ if !verificationSession.requiredInformationProvided {
     //Residency is in ISO 3166-2
     let personalData = PersonalData(email: "example@email.com",
                                     residency: "US",
-                                    legalEntity: false)
+                                    isLegalEntity: false)
     try await verificationSession.setPersonalData(personalData)
 }
 

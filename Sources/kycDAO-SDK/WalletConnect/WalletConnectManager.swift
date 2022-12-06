@@ -14,6 +14,9 @@ import CombineExt
 /// A WalletConnect V1 compatibility support class. Use this, if you want to connect the verification flow to a wallet through WalletConnect
 public class WalletConnectManager {
     
+    /// A successfully connected ``WalletConnectSession`` or a failed connection with ``WalletConnectError``
+    public typealias SessionStartResult = Result<WalletConnectSession, WalletConnectError>
+    
     /// WalletConnectManager singleton instance
     public static var shared = WalletConnectManager()
     
@@ -58,8 +61,21 @@ public class WalletConnectManager {
     
     private var nextURL: WCURL = getNewURL()
     
-    /// Publisher that emits session objects when connections to wallets are established
-    public var sessionStarted: AnyPublisher<Result<WalletConnectSession, WalletConnectError>, Never> {
+    /// Publisher that emits session objects when connections to wallets are established or failed
+    ///
+    /// You can unwrap the contained session object or error like
+    /// ```swift
+    /// let result: SessionStartResult = ...
+    /// switch result {
+    /// case .success(let walletSession):
+    ///     // Do something with `walletSession`
+    /// case .failure(WalletConnectError.failedToConnect(let wallet)):
+    ///     print("Could not connect to \(wallet?.name ?? "unkown wallet")")
+    /// default:
+    ///     break
+    /// }
+    /// ```
+    public var sessionStart: AnyPublisher<SessionStartResult, Never> {
         sessionStartedSubject.eraseToAnyPublisher()
     }
     
@@ -135,6 +151,7 @@ public class WalletConnectManager {
 
     }
     
+    /// Stops listening for incoming connections from wallets, disconnects currently connected sessions
     public func stopListening() {
         
         if isListening {

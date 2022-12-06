@@ -11,7 +11,7 @@ import WalletConnectSwift
 /// The protocol describes a communication session with a wallet that can be used during the verification process.
 ///
 /// #### Wallets
-/// Use this protocol, when you want to integrate the kycDAO SDK to you wallet. Provide a concrete implementation of the protocol in a class. Learn more at <doc:WalletIntegration> about integrating the SDK to a wallet.
+/// Use this protocol, when you want to integrate the kycDAO SDK to your wallet. Provide a concrete implementation of the protocol in a class. Learn more at <doc:WalletIntegration> about integrating the SDK to a wallet.
 ///
 /// #### DApps
 /// For DApps integrating the kycDAO SDK, you will likely won't have to use this protocol. WalletConnect should be used to connect your DApp to a supported Wallet.

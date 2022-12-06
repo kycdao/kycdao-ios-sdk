@@ -133,7 +133,7 @@ class ConfirmEmailViewController : UIViewController {
     
     @objc func resendEmailTap(_ sender: Any) {
         Task {
-            try await verificationSession.sendConfirmationEmail()
+            try await verificationSession.resendConfirmationEmail()
         }
     }
 }

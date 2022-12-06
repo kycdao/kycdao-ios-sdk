@@ -483,7 +483,7 @@ public struct GasEstimation: Codable {
         price * amount
     }
     
-    /// Gas fee estimation in an easy to display string representation
+    /// Gas fee estimation in an easy to display string representation including currency symbol
     public var feeText: String {
         fee.decimalText(divisor: gasCurrency.baseToNativeDivisor) + " \(gasCurrency.symbol)"
     }
@@ -496,11 +496,19 @@ public struct GasEstimation: Codable {
     
 }
 
+/// Contains membership payment estimation related data
 public struct PaymentEstimation: Codable {
+    
+    /// The amount you have to pay for the service (membership cost)
     public let paymentAmount: BigUInt
+    
+    /// Number of discounted years you have available
     public let discountYears: UInt32
+    
+    /// The currency used by the network
     public let currency: CurrencyData
     
+    /// `paymentAmount` in an easy to display string representation including currency symbol
     public var paymentAmountText: String {
         let baseToNativeDivisor = currency.baseToNativeDivisor
         let symbol = currency.symbol
@@ -508,23 +516,31 @@ public struct PaymentEstimation: Codable {
     }
 }
 
-/// Contains gas fee estimation related data
+/// Contains price estimation related data
 public struct PriceEstimation: Codable {
     
+    /// The amount you have to pay for the service (membership cost)
     public let paymentAmount: BigUInt
+    
+    /// Gas fee estimation
     public let gasFee: BigUInt?
+    
+    /// The currency used by the network
     public let currency: CurrencyData
     
-    public var finalPrice: BigUInt {
+    /// The full price of the transaction
+    public var fullPrice: BigUInt {
         paymentAmount + (gasFee ?? 0)
     }
     
+    /// `paymentAmount` in an easy to display string representation including currency symbol
     public var paymentAmountText: String {
         let baseToNativeDivisor = currency.baseToNativeDivisor
         let symbol = currency.symbol
         return paymentAmount.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
     }
     
+    /// Gas fee estimation in an easy to display string representation including currency symbol
     public var gasFeeText: String? {
         guard let gasFee else { return nil }
         let baseToNativeDivisor = currency.baseToNativeDivisor
@@ -532,10 +548,11 @@ public struct PriceEstimation: Codable {
         return gasFee.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
     }
     
-    public var finalPriceText: String {
+    /// The full price of the transaction in an easy to display string representation including currency symbol
+    public var fullPriceText: String {
         let baseToNativeDivisor = currency.baseToNativeDivisor
         let symbol = currency.symbol
-        return finalPrice.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
+        return fullPrice.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"
     }
     
     init(paymentAmount: BigUInt, gasFee: BigUInt, currency: CurrencyData) {
@@ -550,7 +567,9 @@ struct MintingTransactionResult {
     let txHash: String
 }
 
-/// Data that describes a transaction used for minting, values are in hex
+/// Data that describes a transaction used for minting
+///
+/// All values are in hex
 public struct MintingProperties: Codable {
     
     /// The address of the smart contract we want to call
@@ -562,6 +581,9 @@ public struct MintingProperties: Codable {
     /// Price of a gas unit
     public let gasPrice: String
     
+    /// The payment amount required to mint
+    ///
+    /// For EVM chains, this is the `value` field of a transaction object
     public let paymentAmount: String?
     
 }
@@ -655,33 +677,59 @@ public struct PersonalData: Codable {
     public let residency: String
     
     /// Legal entity status of the user
-    public let legalEntity: Bool
+    public let isLegalEntity: Bool
     
     enum CodingKeys: String, CodingKey {
         case email
         case residency
-        case legalEntity = "legal_entity"
+        case isLegalEntity = "legal_entity"
     }
     
-    public init(email: String, residency: String, legalEntity: Bool) {
+    ///
+    /// - Parameters:
+    ///   - email: Email address of the user
+    ///   - residency: Country of residency of the user
+    ///   - isLegalEntity: Legal entity status of the user
+    ///
+    /// Country of residency is in [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) format.
+    /// ##### Example
+    /// ISO 3166-2 Code | Country name
+    /// --- | ---
+    /// `BE` | Belgium
+    /// `ES` | Spain
+    /// `FR` | France
+    /// `US` | United States of America
+    public init(email: String, residency: String, isLegalEntity: Bool) {
         self.email = email
         self.residency = residency
-        self.legalEntity = legalEntity
+        self.isLegalEntity = isLegalEntity
     }
 }
 
+/// A set of configurations for any chain
+///
+/// You can create an `enum` that conforms to it or use ``KycDao/NetworkConfig`` instead
 public protocol NetworkConfigProtocol: Hashable, Identifiable, Decodable {
+    
+    /// [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain id
     var chainId: String { get }
+    
+    /// RPC URL used for communicating with the chain.
+    ///
+    /// Leave it `nil` to use our default RPC URLs or provide your own RPC URL to use
     var rpcURL: URL? { get }
+    
 }
 
 public extension NetworkConfigProtocol {
+    
+    /// ID of the network option, same as chainId
     var id: String {
         chainId
     }
 }
 
-/// A set of options for any chain
+/// A set of configurations for any chain
 public struct NetworkConfig: NetworkConfigProtocol {
     
     /// ID of the network option, same as chainId
@@ -689,13 +737,18 @@ public struct NetworkConfig: NetworkConfigProtocol {
         chainId
     }
     
-    /// CAIP-2 Chain ID
+    /// [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) Chain ID
     public let chainId: String
-    /// RPC URL used for communicating with the chain.
+    
+    /// RPC URL used for communicating with the chain
     ///
     /// Leave it `nil` to use our default RPC URLs or provide your own RPC URL to use
     public let rpcURL: URL?
     
+    /// Creates a configuration
+    /// - Parameters:
+    ///   - chainId: [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain id
+    ///   - rpcURL: An RPC URL,  leave it `nil` to use our default RPC URLs or provide your own RPC URL to use
     public init(chainId: String, rpcURL: URL? = nil) {
         self.chainId = chainId
         self.rpcURL = rpcURL
@@ -772,8 +825,12 @@ internal struct AppliedNetworkConfig: Hashable, Identifiable {
     }
 }
 
+/// The environments the SDK supports
 public enum KycDaoEnvironment: Decodable {
+    
+    /// A production, live service environment
     case production
+    /// A developer service environment
     case dev
     
     var serverURL: URL {
@@ -795,22 +852,43 @@ public enum KycDaoEnvironment: Decodable {
     }
 }
 
+/// A set of configuration options to initialize the kycDAO SDK
 public struct Configuration {
-    let apiKey: String
-    let environment: KycDaoEnvironment
-    let networkConfigs: [any NetworkConfigProtocol]
     
-    public init(apiKey: String, environment: KycDaoEnvironment, networkConfigs: [any NetworkConfigProtocol] = []) {
-        self.apiKey = apiKey
+    /// Selected environment to use
+    public let environment: KycDaoEnvironment
+    
+    /// Network related configurations
+    public let networkConfigs: [any NetworkConfigProtocol]
+    
+    /// Creates a configuration
+    /// - Parameters:
+    ///   - environment: Selected environment to use
+    ///   - networkConfigs: Network related configurations
+    public init(
+//        apiKey: String,
+        environment: KycDaoEnvironment,
+        networkConfigs: [any NetworkConfigProtocol] = []
+    ) {
+//        self.apiKey = apiKey
         self.environment = environment
         self.networkConfigs = networkConfigs
     }
 }
 
+/// Describes the results of a successful mint
 public struct MintingResult: Encodable {
+    
+    /// The transaction can be viewed in an explorer by opening the explorer URL
     public let explorerURL: URL?
+    
+    /// Id of the transaction
     public let transactionId: String
+    
+    /// Id of the minted token
     public let tokenId: String
+    
+    /// URL pointing to the minted image
     public let imageURL: URL?
 }
 

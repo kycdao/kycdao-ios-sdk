@@ -222,7 +222,7 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
             dataSource.apply(snapshot, animatingDifferences: false)
         }
         
-        WalletConnectManager.shared.sessionStarted
+        WalletConnectManager.shared.sessionStart
             .receive(on: DispatchQueue.main)
             .sink { [weak self] result in
                 switch result {

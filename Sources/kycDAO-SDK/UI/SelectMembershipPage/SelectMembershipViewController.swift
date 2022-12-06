@@ -183,7 +183,7 @@ class SelectMembershipViewController: UIViewController {
     }
     
     private func updateTotalCost(years: UInt32) async {
-        let estimation = try? await verificationSession.paymentEstimation(yearsPurchased: years)
+        let estimation = try? await verificationSession.estimatePayment(yearsPurchased: years)
         guard let estimation else { return }
         totalMembershipCost.text = estimation.paymentAmount == 0 ? "Free" : estimation.paymentAmountText
         discountYearsLabel.text = estimation.discountYears == 0 ? "No discounts" : "Discounted years applied: \(estimation.discountYears)"

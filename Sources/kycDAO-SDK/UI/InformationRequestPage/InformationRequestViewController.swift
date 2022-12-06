@@ -204,8 +204,8 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
 //                                                  legalEntity: legalEntityStatusCheck.isSelected)
             
             try await verificationSession.setPersonalData(PersonalData(email: emailAddress,
-                                                              residency: residency,
-                                                              legalEntity: legalEntityStatusCheck.isSelected))
+                                                                       residency: residency,
+                                                                       isLegalEntity: legalEntityStatusCheck.isSelected))
             
             Page.currentPage.send(.confirmEmail(walletSession: walletSession, verificationSession: verificationSession))
             

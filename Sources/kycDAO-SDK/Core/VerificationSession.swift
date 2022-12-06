@@ -125,8 +125,11 @@ public class VerificationSession: Identifiable {
         return .notVerified
     }
     
+    /// A disclaimer text to show to the users
     public let disclaimerText = Constants.disclaimerText
+    /// Terms of service link to show
     public let termsOfService = URL(string: "https://kycdao.xyz/terms-and-conditions")!
+    /// Privacy policy link to show
     public let privacyPolicy = URL(string: "https://kycdao.xyz/privacy-policy")!
     
     /// A wallet session associated with this VerificationSession
@@ -226,9 +229,9 @@ public class VerificationSession: Identifiable {
     /// Used for setting user related personal information.
     /// - Parameter personalData: Contains the personal data needed from the user
     ///
-    ///  Disclaimer has to be accepted before you can set the personal data
+    /// - Important: Disclaimer has to be accepted before you can set the personal data
     ///
-    ///  After setting personal data a confirmation email will be sent out to the user
+    /// - Important: After setting personal data a confirmation email will be sent out to the user automatically
     public func setPersonalData(_ personalData: PersonalData) async throws {
         
         //TODO: Fail if disclaimer not set, send confirm email
@@ -241,7 +244,11 @@ public class VerificationSession: Identifiable {
         sessionData.user = User(dto: result.data)
     }
     
-    public func updateEmail(_ email: String) async throws {
+    /// Updates the email address of the user
+    /// - Parameter email: New email address
+    ///
+    /// - Important: Email confirmation is automatically sent, if the email is not confirmed yet.
+    public func updateEmail(_ newEmail: String) async throws {
         
         //Throw user not logged in error
         guard user != nil else { throw KycDaoError.genericError }
@@ -254,9 +261,9 @@ public class VerificationSession: Identifiable {
             throw KycDaoError.genericError
         }
         
-        let personalData = PersonalData(email: email,
+        let personalData = PersonalData(email: newEmail,
                                         residency: residency,
-                                        legalEntity: isLegalEntity)
+                                        isLegalEntity: isLegalEntity)
         
         let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .PUT,
@@ -266,8 +273,12 @@ public class VerificationSession: Identifiable {
         sessionData.user = User(dto: result.data)
     }
     
-    /// Sends a confirmation email to the user's email address
-    public func sendConfirmationEmail() async throws {
+    /// Resends a confirmation email to the user's email address
+    ///
+    /// Initial confirmation email is sent out automatically after setting or updating email address
+    ///
+    /// - Important: If the email address is already confirmed or an email address is not set for the user, then throws an error
+    public func resendConfirmationEmail() async throws {
         try await ApiConnection.call(endPoint: .emailConfirmation, method: .POST)
     }
     
@@ -288,7 +299,10 @@ public class VerificationSession: Identifiable {
     
     /// Starts the identity verification process, uses [Persona](https://withpersona.com/)
     /// - Parameter viewController: The view controller on top of which you want to present the identity verification flow
-    /// - Returns: The result of the identity verification flow. It only tells wether the user completed the identity flow or cancelled it. Information regarding the validity of the identity verification can be accessed at ``KycDao/VerificationSession/verificationStatus``
+    /// - Returns: The result of the identity verification flow.
+    ///
+    /// - Warning: The return value only tells whether the user completed the identity flow or cancelled it. Information regarding the validity of the identity verification can be accessed at ``KycDao/VerificationSession/verificationStatus``.
+    /// - Important: The verification process may take a long time, you can actively wait for completion after the identity flow is done by by using ``VerificationSession/resumeOnVerificationCompleted()``
     @MainActor
     public func startIdentification(fromViewController viewController: UIViewController) async throws -> IdentityFlowResult {
         
@@ -367,6 +381,8 @@ public class VerificationSession: Identifiable {
         
     }
     
+    /// Use it for displaying annual membership cost to the user
+    /// - Returns: The cost of membership per year
     public func getMembershipCostPerYear() async throws -> BigUInt {
         
         guard let resolvedContractAddress = kycConfig?.address
@@ -375,15 +391,15 @@ public class VerificationSession: Identifiable {
         }
         
         let contractAddress = EthereumAddress(resolvedContractAddress)
-        let ethWalletAddress = EthereumAddress(walletAddress)
         let getSubscriptionCostFunction = KYCGetSubscriptionCostPerYearUSDFunction(contract: contractAddress)
         let result = try await getSubscriptionCostFunction.call(withClient: ethereumClient, responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
         
         return result.value
     }
     
-    /// Requesting minting authorization for a selected image
-    /// - Parameter selectedImageId: The id of the image we want the user to mint
+    /// Requesting minting authorization for a selected image and membership duration
+    /// - Parameter selectedImageId: The id of the image the user selected to mint
+    /// - Parameter membershipDuration: Membership duration to purchase
     ///
     /// You can get the list of available images from ``KycDao/VerificationSession/getNFTImages()``
     public func requestMinting(selectedImageId: String, membershipDuration: UInt32) async throws {
@@ -528,9 +544,9 @@ public class VerificationSession: Identifiable {
     
     
     /// Used for minting the NFT image
-    /// - Returns: An URL for an explorer where the minting transaction can be viewed
+    /// - Returns: Successful minting related data
     ///
-    /// - Note: Can only be called after the user was authorized for minting with a selected image
+    /// - Important: Can only be called after the user was authorized for minting with a selected image and membership duration with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``
     @discardableResult
     public func mint() async throws -> MintingResult? {
         
@@ -584,9 +600,10 @@ public class VerificationSession: Identifiable {
         
     }
     
-    /// Used for estimating gas fees for the minting
-    /// - Returns: The gas fee estimation
-    public func mintingPrice() async throws -> PriceEstimation {
+    /// Use it for estimating minting price, including gas fees and payment for membership
+    /// - Returns: The price estimation
+    /// - Warning: Only call this function after you requested minting by calling ``KycDao/VerificationSession/requestMinting(selectedImageId:membershipDuration:)`` at some point, otherwise you will receive a ``KycDaoError/unauthorizedMinting`` error
+    public func getMintingPrice() async throws -> PriceEstimation {
         
         guard let authCode = authCode
         else { throw KycDaoError.unauthorizedMinting }
@@ -601,7 +618,10 @@ public class VerificationSession: Identifiable {
                                currency: networkMetadata.nativeCurrency)
     }
     
-    public func paymentEstimation(yearsPurchased: UInt32) async throws -> PaymentEstimation {
+    /// Use it for estimating membership costs for number of years
+    /// - Parameter yearsPurchased: Number of years to purchase a membership for
+    /// - Returns: The payment estimation
+    public func estimatePayment(yearsPurchased: UInt32) async throws -> PaymentEstimation {
         let membershipPayment = try await getRequiredMintCostForYears(yearsPurchased)
         let discountYears = sessionData.discountYears ?? 0
         

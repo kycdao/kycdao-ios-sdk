@@ -18,6 +18,7 @@ The SDK can be used by
 ### Articles
 
 - <doc:Installation>
+- <doc:Configuration>
 - <doc:DAppIntegration>
 - <doc:WalletIntegration>
 - <doc:Onboarding>

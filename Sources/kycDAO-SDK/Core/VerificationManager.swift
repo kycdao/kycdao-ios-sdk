@@ -33,9 +33,9 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
         )
     }
     
-    internal static var apiKey: String {
-        configuration.apiKey
-    }
+//    internal static var apiKey: String {
+//        configuration.apiKey
+//    }
     
     internal static var environment: KycDaoEnvironment {
         configuration.environment
@@ -80,9 +80,12 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
         
     }
     
+    /// Initializes the SDK with a configuration
+    /// - Parameter configuration: The configuration options for the SDK
+    /// - Important: You have to provide a configuration for the SDK **before** using it. Configuration can only be set **once** per app launch
     public static func configure(_ configuration: Configuration) {
         guard _configuration == nil else {
-            //Disallow reconfiguration after initial configuration
+            // Disallow reconfiguration after initial configuration
             print("Reconfiguration is not allowed!!!")
             return
         }
@@ -171,7 +174,7 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
     /// - Parameters:
     ///   - verificationType: The type of verification we want to find a valid token for
     ///   - walletAddress: The address of the wallet the token belongs to
-    ///   - networkOptions: Network options for setting up the connection
+    ///   - chainId: [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain id of the network to use
     /// - Returns: True, when the wallet has a valid token for the selected verification type on the given network
     public func hasValidToken(
         verificationType: VerificationType,

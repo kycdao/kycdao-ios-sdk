@@ -21,10 +21,18 @@ WalletConnectManager.shared.startListening()
 The ``WalletConnectManager`` will keep waiting for new connections and emit ``WalletConnectSession`` objects on successful connections. We can subscribe for these session creation events using
 
 ```swift
-WalletConnectManager.shared.sessionStarted
+WalletConnectManager.shared.sessionStart
     .receive(on: DispatchQueue.main)
-    .sink { [weak self] walletConnectSession in
-        //Do something with walletConnectSession
+    .sink { [weak self] result in
+        switch result {
+        case .success(let walletConnectSession):
+            // Do something with the wallet connect session
+        case .failure(WalletConnectError.failedToConnect(let wallet)):
+            print("Could not connect to \(wallet?.name ?? "unkown wallet")")
+        // Other errors can't happen here
+        default:
+            break
+        }
     }.store(in: &disposeBag)
 ```
 
@@ -66,7 +74,7 @@ func setQR(_ code: String) {
 }
 ```
 
-Once the user scans the QR in their wallet and accepts the connection, ``WalletConnectManager/sessionStarted`` will emit the session object of the connection and ``WalletConnectManager/pendingSessionURI`` will emit the URI for the next possible connection.
+Once the user scans the QR in their wallet and accepts the connection, ``WalletConnectManager/sessionStart`` will emit the session object of the connection and ``WalletConnectManager/pendingSessionURI`` will emit the URI for the next possible connection.
 
 ### Connecting through the wallet app list
 
@@ -80,15 +88,15 @@ You can display the image and name of these wallets, let the user select their p
 try WalletConnectManager.shared.connect(withWallet: selectedWallet)
 ```
 
-Once the wallet is launched and the user accepts the connection, ``WalletConnectManager/sessionStarted`` will emit the session object of the connection and ``WalletConnectManager/pendingSessionURI`` will emit the URI for the next possible connection.
+Once the wallet is launched and the user accepts the connection, ``WalletConnectManager/sessionStart`` will emit the session object of the connection and ``WalletConnectManager/pendingSessionURI`` will emit the URI for the next possible connection.
 
 ## Check verification status of an address
 
 Depending from your usecase, you have two options.
 
-If you already obtained the user's wallet address and know the chain they possibly minted their kycDAO NFT on, you can use ``VerificationManager/hasValidToken(verificationType:walletAddress:networkOptions:)``.
+If you already obtained the user's wallet address and know the chain they possibly minted their kycDAO NFT on, you can use ``VerificationManager/hasValidToken(verificationType:walletAddress:chainId:)``.
 
-If the user's wallet address is unknown, you can get a connection through WalletConnectManager to their wallet and use the WalletConnectSession object to ask for their verification status.
+If the user's wallet address is unknown, you can get a connection through ``WalletConnectManager`` to their wallet and use the ``WalletConnectSession`` object to ask for their verification status.
 
 ### Using WalletConnectSession
 
@@ -104,13 +112,13 @@ let hasValidToken = try await VerificationManager.shared.hasValidToken(verificat
 
 ### Using existing wallet information
 
-A ``NetworkOptions`` object have to be constructed specifying the chain in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) format and an RPC URL can be optionally provided, read more about it at <doc:BringYourOwnNode>.
+When you already have the chain information of the user's wallet, you can use a chain id in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) format to check for a valid token.
 
 ```swift
-let networkOptions = NetworkOptions(chainId: "eip155:80001")
+let chainId = "eip155:80001" // eip155:80001 is Polygon Mumbai
 let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                        walletAddress: walletAddress,
-                                                                       networkOptions: networkOptions)
+                                                                       chainId: chainId)
 ```
 
 ## Initializing a verification flow
@@ -144,10 +152,17 @@ init() {
             self?.setQR(uri)
         }.store(in: &disposeBag)
 
-    walletConnectManager.sessionStarted
+    walletConnectManager.sessionStart
         .receive(on: DispatchQueue.main)
-        .sink { [weak self] walletConnectSession in
-            self?.sessionReceived(walletConnectSession)
+        .sink { [weak self] result in
+            switch result {
+            case .success(let walletConnectSession):
+                self?.sessionReceived(walletConnectSession)
+            case .failure(WalletConnectError.failedToConnect(let wallet)):
+                print("Could not connect to \(wallet?.name ?? "unkown wallet")")
+            default:
+                break
+            }
         }.store(in: &disposeBag)
 
     Task {
