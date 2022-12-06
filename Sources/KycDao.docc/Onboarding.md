@@ -11,8 +11,9 @@ The process consists of the following steps:
 3. Gather some personal information from the user
 4. Confirm the email address
 5. Verification
-6. Select NFT image to mint
-7. Mint NFT
+6. Select membership
+7. Select NFT image to mint
+8. Mint NFT
 
 The user can end up at almost any point of the verification process. It is important to manage that users may interrupt the process and return later to complete the flow. You can determine the next step of the user using various state properties of the ``VerificationSession``, for example ``VerificationSession/disclaimerAccepted``. Keep in mind that these values may change for an existing user. For example the disclaimer acceptance will be reseted if the contents of the disclaimer change and a new user consent is required.
 
@@ -47,19 +48,18 @@ If the user did not have all the required information, you should gather it and 
 if !verificationSession.requiredInformationProvided {
     //Residency is in ISO 3166-2
     let personalData = PersonalData(email: "example@email.com",
-                                    residency: "US",
-                                    isLegalEntity: false)
+                                    residency: "US")
     try await verificationSession.setPersonalData(personalData)
 }
 ```
 
-> Note: Calling ``VerificationSession/setPersonalData(_:)`` will send a confirmation email to the provided email address automatically, you are not required to call ``VerificationSession/sendConfirmationEmail()`` manually
+> Note: Calling ``VerificationSession/setPersonalData(_:)`` will send a confirmation email to the provided email address automatically
 
 ## Confirm email
 
 After you ``VerificationSession/setPersonalData(_:)``, you only need to wait for the email to be confirmed by the user to continue. 
 
-If the user did not receive or lost the email, they may want to resend the confirmation email. You can use ``VerificationSession/sendConfirmationEmail()`` in this case.
+If the user did not receive or lost the email, they may want to resend the confirmation email. You can use ``VerificationSession/resendConfirmationEmail()`` in this case.
 
 ```swift
 try await verificationSession.sendConfirmationEmail()
@@ -116,7 +116,11 @@ if verificationSession.verificationStatus == .processing {
 }
 ```
 
-## Select NFT image to mint
+## Select membership
+
+In order to mint a kycNFT, you need to purchase a kycDAO membership. 
+
+## Select kycNFT image to mint
 
 First you should obtain the possible NFT images by calling ``VerificationSession/getNFTImages()``. This returns an array of ``TokenImage``s, which has an ``TokenImage/url`` field usable to preview the NFT images. 
 

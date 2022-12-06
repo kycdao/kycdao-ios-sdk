@@ -247,35 +247,45 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
             
             Task {
                 
-                let verificationSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
-                
-                if verificationSession.loggedIn {
+                do {
                     
-                    if verificationSession.requiredInformationProvided {
+                    let verificationSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
+                    
+                    if verificationSession.loggedIn {
                         
-                        if verificationSession.emailConfirmed {
+                        if verificationSession.requiredInformationProvided {
                             
-                            switch verificationSession.verificationStatus {
-                            case .verified:
-                                Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
-                            case .processing:
-                                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
-                            case .notVerified:
-                                Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
+                            if verificationSession.emailConfirmed {
+                                
+                                switch verificationSession.verificationStatus {
+                                case .verified:
+                                    if verificationSession.hasMembership {
+                                        Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession, membershipDuration: 0))
+                                    } else {
+                                        Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
+                                    }
+                                case .processing:
+                                    Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
+                                case .notVerified:
+                                    Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
+                                }
+                                
+                            } else {
+                                
+                                Page.currentPage.send(.confirmEmail(walletSession: walletSession, verificationSession: verificationSession))
                             }
                             
                         } else {
                             
-                            Page.currentPage.send(.confirmEmail(walletSession: walletSession, verificationSession: verificationSession))
+                            Page.currentPage.send(.informationRequest(walletSession: walletSession, verificationSession: verificationSession))
                         }
                         
                     } else {
-                        
-                        Page.currentPage.send(.informationRequest(walletSession: walletSession, verificationSession: verificationSession))
+                        Page.currentPage.send(.createSignature(walletSession: walletSession, verificationSession: verificationSession))
                     }
                     
-                } else {
-                    Page.currentPage.send(.createSignature(walletSession: walletSession, verificationSession: verificationSession))
+                } catch let error {
+                    print(error)
                 }
                 
             }

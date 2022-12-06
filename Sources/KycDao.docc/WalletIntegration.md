@@ -20,7 +20,6 @@ Properties | Implementation
 --- | ---
 ``WalletSessionProtocol/id`` | A unique identifier for your session, assigning `UUID().uuidString` to this property at the initialization of your implementation should be enough.
 ``WalletSessionProtocol/chainId`` | The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md). For example `eip155:1` is the `chainId` of Ethereum Mainnet.
-``WalletSessionProtocol/rpcURL`` | A custom RPC URL you whish to use during on-chain calls. Make sure your custom RPC uses the same chain you provided the `chainId` for. By returning `nil` for `rpcURL`, the SDK will default to using its own RPC for the given chain.
 
 #### Functions
 
@@ -46,18 +45,19 @@ let hasValidToken = try await VerificationManager.shared.hasValidToken(verificat
 
 ### Using existing wallet information
 
-A ``NetworkOptions`` object have to be constructed specifying the chain in CAIP-2 format and an RPC URL can be optionally provided, read more about it in <doc:BringYourOwnNode>.
+When you already have the chain information of the user's wallet, you can use a chain id in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) format to check for a valid token.
 
 ```swift
-let networkOptions = NetworkOptions(chainId: "eip155:80001")
+let chainId = "eip155:80001" // eip155:80001 is Polygon Mumbai
 let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                        walletAddress: walletAddress,
-                                                                       networkOptions: networkOptions)
+                                                                       chainId: chainId)
 ```
 
 ## Initializing a verification flow
 
-First you need to have an instance of an object you created at the *'Conforming to WalletSessionProtocol'* section. Once you obtained your wallet session instance, pass it along with a wallet address to ``VerificationManager/createSession(walletAddress:walletSession:)``
+First you need to have an instance of an object you created at the *'Conforming to WalletSessionProtocol'* section. 
+Once you obtained your wallet session instance, pass it along with a wallet address to ``VerificationManager/createSession(walletAddress:walletSession:)``
 
 ```swift
 let walletSession: WalletSessionProtocol = ...

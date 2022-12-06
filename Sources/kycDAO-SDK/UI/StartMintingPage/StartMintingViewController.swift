@@ -97,7 +97,11 @@ class StartMintingViewController: UIViewController {
 //            walletSession.getTransactionReceipt(txHash: "0x80360bfe05fcb0aa05cefe88834abb133b0f14b38b0a459cc67ad79e88a280be")
 //            try await verificationSession.getTransactionReceipt(hash: "0x80360bfe05fcb0aa05cefe88834abb133b0f14b38b0a459cc67ad79e88a280be")
 //        }
-        Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
+        if verificationSession.hasMembership {
+            Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession, membershipDuration: 0))
+        } else {
+            Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
+        }
         
     }
     

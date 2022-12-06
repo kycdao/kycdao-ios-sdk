@@ -125,6 +125,14 @@ public class VerificationSession: Identifiable {
         return .notVerified
     }
     
+    /// The membership status of the user
+    ///
+    /// For users that are already members, you should skip the membership purchase step
+    public var hasMembership: Bool {
+        guard let expiry = sessionData.user?.subscription_expiry else { return false }
+        return expiry.timeIntervalSinceReferenceDate > Date().timeIntervalSinceReferenceDate
+    }
+    
     /// A disclaimer text to show to the users
     public let disclaimerText = Constants.disclaimerText
     /// Terms of service link to show
@@ -262,8 +270,7 @@ public class VerificationSession: Identifiable {
         }
         
         let personalData = PersonalData(email: newEmail,
-                                        residency: residency,
-                                        isLegalEntity: isLegalEntity)
+                                        residency: residency)
         
         let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .PUT,
@@ -510,13 +517,19 @@ public class VerificationSession: Identifiable {
     }
     
     private func getRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
-        let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
-        
-        //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
-        let result = mintingCost.quotientAndRemainder(dividingBy: 10)
-        let slippage = result.quotient
-        
-        return mintingCost + slippage
+        do {
+            let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
+            
+            //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
+            let result = mintingCost.quotientAndRemainder(dividingBy: 10)
+            let slippage = result.quotient
+            
+            return mintingCost + slippage
+        } catch {
+            print("FAILED CODE")
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            return try await getRequiredMintCostForCode(authCode: authCode)
+        }
     }
     
     private func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
@@ -632,30 +645,37 @@ public class VerificationSession: Identifiable {
     
     func estimateGas(forTransaction transaction: EthereumTransaction) async throws -> GasEstimation {
         
-        print("will init client")
-        
-        print("getting price")
-        //price in wei
-        let ethGasPrice = try await ethereumClient.eth_gasPrice()
-        let minGasPrice = BigUInt(50).gwei
-        let price = max(ethGasPrice, minGasPrice)
-        
-        print("ethGasPrice \(ethGasPrice)")
-        print("minGasPrice \(minGasPrice)")
-        print("price \(price)")
-        
-        
-        let amount = try await ethereumClient.eth_estimateGas(transaction)
-        
-        print("amount: \(amount)")
-        
-        let estimation = GasEstimation(gasCurrency: networkMetadata.nativeCurrency,
-                                       amount: amount,
-                                       price: ethGasPrice)
-        
-        print("fee: \(estimation.fee)")
-        
-        return estimation
+        do {
+            
+            print("will init client")
+            
+            print("getting price")
+            //price in wei
+            let ethGasPrice = try await ethereumClient.eth_gasPrice()
+            let minGasPrice = BigUInt(50).gwei
+            let price = max(ethGasPrice, minGasPrice)
+            
+            print("ethGasPrice \(ethGasPrice)")
+            print("minGasPrice \(minGasPrice)")
+            print("price \(price)")
+            
+            let amount = try await ethereumClient.eth_estimateGas(transaction)
+            
+            print("amount: \(amount)")
+            
+            let estimation = GasEstimation(gasCurrency: networkMetadata.nativeCurrency,
+                                           amount: amount,
+                                           price: ethGasPrice)
+            
+            print("fee: \(estimation.fee)")
+            
+            return estimation
+            
+        } catch {
+            print("FAILED GAS")
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            return try await estimateGas(forTransaction: transaction)
+        }
         
     }
     

@@ -169,7 +169,11 @@ class CreateSignatureViewController: UIViewController {
                         
                         switch verificationSession.verificationStatus {
                         case .verified:
-                            Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
+                            if verificationSession.hasMembership {
+                                Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession, membershipDuration: 0))
+                            } else {
+                                Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
+                            }
                         case .processing:
                             Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
                         case .notVerified:
