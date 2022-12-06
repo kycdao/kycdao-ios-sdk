@@ -19,8 +19,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         //let rootView = ContentView()
 
-        let config = Configuration(apiKey: "",
-                                   environment: .dev)
+        let config = Configuration(
+//            apiKey: "",
+            environment: .dev
+        )
         
         VerificationManager.configure(config)
         

@@ -205,7 +205,7 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         hasValidTokenLabel2.text = "Connect a wallet to check token"
         
         WalletConnectManager.shared.startListening()
-        WalletConnectManager.shared.sessionStarted
+        WalletConnectManager.shared.sessionStart
             .receive(on: DispatchQueue.main)
             .sink { [weak self] result in
                 switch result {
