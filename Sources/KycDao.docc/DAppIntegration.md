@@ -18,6 +18,8 @@ Connecting to a wallet starts with the ``WalletConnectManager`` having to active
 WalletConnectManager.shared.startListening()
 ```
 
+> Note: When you no longer want to connect to new wallets, you should call ``WalletConnectManager/stopListening()``
+
 The ``WalletConnectManager`` will keep waiting for new connections and emit ``WalletConnectSession`` objects on successful connections. We can subscribe for these session creation events using
 
 ```swift

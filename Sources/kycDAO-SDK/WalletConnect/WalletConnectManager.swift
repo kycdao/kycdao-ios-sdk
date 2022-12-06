@@ -157,16 +157,6 @@ public class WalletConnectManager {
         if isListening {
             isListening = false
             pendingSessionURISubject.send(nil)
-            disconnectAll()
-        }
-        
-    }
-    
-    private func disconnectAll() {
-        
-        let openSessions = client.openSessions()
-        openSessions.forEach { session in
-            try? client.disconnect(from: session)
         }
         
     }
