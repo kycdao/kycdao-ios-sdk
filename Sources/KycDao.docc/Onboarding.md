@@ -43,9 +43,9 @@ if !verificationSession.disclaimerAccepted {
 
 ## 3. Gathering personal information
 
-Check wether this step was already completed by the user by reading the value of ``VerificationSession/requiredInformationProvided``.
+Check whether this step was already completed by the user by reading the value of ``VerificationSession/requiredInformationProvided``.
 
-If the user did not have all the required information, you should gather it and submit, but first of all, you have to accept the disclaimer, if it is not accepted yet
+If not, then the required informations have to be provided by the user and submited. This step will fail if the disclaimer is not yet accepted.
 
 ```swift
 if !verificationSession.requiredInformationProvided {
@@ -62,12 +62,13 @@ A user's email address can be changed with ``VerificationSession/updateEmail(_:)
 
 ## 4. Confirm email
 
-After you ``VerificationSession/setPersonalData(_:)``, you only need to wait for the email to be confirmed by the user to continue. 
+After calling ``VerificationSession/setPersonalData(_:)``, in order to proceed forward the email has to be confirmed by the user.
 
-If the user did not receive or lost the email, they may want to resend the confirmation email. You can use ``VerificationSession/resendConfirmationEmail()`` in this case.
+If the user failed to recive or lost the email, then it may be resent by calling ``VerificationSession/resendConfirmationEmail()``.
+You could also let them edit their email address with ``VerificationSession/updateEmail(_:)`` to correct an incorrect email address.
 
 ```swift
-try await verificationSession.sendConfirmationEmail()
+try await verificationSession.resendConfirmationEmail()
 ```
 
 To wait for email confirmation, call ``VerificationSession/resumeOnEmailConfirmed()``. It suspends the Task and resumes when the email becomes confirmed.
@@ -102,7 +103,7 @@ case .cancelled:
 
 > Note: The result of ``VerificationSession/startIdentification(fromViewController:)`` does not indicate whether the verification is successful or not. It merely signals that the user completed the Persona identity process (or not). 
 
-To wait for the identity verification to complete, use ``VerificationSession/resumeWhenIdentified()``, which suspends the Task and resumes when the user becomes verified.
+To wait for the identity verification to complete, use ``VerificationSession/resumeOnVerificationCompleted()``, which suspends the Task and resumes when the user becomes verified.
 
 ### Logical flow for the verification
 
@@ -172,7 +173,7 @@ It is recommended to use `WKWebView` to display these images. They are SVGs, but
 
 After the user selected their image of choice, the minting has to be authorized for that particular image and selected membership duration (in years) with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``. 
 
-In case the user already has membership, setting a membership duration will have no effect, but it is recommended to set it to 0 for them..
+In case the user already has membership, setting a membership duration will have no effect, but it is recommended to set it to 0 for them.
 
 ```swift
 let nftImages = verificationSession.getNFTImages()
@@ -188,7 +189,7 @@ Call ``VerificationSession/getMintingPrice()`` for mint price estimation, which 
 - membership payment amount for the selected duration
 - gas fee
 - currency information 
-- full price of minting.
+- full price of minting
 
 ```swift
 let mintingPrice = try await verificationSession.getMintingPrice()
