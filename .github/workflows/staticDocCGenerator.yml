@@ -9,7 +9,7 @@ on:
     # we'll start this action on every push to main
 
 jobs:
-  Build-Github-Actions:
+  build:
     runs-on: macos-12
     # we need to run eveything on macOS, as we need to have Xcode installed
     
@@ -43,31 +43,16 @@ jobs:
           
           cd ..
           
-    # Clone the docs repo
-    - name: Git Checkout
-      uses: actions/checkout@v3
-      with:
-        path: 'docsBranch'
-        ref: 'docs'
-          
     # Generate static HTML docs
     - name: Generate static HTML docs 📖
       run: |
-      
-          rm -rf ./docsBranch/docs ./docsBranch/doc_archives
       
           # Doc is built, but it's inside docbuild, let's find it
           DOCC_DIR=`find ./mainBranch/docbuild -type d -iname "KycDao.doccarchive"`
           
           echo "Copying DocC archives to doc_archives..."
-          mkdir ./docsBranch/doc_archives
-          cp -R "$DOCC_DIR" ./docsBranch/doc_archives
-          
-          ls -l
-          ls -l ./docsBranch
-          ls -l ./docsBranch/doc_archives
-          
-          rm -rf ./mainBranch
+          mkdir ./doc_archives
+          cp -R "$DOCC_DIR" ./doc_archives
           
           echo "$DOCC_DIR"
           
@@ -76,24 +61,25 @@ jobs:
           xcrun --find docc
           xcrun xcodebuild -version
           
-          mkdir ./docsBranch/docs
+          mkdir ./docs
           
-          $(xcrun --find docc) process-archive transform-for-static-hosting ./docsBranch/doc_archives/KycDao.doccarchive --hosting-base-path kycdao-ios-sdk --output-path docsBranch/docs
+          $(xcrun --find docc) process-archive transform-for-static-hosting ./doc_archives/KycDao.doccarchive --hosting-base-path kycdao-ios-sdk --output-path docs
           
-          rm -rf ./docsBranch/docs/index.html
-          rm -rf ./docsBranch/docs/documentation/index.html
+          cp ./mainBranch/docsRes/index.html ./docs/index.html
+          cp ./mainBranch/docsRes/index.html ./docs/documentation
           
-          cp ./docsBranch/RedirectPages/index.html ./docsBranch/docs/index.html
-          cp ./docsBranch/RedirectPages/index.html ./docsBranch/docs/documentation
+    - uses: actions/upload-pages-artifact@v1
+      with:
+          path: docs/
           
-          ls -l ./docsBranch
-          ls -l ./docsBranch/doc_archives
-          ls -l ./docsBranch/docs
-          
-          cd docsBranch
-          
-          git add docs doc_archives
-          
-          git commit -m "Updated DocC documentation"
-          
-          git push origin
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
