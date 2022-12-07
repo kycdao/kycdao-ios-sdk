@@ -7,6 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BE314BA629400D7600B54249 /* KycDaoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9D29400CD000B54249 /* KycDaoViewController.swift */; };
+		BE314BA729400D7B00B54249 /* StartMintingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9C29400CD000B54249 /* StartMintingViewController.swift */; };
+		BE314BA829400D7E00B54249 /* MintNFTViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9A29400CD000B54249 /* MintNFTViewController.swift */; };
+		BE314BA929400D8200B54249 /* InformationRequestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9829400CD000B54249 /* InformationRequestViewController.swift */; };
+		BE314BAA29400D8A00B54249 /* SelectNFTImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9529400CD000B54249 /* SelectNFTImageViewController.swift */; };
+		BE314BAB29400D8A00B54249 /* NFTPreviewImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9629400CD000B54249 /* NFTPreviewImage.swift */; };
+		BE314BAC29400D9C00B54249 /* WalletCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B8E29400CD000B54249 /* WalletCell.swift */; };
+		BE314BAD29400D9C00B54249 /* AuthorizeMintingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9129400CD000B54249 /* AuthorizeMintingViewController.swift */; };
+		BE314BAE29400D9C00B54249 /* PersonaViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B8929400CD000B54249 /* PersonaViewController.swift */; };
+		BE314BAF29400D9C00B54249 /* PersonaCompletePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9329400CD000B54249 /* PersonaCompletePage.swift */; };
+		BE314BB029400D9C00B54249 /* SelectAccountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B8B29400CD000B54249 /* SelectAccountViewController.swift */; };
+		BE314BB129400D9C00B54249 /* ConnectWalletViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B8D29400CD000B54249 /* ConnectWalletViewController.swift */; };
+		BE314BB229400D9C00B54249 /* WalletIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B8F29400CD000B54249 /* WalletIconView.swift */; };
+		BE314BB329400DAC00B54249 /* CreateSignatureViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BA129400CD000B54249 /* CreateSignatureViewController.swift */; };
+		BE314BB429400DAC00B54249 /* MintingInProgressViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9F29400CD000B54249 /* MintingInProgressViewController.swift */; };
+		BE314BB529400DAC00B54249 /* ConfirmEmailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BA529400CD000B54249 /* ConfirmEmailViewController.swift */; };
+		BE314BB629400DAC00B54249 /* SelectMembershipViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BA329400CD000B54249 /* SelectMembershipViewController.swift */; };
+		BE314BB929400EA900B54249 /* UIButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BB829400EA900B54249 /* UIButton.swift */; };
+		BE314BBB29400F8400B54249 /* SimpleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BBA29400F8400B54249 /* SimpleButton.swift */; };
+		BE314BBD29400FD300B54249 /* Collection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BBC29400FD300B54249 /* Collection.swift */; };
+		BE314BBF2940105000B54249 /* NSMutableAttributedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BBE2940105000B54249 /* NSMutableAttributedString.swift */; };
+		BE314BC12940106D00B54249 /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314BC02940106D00B54249 /* String.swift */; };
 		BE4844F7285C92D800B3A6F7 /* KycDao in Frameworks */ = {isa = PBXBuildFile; productRef = BE4844F6285C92D800B3A6F7 /* KycDao */; };
 		BE4844F9285C976800B3A6F7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844F8285C976800B3A6F7 /* AppDelegate.swift */; };
 		BE4844FB285C977C00B3A6F7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */; };
@@ -16,6 +38,28 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BE314B8929400CD000B54249 /* PersonaViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaViewController.swift; sourceTree = "<group>"; };
+		BE314B8B29400CD000B54249 /* SelectAccountViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectAccountViewController.swift; sourceTree = "<group>"; };
+		BE314B8D29400CD000B54249 /* ConnectWalletViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWalletViewController.swift; sourceTree = "<group>"; };
+		BE314B8E29400CD000B54249 /* WalletCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletCell.swift; sourceTree = "<group>"; };
+		BE314B8F29400CD000B54249 /* WalletIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletIconView.swift; sourceTree = "<group>"; };
+		BE314B9129400CD000B54249 /* AuthorizeMintingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizeMintingViewController.swift; sourceTree = "<group>"; };
+		BE314B9329400CD000B54249 /* PersonaCompletePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaCompletePage.swift; sourceTree = "<group>"; };
+		BE314B9529400CD000B54249 /* SelectNFTImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectNFTImageViewController.swift; sourceTree = "<group>"; };
+		BE314B9629400CD000B54249 /* NFTPreviewImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFTPreviewImage.swift; sourceTree = "<group>"; };
+		BE314B9829400CD000B54249 /* InformationRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InformationRequestViewController.swift; sourceTree = "<group>"; };
+		BE314B9A29400CD000B54249 /* MintNFTViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MintNFTViewController.swift; sourceTree = "<group>"; };
+		BE314B9C29400CD000B54249 /* StartMintingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartMintingViewController.swift; sourceTree = "<group>"; };
+		BE314B9D29400CD000B54249 /* KycDaoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KycDaoViewController.swift; sourceTree = "<group>"; };
+		BE314B9F29400CD000B54249 /* MintingInProgressViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MintingInProgressViewController.swift; sourceTree = "<group>"; };
+		BE314BA129400CD000B54249 /* CreateSignatureViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSignatureViewController.swift; sourceTree = "<group>"; };
+		BE314BA329400CD000B54249 /* SelectMembershipViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectMembershipViewController.swift; sourceTree = "<group>"; };
+		BE314BA529400CD000B54249 /* ConfirmEmailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmEmailViewController.swift; sourceTree = "<group>"; };
+		BE314BB829400EA900B54249 /* UIButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIButton.swift; sourceTree = "<group>"; };
+		BE314BBA29400F8400B54249 /* SimpleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleButton.swift; sourceTree = "<group>"; };
+		BE314BBC29400FD300B54249 /* Collection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collection.swift; sourceTree = "<group>"; };
+		BE314BBE2940105000B54249 /* NSMutableAttributedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSMutableAttributedString.swift; sourceTree = "<group>"; };
+		BE314BC02940106D00B54249 /* String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 		BE4844F8285C976800B3A6F7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		BE4844FC285C97E000B3A6F7 /* iOS-Example-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "iOS-Example-Info.plist"; sourceTree = "<group>"; };
@@ -38,6 +82,146 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BE314B8729400CD000B54249 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B8829400CD000B54249 /* PersonaPage */,
+				BE314B8A29400CD000B54249 /* SelectAccountPage */,
+				BE314B8C29400CD000B54249 /* ConnectWalletPage */,
+				BE314B9029400CD000B54249 /* AuthorizeMintingPage */,
+				BE314B9229400CD000B54249 /* PersonaCompletePage */,
+				BE314B9429400CD000B54249 /* SelectNFTImagePage */,
+				BE314B9729400CD000B54249 /* InformationRequestPage */,
+				BE314B9929400CD000B54249 /* MintNFTPage */,
+				BE314B9B29400CD000B54249 /* StartMintingPage */,
+				BE314B9D29400CD000B54249 /* KycDaoViewController.swift */,
+				BE314B9E29400CD000B54249 /* MintingInProgressPage */,
+				BE314BA029400CD000B54249 /* CreateSignaturePage */,
+				BE314BA229400CD000B54249 /* SelectMembershipPage */,
+				BE314BA429400CD000B54249 /* ConfirmEmailPage */,
+				BE314BBA29400F8400B54249 /* SimpleButton.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		BE314B8829400CD000B54249 /* PersonaPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B8929400CD000B54249 /* PersonaViewController.swift */,
+			);
+			path = PersonaPage;
+			sourceTree = "<group>";
+		};
+		BE314B8A29400CD000B54249 /* SelectAccountPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B8B29400CD000B54249 /* SelectAccountViewController.swift */,
+			);
+			path = SelectAccountPage;
+			sourceTree = "<group>";
+		};
+		BE314B8C29400CD000B54249 /* ConnectWalletPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B8D29400CD000B54249 /* ConnectWalletViewController.swift */,
+				BE314B8E29400CD000B54249 /* WalletCell.swift */,
+				BE314B8F29400CD000B54249 /* WalletIconView.swift */,
+			);
+			path = ConnectWalletPage;
+			sourceTree = "<group>";
+		};
+		BE314B9029400CD000B54249 /* AuthorizeMintingPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9129400CD000B54249 /* AuthorizeMintingViewController.swift */,
+			);
+			path = AuthorizeMintingPage;
+			sourceTree = "<group>";
+		};
+		BE314B9229400CD000B54249 /* PersonaCompletePage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9329400CD000B54249 /* PersonaCompletePage.swift */,
+			);
+			path = PersonaCompletePage;
+			sourceTree = "<group>";
+		};
+		BE314B9429400CD000B54249 /* SelectNFTImagePage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9529400CD000B54249 /* SelectNFTImageViewController.swift */,
+				BE314B9629400CD000B54249 /* NFTPreviewImage.swift */,
+			);
+			path = SelectNFTImagePage;
+			sourceTree = "<group>";
+		};
+		BE314B9729400CD000B54249 /* InformationRequestPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9829400CD000B54249 /* InformationRequestViewController.swift */,
+			);
+			path = InformationRequestPage;
+			sourceTree = "<group>";
+		};
+		BE314B9929400CD000B54249 /* MintNFTPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9A29400CD000B54249 /* MintNFTViewController.swift */,
+			);
+			path = MintNFTPage;
+			sourceTree = "<group>";
+		};
+		BE314B9B29400CD000B54249 /* StartMintingPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9C29400CD000B54249 /* StartMintingViewController.swift */,
+			);
+			path = StartMintingPage;
+			sourceTree = "<group>";
+		};
+		BE314B9E29400CD000B54249 /* MintingInProgressPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314B9F29400CD000B54249 /* MintingInProgressViewController.swift */,
+			);
+			path = MintingInProgressPage;
+			sourceTree = "<group>";
+		};
+		BE314BA029400CD000B54249 /* CreateSignaturePage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314BA129400CD000B54249 /* CreateSignatureViewController.swift */,
+			);
+			path = CreateSignaturePage;
+			sourceTree = "<group>";
+		};
+		BE314BA229400CD000B54249 /* SelectMembershipPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314BA329400CD000B54249 /* SelectMembershipViewController.swift */,
+			);
+			path = SelectMembershipPage;
+			sourceTree = "<group>";
+		};
+		BE314BA429400CD000B54249 /* ConfirmEmailPage */ = {
+			isa = PBXGroup;
+			children = (
+				BE314BA529400CD000B54249 /* ConfirmEmailViewController.swift */,
+			);
+			path = ConfirmEmailPage;
+			sourceTree = "<group>";
+		};
+		BE314BB729400E9700B54249 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				BE314BB829400EA900B54249 /* UIButton.swift */,
+				BE314BBC29400FD300B54249 /* Collection.swift */,
+				BE314BBE2940105000B54249 /* NSMutableAttributedString.swift */,
+				BE314BC02940106D00B54249 /* String.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		D95C08AB277D8AA00016A10F = {
 			isa = PBXGroup;
 			children = (
@@ -60,6 +244,8 @@
 		D95C08B6277D8AA00016A10F /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				BE314BB729400E9700B54249 /* Extensions */,
+				BE314B8729400CD000B54249 /* UI */,
 				D95C08BB277D8AA20016A10F /* Assets.xcassets */,
 				D95C08BD277D8AA20016A10F /* Preview Content */,
 				BE4844F8285C976800B3A6F7 /* AppDelegate.swift */,
@@ -165,9 +351,31 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE314BAB29400D8A00B54249 /* NFTPreviewImage.swift in Sources */,
+				BE314BAE29400D9C00B54249 /* PersonaViewController.swift in Sources */,
+				BE314BB629400DAC00B54249 /* SelectMembershipViewController.swift in Sources */,
+				BE314BB029400D9C00B54249 /* SelectAccountViewController.swift in Sources */,
+				BE314BA929400D8200B54249 /* InformationRequestViewController.swift in Sources */,
+				BE314BBB29400F8400B54249 /* SimpleButton.swift in Sources */,
+				BE314BAC29400D9C00B54249 /* WalletCell.swift in Sources */,
+				BE314BB529400DAC00B54249 /* ConfirmEmailViewController.swift in Sources */,
+				BE314BB329400DAC00B54249 /* CreateSignatureViewController.swift in Sources */,
 				BE4844FE285C9A2A00B3A6F7 /* MainViewController.swift in Sources */,
+				BE314BB429400DAC00B54249 /* MintingInProgressViewController.swift in Sources */,
 				BE4844F9285C976800B3A6F7 /* AppDelegate.swift in Sources */,
+				BE314BB929400EA900B54249 /* UIButton.swift in Sources */,
+				BE314BAA29400D8A00B54249 /* SelectNFTImageViewController.swift in Sources */,
 				BE4844FB285C977C00B3A6F7 /* SceneDelegate.swift in Sources */,
+				BE314BB129400D9C00B54249 /* ConnectWalletViewController.swift in Sources */,
+				BE314BA829400D7E00B54249 /* MintNFTViewController.swift in Sources */,
+				BE314BC12940106D00B54249 /* String.swift in Sources */,
+				BE314BA729400D7B00B54249 /* StartMintingViewController.swift in Sources */,
+				BE314BB229400D9C00B54249 /* WalletIconView.swift in Sources */,
+				BE314BBD29400FD300B54249 /* Collection.swift in Sources */,
+				BE314BBF2940105000B54249 /* NSMutableAttributedString.swift in Sources */,
+				BE314BAF29400D9C00B54249 /* PersonaCompletePage.swift in Sources */,
+				BE314BA629400D7600B54249 /* KycDaoViewController.swift in Sources */,
+				BE314BAD29400D9C00B54249 /* AuthorizeMintingViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

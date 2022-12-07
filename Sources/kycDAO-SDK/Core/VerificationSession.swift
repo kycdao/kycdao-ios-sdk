@@ -517,19 +517,13 @@ public class VerificationSession: Identifiable {
     }
     
     private func getRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
-        do {
-            let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
-            
-            //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
-            let result = mintingCost.quotientAndRemainder(dividingBy: 10)
-            let slippage = result.quotient
-            
-            return mintingCost + slippage
-        } catch {
-            print("FAILED CODE")
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            return try await getRequiredMintCostForCode(authCode: authCode)
-        }
+        let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
+        
+        //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
+        let result = mintingCost.quotientAndRemainder(dividingBy: 10)
+        let slippage = result.quotient
+        
+        return mintingCost + slippage
     }
     
     private func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
@@ -644,38 +638,30 @@ public class VerificationSession: Identifiable {
     }
     
     func estimateGas(forTransaction transaction: EthereumTransaction) async throws -> GasEstimation {
+            
+        print("will init client")
         
-        do {
-            
-            print("will init client")
-            
-            print("getting price")
-            //price in wei
-            let ethGasPrice = try await ethereumClient.eth_gasPrice()
-            let minGasPrice = BigUInt(50).gwei
-            let price = max(ethGasPrice, minGasPrice)
-            
-            print("ethGasPrice \(ethGasPrice)")
-            print("minGasPrice \(minGasPrice)")
-            print("price \(price)")
-            
-            let amount = try await ethereumClient.eth_estimateGas(transaction)
-            
-            print("amount: \(amount)")
-            
-            let estimation = GasEstimation(gasCurrency: networkMetadata.nativeCurrency,
-                                           amount: amount,
-                                           price: ethGasPrice)
-            
-            print("fee: \(estimation.fee)")
-            
-            return estimation
-            
-        } catch {
-            print("FAILED GAS")
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            return try await estimateGas(forTransaction: transaction)
-        }
+        print("getting price")
+        //price in wei
+        let ethGasPrice = try await ethereumClient.eth_gasPrice()
+        let minGasPrice = BigUInt(50).gwei
+        let price = max(ethGasPrice, minGasPrice)
+        
+        print("ethGasPrice \(ethGasPrice)")
+        print("minGasPrice \(minGasPrice)")
+        print("price \(price)")
+        
+        let amount = try await ethereumClient.eth_estimateGas(transaction)
+        
+        print("amount: \(amount)")
+        
+        let estimation = GasEstimation(gasCurrency: networkMetadata.nativeCurrency,
+                                       amount: amount,
+                                       price: ethGasPrice)
+        
+        print("fee: \(estimation.fee)")
+        
+        return estimation
         
     }
     

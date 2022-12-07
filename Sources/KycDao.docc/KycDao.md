@@ -22,7 +22,6 @@ The SDK can be used by
 - <doc:DAppIntegration>
 - <doc:WalletIntegration>
 - <doc:Onboarding>
-- <doc:BringYourOwnNode>
 
 ### Verification
 

@@ -11,7 +11,7 @@ The process consists of the following steps:
 3. Gather some personal information from the user
 4. Confirm the email address
 5. Verification
-6. Select membership
+6. Select membership duration
 7. Select NFT image to mint
 8. Mint NFT
 
@@ -21,7 +21,7 @@ The user can end up at almost any point of the verification process. It is impor
 
 Before you can implement the verification flow, you must follow either the <doc:DAppIntegration> guide for DApps or the <doc:WalletIntegration> guide.
 
-## Login
+## 1. Login
 
 Once you obtained a `VerificationSession` as shown in <doc:DAppIntegration> and <doc:WalletIntegration> guide, you can login your wallet to that session.
 
@@ -29,9 +29,11 @@ Once you obtained a `VerificationSession` as shown in <doc:DAppIntegration> and 
 try await verificationSession.login()
 ```
 
-## Accepting the disclaimer
+## 2. Accepting the disclaimer
 
-The user has to accept the disclaimer before being able to interact with kycDAO services.
+The user has to accept the disclaimer before being able to interact with kycDAO services. You can get the disclaimer text from ``VerificationSession/disclaimerText``, the ToS link from ``VerificationSession/termsOfService`` and the Privacy Policy link from ``VerificationSession/privacyPolicy``.
+
+> Important: When implementing the SDK, you are required to show the full disclaimer to the user, and make them able to visit the ToS and PP.
 
 ```swift
 if !verificationSession.disclaimerAccepted {
@@ -39,9 +41,10 @@ if !verificationSession.disclaimerAccepted {
 }
 ```
 
-## Gathering personal information
+## 3. Gathering personal information
 
-Check wether this step was already completed by the user by reading the value of ``VerificationSession/requiredInformationProvided``
+Check wether this step was already completed by the user by reading the value of ``VerificationSession/requiredInformationProvided``.
+
 If the user did not have all the required information, you should gather it and submit, but first of all, you have to accept the disclaimer, if it is not accepted yet
 
 ```swift
@@ -53,9 +56,11 @@ if !verificationSession.requiredInformationProvided {
 }
 ```
 
+A user's email address can be changed with ``VerificationSession/updateEmail(_:)``, but ***only*** if the user never requested minting before.
+
 > Note: Calling ``VerificationSession/setPersonalData(_:)`` will send a confirmation email to the provided email address automatically
 
-## Confirm email
+## 4. Confirm email
 
 After you ``VerificationSession/setPersonalData(_:)``, you only need to wait for the email to be confirmed by the user to continue. 
 
@@ -73,7 +78,7 @@ if !verificationSession.emailConfirmed {
 }
 ```
 
-## Verification
+## 5. Verification
 
 Verification is currently done through Persona. You can check whether the user already has an accepted verification using the property ``VerificationSession/verificationStatus``.
 
@@ -116,39 +121,87 @@ if verificationSession.verificationStatus == .processing {
 }
 ```
 
-## Select membership
+## 6. Select membership duration
 
 In order to mint a kycNFT, you need to purchase a kycDAO membership. 
 
-## Select kycNFT image to mint
+- Check the user's membership status with ``VerificationSession/hasMembership``.
+
+If the user does not have a membership, they have to buy one. They can buy memberships that last from a one year minimum period till multiple years. 
+
+The price of membership goes up linearly with the membership duration. It is currently set in cost per year. 
+
+- Get the current cost by calling ``VerificationSession/getMembershipCostPerYear()``
+
+Your user can receive a discount for a number of years, for example the first year can be free, regardless of how many years you purchase: if you purchase 1 year, your membership for that 1 year subscription will be free in this case. 
+
+- Estimate the user's membership payment for any number of years by calling ``VerificationSession/estimatePayment(yearsPurchased:)``
+- Get the number of discounted years granted to the user from ``PaymentEstimation/discountYears``
+
+> Important: If the user already has a membership, they can't purchase new memberships to extend their subscription periods. You should skip this step for them and make them continue with kycNFT selection. They can still remint their kycNFTs but they don't have to repurchase memberships for it.
+
+```swift
+// Display yearly membership cost in dollars
+let cost = try await verificationSession.getMembershipCostPerYear()
+membershipCost.text = "$\(cost) / year"
+
+// Calculating membership payment estimation for 3 years
+// then displaying the payment amount and applied discounts
+let paymentEstimation = try await verificationSession.estimatePayment(yearsPurchased: 3)
+
+if paymentEstimation.paymentAmount > 0 {
+    membershipPayment.text = paymentEstimation.paymentAmountText
+} else {
+    membershipPayment.text = "Free"
+}
+
+if paymentEstimation.discountYears > 0 {
+    discountYears.text = "Discounted years applied: \(paymentEstimation.discountYears)"
+} else {
+    discountYears.text = "No discounts"
+}
+```
+
+The selected membership duration will be used to request minting with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``
+
+## 7. Select kycNFT image to mint
 
 First you should obtain the possible NFT images by calling ``VerificationSession/getNFTImages()``. This returns an array of ``TokenImage``s, which has an ``TokenImage/url`` field usable to preview the NFT images. 
 
 It is recommended to use `WKWebView` to display these images. They are SVGs, but they could be GIFs, PNGs, JPGs or other formats in the future.
 
-After the user selected their image of choice, the minting has to be authorized for that particular image with ``VerificationSession/requestMinting(selectedImageId:)``
+After the user selected their image of choice, the minting has to be authorized for that particular image and selected membership duration (in years) with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``. 
+
+In case the user already has membership, setting a membership duration will have no effect, but it is recommended to set it to 0 for them..
 
 ```swift
 let nftImages = verificationSession.getNFTImages()
 guard let selectedImage = nftImages.first else { return }
-try await verificationSession.requestMinting(selectedImageId: selectedImage.id)
+try await verificationSession.requestMinting(selectedImageId: selectedImage.id, membershipDuration: 3)
 ```
 
-## Mint NFT
+## 8. Mint kycNFT
 
-### Display gas fee estimation to user
+### Display mint price estimation to user
+
+Call ``VerificationSession/getMintingPrice()`` for mint price estimation, which includes: 
+- membership payment amount for the selected duration
+- gas fee
+- currency information 
+- full price of minting.
 
 ```swift
-let gasEstimation = try await verificationSession.estimateGasForMinting()
-//Here mintinFee is an UILabel
-mintingFee.text = gasEstimation.feeInNative
+let mintingPrice = try await verificationSession.getMintingPrice()
+//Here fullPrice is an UILabel
+fullPrice.text = mintingPrice.fullPriceText
 ```
+
 ### Mint
 
-The returned txURL can be used to let the user view their transaction on the explorer linked by the URL.
+The returned ``MintingResult`` can be used to let the user view their transaction on the explorer linked by ``MintingResult/explorerURL``, show them the kycNFT using ``MintingResult/imageURL``, or write some custom logic around ``MintingResult/tokenId`` and ``MintingResult/transactionId``.
 
 ```swift
-let txURL = try await verificationSession.mint()
+let mintingResult = try await verificationSession.mint()
 ```
 
 ## Flow summary
@@ -164,8 +217,7 @@ if !verificationSession.disclaimerAccepted {
 if !verificationSession.requiredInformationProvided {
     //Residency is in ISO 3166-2
     let personalData = PersonalData(email: "example@email.com",
-                                    residency: "US",
-                                    isLegalEntity: false)
+                                    residency: "US")
     try await verificationSession.setPersonalData(personalData)
 }
 
@@ -188,10 +240,21 @@ if verificationSession.verificationStatus == .processing {
     }
 }
 
+// Let the user choose their membership duration and show them the payment amount for membership
+let selectedDuration = ...
+let costPerYearUSD = try await verificationSession.getMembershipCostPerYear()
+let paymentEstimation = try await verificationSession.estimatePayment(yearsPurchased: selectedDuration)
+
 let nftImages = verificationSession.getNFTImages()
 guard let selectedImage = nftImages.first else { return }
-try await verificationSession.requestMinting(selectedImageId: selectedImage.id)
 
-let txURL = try await verificationSession.mint()
+try await verificationSession.requestMinting(selectedImageId: selectedImage.id, 
+                                             membershipDuration: selectedDuration)
+
+// Display full price of minting (gas fee + membership cost)
+let mintingPrice = try await verificationSession.getMintingPrice()
+
+// Mint and show the transaction, image etc using the result
+let mintingResult = try await verificationSession.mint()
 
 ```
