@@ -41,10 +41,10 @@ VerificationManager.configure(configuration)
 
 ``KycDaoEnvironment`` `enum` defines the available environments.
 
-``KycDaoEnvironment`` | Implementation
+`KycDaoEnvironment` | Implementation
 --- | ---
-``KycDaoEnvironment/production`` | A live, production environment which uses the smart contracts on the main nets, with a live identity verification service and live kycDAO server environment.
-``KycDaoEnvironment/dev`` | A developer environment which uses the smart contracts on the dev/test nets, with a sandbox identity verification service and staging kycDAO server environment.
+`production` | A live, production environment which uses the smart contracts on the main nets, with a live identity verification service and live kycDAO server environment.
+`dev` | A developer environment which uses the smart contracts on the dev/test nets, with a sandbox identity verification service and staging kycDAO server environment.
 
 ## Network configurations
 

@@ -109,11 +109,11 @@ class MintNFTViewController: UIViewController {
             mintNFTButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
         
-        imageTitle.text = "Your kycDAO NFT"
+        imageTitle.text = "Your kycNFT"
         
         mintingFeeTitle.text = "Minting fee:"
         
-        mintNFTButton.setTitle("Mint NFT", for: .normal)
+        mintNFTButton.setTitle("Mint kycNFT", for: .normal)
         mintNFTButton.addTarget(self, action: #selector(mintNFTTap(_:)), for: .touchUpInside)
         
         let backButton = UIButton(type: .system)

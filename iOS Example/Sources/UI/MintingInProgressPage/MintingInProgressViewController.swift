@@ -103,7 +103,7 @@ class MintingInProgressViewController: UIViewController {
             bottomActionButton.widthAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 0.7),
         ])
         
-        titleLabel.text = "Minting NFT..."
+        titleLabel.text = "Minting kycNFT..."
         messageLabel.text = "Please wait for the minting process to complete"
         topActionButton.isHidden = true
         bottomActionButton.isHidden = true
@@ -119,7 +119,7 @@ class MintingInProgressViewController: UIViewController {
                 let result = try await verificationSession.mint()
                 activityIndicator.stopAnimating()
                 titleLabel.text = "Minting successful 🎉"
-                messageLabel.text = "Congratulations, your KYC NFT is ready!"
+                messageLabel.text = "Congratulations, your kycNFT is ready!"
                 
                 bottomActionButton.isHidden = false
                 bottomActionButton.setTitle("Exit", for: .normal)
@@ -129,7 +129,7 @@ class MintingInProgressViewController: UIViewController {
                     return
                 }
 
-                messageLabel.text = "Congratulations, your KYC NFT is ready! You can view your transaction or close the KYC flow now."
+                messageLabel.text = "Congratulations, your kycNFT is ready! You can view your transaction or close the KYC flow now."
                 topActionButton.isHidden = false
                 topActionButton.setTitle("Show transaction", for: .normal)
                 
@@ -158,7 +158,7 @@ class MintingInProgressViewController: UIViewController {
             guard let transactionURL = transactionURL else { return }
             UIApplication.shared.open(transactionURL)
         case .failure:
-            titleLabel.text = "Minting NFT..."
+            titleLabel.text = "Minting kycNFT..."
             messageLabel.text = "Please wait for the minting process to complete"
             topActionButton.isHidden = true
             bottomActionButton.isHidden = true

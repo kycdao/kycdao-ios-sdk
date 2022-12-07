@@ -162,7 +162,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
             selectNFTButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
         
-        imageTitle.text = "Choose your kycDAO NFT"
+        imageTitle.text = "Choose your kycNFT"
         
         selectNFTButton.setTitle("Select", for: .normal)
         selectNFTButton.addTarget(self, action: #selector(selectNFTTap(_:)), for: .touchUpInside)

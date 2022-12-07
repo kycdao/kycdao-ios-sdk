@@ -81,8 +81,8 @@ class StartMintingViewController: UIViewController {
             startMintingButton.widthAnchor.constraint(equalTo: containerView.widthAnchor, multiplier: 0.8)
         ])
         
-        titleLabel.text = "Mint your NFT"
-        messageLabel.text = "Start minting your KYC NFT here"
+        titleLabel.text = "Mint your kycNFT"
+        messageLabel.text = "Start minting your kycNFT here"
         startMintingButton.setTitle("Exit", for: .normal)
     }
     

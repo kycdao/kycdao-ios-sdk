@@ -96,7 +96,7 @@ Once the wallet is launched and the user accepts the connection, ``WalletConnect
 
 Depending from your usecase, you have two options.
 
-If you already obtained the user's wallet address and know the chain they possibly minted their kycDAO NFT on, you can use ``VerificationManager/hasValidToken(verificationType:walletAddress:chainId:)``.
+If you already obtained the user's wallet address and know the chain they possibly minted their kycNFT on, you can use ``VerificationManager/hasValidToken(verificationType:walletAddress:chainId:)``.
 
 If the user's wallet address is unknown, you can get a connection through ``WalletConnectManager`` to their wallet and use the ``WalletConnectSession`` object to ask for their verification status.
 

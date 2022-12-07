@@ -1,10 +1,10 @@
 # Onboarding
 
-A guide for the verification process and NFT minting
+A guide for the verification process and kycNFT minting
 
 ## Overview
 
-This guide will help you implementing the whole process of minting a kycDAO NFT.
+This guide will help you implementing the whole process of minting a kycNFT.
 The process consists of the following steps:
 1. Login to kycDAO with your wallet
 2. Make the user accept the disclaimer
@@ -12,8 +12,8 @@ The process consists of the following steps:
 4. Confirm the email address
 5. Verification
 6. Select membership duration
-7. Select NFT image to mint
-8. Mint NFT
+7. Select kycNFT image to mint
+8. Mint kycNFT
 
 The user can end up at almost any point of the verification process. It is important to manage that users may interrupt the process and return later to complete the flow. You can determine the next step of the user using various state properties of the ``VerificationSession``, for example ``VerificationSession/disclaimerAccepted``. Keep in mind that these values may change for an existing user. For example the disclaimer acceptance will be reseted if the contents of the disclaimer change and a new user consent is required.
 
@@ -166,7 +166,7 @@ The selected membership duration will be used to request minting with ``Verifica
 
 ## 7. Select kycNFT image to mint
 
-First you should obtain the possible NFT images by calling ``VerificationSession/getNFTImages()``. This returns an array of ``TokenImage``s, which has an ``TokenImage/url`` field usable to preview the NFT images. 
+First you should obtain the possible kycNFT images by calling ``VerificationSession/getNFTImages()``. This returns an array of ``TokenImage``s, which has an ``TokenImage/url`` field usable to preview the kycNFT images. 
 
 It is recommended to use `WKWebView` to display these images. They are SVGs, but they could be GIFs, PNGs, JPGs or other formats in the future.
 

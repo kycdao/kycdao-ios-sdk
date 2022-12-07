@@ -378,7 +378,7 @@ public class VerificationSession: Identifiable {
         }
     }
     
-    /// Provides the selectable NFT images
+    /// Provides the selectable kycNFT images
     /// - Returns: A list of image related data
     public func getNFTImages() -> [TokenImage] {
         print(sessionData.user?.availableImages ?? [:])
@@ -550,7 +550,7 @@ public class VerificationSession: Identifiable {
     }
     
     
-    /// Used for minting the NFT image
+    /// Used for minting the kycNFT
     /// - Returns: Successful minting related data
     ///
     /// - Important: Can only be called after the user was authorized for minting with a selected image and membership duration with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``
