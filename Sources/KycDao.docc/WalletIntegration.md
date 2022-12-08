@@ -29,7 +29,7 @@ In the implementation of this function your wallet is expected to sign a message
 
 ``WalletSessionProtocol/sendMintingTransaction(walletAddress:mintingProperties:)``
 
-In the implementation of this function your wallet is expected to send a transaction (for EVM chains use eth_sendTransaction call), with the given wallet address using the minting properties.
+In the implementation of this function your wallet is expected to send a transaction (for EVM chains use eth_sendTransaction call), with the given wallet address using the minting properties. Returns the transaction hash.
 
 ## Checking the verification status of an address
 

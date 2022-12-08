@@ -1,6 +1,6 @@
 # ``KycDao``
 
-On-chain KYC - Bridge IRL to web3
+Composable Compliance
 
 ## Overview
 
@@ -26,6 +26,14 @@ The source code of the SDK is on [GitHub](https://github.com/kycdao/kycdao-ios-s
 An example Xcode project for a DApp implementation is available on the [iOS GitHub repository](https://github.com/kycdao/kycdao-ios-sdk/tree/main/iOS%20Example).
 
 > Important: It is recommended that you bring your own nodes when using the SDK, you can check the <doc:ConfigureSDK> article to see how to set your own RPC URLs for your supported networks.
+
+### Supported networks
+
+Main | Test
+--- | ---
+Polygon | Polygon Mumbai
+Celo | Celo Alfajores
+
 
 ### Other platforms
 

@@ -105,7 +105,7 @@ struct TokenImageDTO: Decodable {
 /// Can be used for
 /// - displaying the image via the URL on your UI
 /// - selecting an image and authorizing minting for it
-///     - ``KycDao/VerificationSession/requestMinting(selectedImageId:)``
+///     - ``KycDao/VerificationSession/requestMinting(selectedImageId:membershipDuration:)``
 public struct TokenImage: Equatable {
     /// The id of this image
     public let id: String
