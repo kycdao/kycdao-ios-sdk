@@ -49,8 +49,8 @@ public struct Wallet: Identifiable, Hashable, Codable {
     public let name: String
     /// An url pointing to an icon image of the wallet app
     public let imageURL: URL?
-    internal let universalLinkBase: String?
-    internal let deepLinkBase: String?
+    public let universalLinkBase: String?
+    public let deepLinkBase: String?
 }
 
 struct PendingSession: Codable {
@@ -60,18 +60,4 @@ struct PendingSession: Codable {
     var walletId: String? {
         wallet?.id
     }
-    
-    var state: ConnectionState
-}
-
-enum ConnectionState: Codable, Equatable, Hashable {
-    case connected
-    case retrying(retries: Int = 3)
-    case failed
-    case initialised
-}
-
-enum SessionStatus: Codable {
-    case active
-    case inactive
 }

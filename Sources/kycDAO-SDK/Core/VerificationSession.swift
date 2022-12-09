@@ -62,7 +62,7 @@ public class VerificationSession: Identifiable {
     
     /// Email confirmation status of the user
     public var emailConfirmed: Bool {
-        user?.email_confirmed?.isEmpty == false
+        user?.emailConfirmed?.isEmpty == false
     }
     
     /// Country of residency of the user
@@ -80,7 +80,7 @@ public class VerificationSession: Identifiable {
     }
     
     private var isLegalEntity: Bool? {
-        user?.legal_entity
+        user?.legalEntity
     }
     
     private var residencyProvided: Bool {
@@ -93,12 +93,12 @@ public class VerificationSession: Identifiable {
     
     /// Disclaimer acceptance status of the user
     public var disclaimerAccepted: Bool {
-        user?.disclaimer_accepted?.isEmpty == false
+        user?.disclaimerAccepted?.isEmpty == false
     }
     
     /// Indicates that the user provided every information required to continue with identity verification
     public var requiredInformationProvided: Bool {
-        residencyProvided && emailProvided && user?.legal_entity != nil
+        residencyProvided && emailProvided && user?.legalEntity != nil
     }
     
     private var authCode: String?
@@ -107,11 +107,11 @@ public class VerificationSession: Identifiable {
     /// Verification status of the user
     public var verificationStatus: VerificationStatus {
         
-        let statuses = user?.verification_requests?.map { verificationRequest -> VerificationStatus in
-            if verificationRequest.verification_type != .kyc {
+        let statuses = user?.verificationRequests?.map { verificationRequest -> VerificationStatus in
+            if verificationRequest.verificationType != .kyc {
                 return VerificationStatus.notVerified
             }
-            return verificationRequest.status.simplified
+            return verificationRequest.status
         }
         
         guard let statuses = statuses else { return .notVerified }
@@ -129,7 +129,7 @@ public class VerificationSession: Identifiable {
     ///
     /// For users that are already members, you should skip the membership purchase step
     public var hasMembership: Bool {
-        guard let expiry = sessionData.user?.subscription_expiry else { return false }
+        guard let expiry = sessionData.user?.subscriptionExpiry else { return false }
         return expiry.timeIntervalSinceReferenceDate > Date().timeIntervalSinceReferenceDate
     }
     
@@ -176,12 +176,8 @@ public class VerificationSession: Identifiable {
         
         let signature = try await walletSession.personalSign(walletAddress: walletAddress, message: loginProof)
         
-        let appState = await UIApplication.shared.applicationState
-        var state = appState == .active ? "active" : (appState == .background ? "background" : "inactive")
-        print("appState \(state) mainThread: \(Thread.isMainThread)")
-        
-        let signatureInput = SignatureInputDTO(signature: signature,
-                                               public_key: nil)
+        let signatureInput = SignatureDTO(signature: signature,
+                                          public_key: nil)
         
         let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .POST,
@@ -297,7 +293,7 @@ public class VerificationSession: Identifiable {
             // Delay the task by 3 second
             try? await Task.sleep(nanoseconds: 1_000_000_000 * 3)
             let user = try await refreshUser()
-            emailConfirmed = user.email_confirmed?.isEmpty == false
+            emailConfirmed = user.emailConfirmed?.isEmpty == false
         }
         
     }
@@ -314,7 +310,7 @@ public class VerificationSession: Identifiable {
         
         //TODO: block if data needed
         
-        guard let referenceId = sessionData.user?.ext_id else {
+        guard let referenceId = sessionData.user?.extId else {
             throw KycDaoError.genericError
         }
         
@@ -369,9 +365,9 @@ public class VerificationSession: Identifiable {
             try? await Task.sleep(nanoseconds: 1_000_000_000 * 3)
             let user = try await refreshUser()
             
-            if let verificationRequests = user.verification_requests {
+            if let verificationRequests = user.verificationRequests {
                 identified = verificationRequests.contains {
-                    $0.verification_type == .kyc && $0.status == .verified
+                    $0.verificationType == .kyc && $0.status == .verified
                 }
             }
         }
@@ -410,18 +406,18 @@ public class VerificationSession: Identifiable {
     /// You can get the list of available images from ``KycDao/VerificationSession/getNFTImages()``
     public func requestMinting(selectedImageId: String, membershipDuration: UInt32) async throws {
         
-        guard let accountId = sessionData.user?.blockchain_accounts?.first?.id
+        guard let accountId = sessionData.user?.blockchainAccounts?.first?.id
         else { throw KycDaoError.genericError }
         
-        let mintAuthInput = MintRequestInput(accountId: accountId,
-                                             network: networkMetadata.id,
-                                             selectedImageId: selectedImageId,
-                                             subscriptionDuration: membershipDuration)
+        let mintAuthInput = MintRequestDTO(accountId: accountId,
+                                           network: networkMetadata.id,
+                                           selectedImageId: selectedImageId,
+                                           subscriptionDuration: membershipDuration)
         
         let result = try await ApiConnection.call(endPoint: .authorizeMinting,
                                                   method: .POST,
                                                   input: mintAuthInput,
-                                                  output: MintAuthorization.self)
+                                                  output: MintAuthorizationDTO.self)
         let mintAuth = result.data
         
         guard let code = mintAuth.code, let txHash = mintAuth.tx_hash else {
@@ -439,15 +435,10 @@ public class VerificationSession: Identifiable {
         
         let transactionStatus: EthereumTransactionReceiptStatus = .notProcessed
         
-        print("continue block")
-        
         while transactionStatus != .success {
-            
-            print("while begin: \(transactionStatus)")
             
             // Delay the task by 1 second
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-            print("sleep end")
             
             do {
                 
@@ -467,14 +458,7 @@ public class VerificationSession: Identifiable {
     }
     
     func getTransactionReceipt(txHash: String) async throws -> EthereumTransactionReceipt {
-        
-        print("will init client")
-        
-        print("getting receipt")
-        let receipt = try await ethereumClient.eth_getTransactionReceipt(txHash: txHash)
-        print("got receipt")
-        return receipt
-        
+        return try await ethereumClient.eth_getTransactionReceipt(txHash: txHash)
     }
     
     func kycMintingFunction(authCode: String) throws -> KYCMintingFunction {
@@ -638,9 +622,6 @@ public class VerificationSession: Identifiable {
     
     func estimateGas(forTransaction transaction: EthereumTransaction) async throws -> GasEstimation {
             
-        print("will init client")
-        
-        print("getting price")
         //price in wei
         let ethGasPrice = try await ethereumClient.eth_gasPrice()
         let minGasPrice = BigUInt(50).gwei
@@ -661,14 +642,13 @@ public class VerificationSession: Identifiable {
         print("fee: \(estimation.fee)")
         
         return estimation
-        
     }
     
     func tokenMinted(authCode: String, tokenId: String, txHash: String) async throws -> TokenDetailsDTO {
         
-        let mintResultInput = MintResultInput(authCode: authCode,
-                                              tokenId: tokenId,
-                                              txHash: txHash)
+        let mintResultInput = MintResultUploadDTO(authCode: authCode,
+                                                  tokenId: tokenId,
+                                                  txHash: txHash)
         
         let result = try await ApiConnection.call(endPoint: .token,
                                                   method: .POST,
@@ -693,7 +673,7 @@ extension VerificationSession: InquiryDelegate {
     public func inquiryCanceled(inquiryId: String?, sessionToken: String?) {
         print("Persona canceled")
         
-        if let inquiryId, let sessionToken, let referenceId = sessionData.user?.ext_id {
+        if let inquiryId, let sessionToken, let referenceId = sessionData.user?.extId {
             personaSessionData = PersonaSessionData(referenceId: referenceId, inquiryId: inquiryId, sessionToken: sessionToken)
         }
         

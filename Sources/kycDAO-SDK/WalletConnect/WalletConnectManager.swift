@@ -113,14 +113,15 @@ public class WalletConnectManager {
         let listings = Array(listingValues)
         
         let wcWallets = listings.filter {
-            let isEip155Supported = $0.chains?.contains {
-                $0.starts(with: "eip155:")
-            } ?? false
+//            let isEip155Supported = $0.chains?.contains {
+//                $0.starts(with: "eip155:")
+//            } ?? false
             var mobileSupported = false
             if $0.mobile?.universal?.isEmpty == false || $0.mobile?.native?.isEmpty == false {
                 mobileSupported = true
             }
-            return isEip155Supported && mobileSupported
+            // Wallet connect V1 registry is not properly maintained and is inappropriate for building any serious filtering around chainIds...
+            return /*isEip155Supported &&*/ mobileSupported
         }.map { listing -> Wallet in
             
             var imageURL: URL?
@@ -128,11 +129,24 @@ public class WalletConnectManager {
                 imageURL = URL(string: imageURLString)
             }
             
+            var universalLinkBase: String?
+            var deepLinkBase: String?
+            
+            if let universal = listing.mobile?.universal {
+                universalLinkBase = "\(universal)/wc"
+            }
+            
+            if let deepLink = listing.mobile?.native, deepLink.hasSuffix(":") {
+                deepLinkBase = "\(deepLink)//wc"
+            } else if let deepLink = listing.mobile?.native {
+                deepLinkBase = "\(deepLink)/wc"
+            }
+            
             return Wallet(id: listing.id,
                           name: listing.metadata?.shortName ?? listing.name ?? "",
                           imageURL: imageURL,
-                          universalLinkBase: listing.mobile?.universal,
-                          deepLinkBase: listing.mobile?.native)
+                          universalLinkBase: universalLinkBase,
+                          deepLinkBase: deepLinkBase)
         }.sorted {
             $1.name > $0.name
         }
@@ -169,8 +183,7 @@ public class WalletConnectManager {
         do {
             try client.connect(to: nextURL)
             pendingSession = PendingSession(url: nextURL,
-                                            wallet: nil,
-                                            state: .initialised)
+                                            wallet: nil)
             
             pendingSessionURISubject.send(nextURL.absoluteString)
             
@@ -194,15 +207,8 @@ public class WalletConnectManager {
     public func connect(withWallet wallet: Wallet) throws {
         
         guard isListening else { throw KycDaoError.genericError }
-        
-//        let savedSession = sessionRepo.getSession(walletId: wallet.id)
-//        let savedSessionIsOpen = client.openSessions().contains(where: { $0.url == savedSession?.url }) == true
-//
-//        if savedSessionIsOpen, let savedSession = savedSession {
-//            sessionStartedSubject.send(savedSession)
-//        } else {
-            try openWallet(wallet)
-//        }
+
+        try openWallet(wallet)
     }
     
     func openWallet(_ wallet: Wallet) throws {
@@ -212,69 +218,30 @@ public class WalletConnectManager {
         }
         
         #warning("""
-            MetaMask's WalletConnect universal links are broken since months and they don't bother fixing them.
+            MetaMask's WalletConnect universal links are broken since months.
             Remove this and use universal links when they fixed it.
         """)
         
         if wallet.name.lowercased() == "metamask" {
-            try openWalletDeepLinkFirst(wallet: wallet, connectionURL: connectionURL)
+            try connectTo(wallet: wallet, connectionURL: connectionURL, tryDeepLinkFirst: true)
         } else {
-            try openWalletUniversalLinkFirst(wallet: wallet, connectionURL: connectionURL)
-        }
-        
-    }
-        
-    private func openWalletUniversalLinkFirst(wallet: Wallet, connectionURL: String) throws {
-        if let universalLink = wallet.universalLinkBase,
-           let url = URL(string: "\(universalLink)/wc?uri=\(connectionURL)") {
-            print(url.absoluteString)
-            UIApplication.shared.open(url)
-            pendingSession?.wallet = wallet
-
-        } else if let deepLink = wallet.deepLinkBase,
-                  deepLink.hasSuffix(":"),
-                  let url = URL(string: "\(deepLink)//wc?uri=\(connectionURL)") {
-            print(url.absoluteString)
-            UIApplication.shared.open(url)
-            pendingSession?.wallet = wallet
-
-        } else if let deepLink = wallet.deepLinkBase,
-                  let url = URL(string: "\(deepLink)/wc?uri=\(connectionURL)") {
-            print(url.absoluteString)
-            UIApplication.shared.open(url)
-            pendingSession?.wallet = wallet
-
-        } else {
-
-            throw KycDaoError.genericError
-
+            try connectTo(wallet: wallet, connectionURL: connectionURL)
         }
     }
+    
+    private func connectTo(wallet: Wallet, connectionURL: String, tryDeepLinkFirst: Bool = false) throws {
         
-    private func openWalletDeepLinkFirst(wallet: Wallet, connectionURL: String) throws {
+        var baseURL = wallet.universalLinkBase ?? wallet.deepLinkBase
         
-        if let deepLink = wallet.deepLinkBase,
-                  deepLink.hasSuffix(":"),
-                  let url = URL(string: "\(deepLink)//wc?uri=\(connectionURL)") {
-            print(url.absoluteString)
+        if tryDeepLinkFirst {
+            baseURL = wallet.deepLinkBase ?? wallet.universalLinkBase
+        }
+        
+        guard let baseURL else { throw KycDaoError.genericError }
+        
+        if let url = URL(string: "\(baseURL)?uri=\(connectionURL)") {
             UIApplication.shared.open(url)
             pendingSession?.wallet = wallet
-            
-        } else if let deepLink = wallet.deepLinkBase,
-                  let url = URL(string: "\(deepLink)/wc?uri=\(connectionURL)") {
-            print(url.absoluteString)
-            UIApplication.shared.open(url)
-            pendingSession?.wallet = wallet
-            
-        } else if let universalLink = wallet.universalLinkBase,
-           let url = URL(string: "\(universalLink)/wc?uri=\(connectionURL)") {
-            print(url.absoluteString)
-            UIApplication.shared.open(url)
-            pendingSession?.wallet = wallet
-        } else {
-            
-            throw KycDaoError.genericError
-            
         }
         
     }
@@ -321,10 +288,9 @@ public class WalletConnectManager {
                     }
                 }
                 
-                #warning("Make sure the link URL is properly formatted here, with the / slashes having correct count")
-//                guard let link = wallet.universalLinkBase ?? wallet.deepLinkBase,
+                // safe to use deep link first as connecting with an universal link prooved that the user already installed the app
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
-                      let linkURL = URL(string: "\(link)//wc") else {
+                      let linkURL = URL(string: "\(link)") else {
                     throw KycDaoError.genericError
                 }
                 
@@ -379,10 +345,9 @@ public class WalletConnectManager {
                     }
                 }
                 
-                #warning("Make sure the link URL is properly formatted here, with the / slashes having correct count")
-//                guard let link = wallet.universalLinkBase ?? wallet.deepLinkBase,
+                // safe to use deep link first as connecting with an universal link prooved that the user already installed the app
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
-                      let linkURL = URL(string: "\(link)/wc") else {
+                      let linkURL = URL(string: "\(link)") else {
                     throw KycDaoError.genericError
                 }
                 
@@ -397,8 +362,6 @@ public class WalletConnectManager {
     
     private static func getNewURL() -> WCURL {
         WCURL(topic: UUID().uuidString,
-//              bridgeURL: URL(string: "https://safe-walletconnect.gnosis.io/")!,
-//              bridgeURL: URL(string: "https://bridge.walletconnect.org")!,
               bridgeURL: URL(string: "https://safe-walletconnect.safe.global/")!,
               key: randomKey())
     }

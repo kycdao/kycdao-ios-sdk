@@ -29,7 +29,12 @@ enum HTTPMethod: String {
 
 class ApiConnection {
     
-    static let baseURL = "https://staging.kycdao.xyz/api/public/"
+    static var baseURL: String {
+        VerificationManager.environment
+            .serverURL
+            .absoluteString
+        + "/api/public/"
+    }
     
     static func call<I: Encodable, O: Decodable>(
         endPoint: EndPoint,
@@ -52,7 +57,7 @@ class ApiConnection {
         
         print(response)
         let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
+        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.genericError
@@ -87,7 +92,7 @@ class ApiConnection {
         
         print(response)
         let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
+        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.genericError
@@ -115,7 +120,7 @@ class ApiConnection {
         
         print(response)
         let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
+        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.genericError
@@ -143,7 +148,7 @@ class ApiConnection {
         
         print(response)
         let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint) \(method.rawValue) result: \(responseString)")
+        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.genericError
