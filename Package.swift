@@ -15,13 +15,10 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/WalletConnect/WalletConnectSwift", .exact("1.7.0")),
-//        .package(path: "file:///Users/veketyrobin/Bitraptors/RelatedProjects/WalletConnectSwift"),
-        .package(url: "https://github.com/argentlabs/web3.swift", .exact("1.3.0")),
-        .package(url: "https://github.com/persona-id/inquiry-ios-2", .exact("2.3.0")),
-//        .package(url: "https://github.com/CombineCommunity/CombineExt.git", .exact("1.7.0"))
-        //Fixes building documentation
-        .package(url: "https://github.com/thebrowsercompany/CombineExt", branch: "main")
+        .package(url: "https://github.com/WalletConnect/WalletConnectSwift", .upToNextMajor(from: "1.7.0")),
+        .package(url: "https://github.com/argentlabs/web3.swift", .upToNextMajor(from: "1.3.0")),
+        .package(url: "https://github.com/persona-id/inquiry-ios-2", .upToNextMajor(from: "2.3.0")),
+        .package(url: "https://github.com/CombineCommunity/CombineExt.git", .upToNextMajor(from: "1.8.1"))
     ],
     targets: [
         .target(

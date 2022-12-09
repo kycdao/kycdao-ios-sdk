@@ -25,7 +25,7 @@ TODO: Add long description of the pod here.
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'Cydie' => 'robin.vekety@gmail.com' }
-  s.source           = { :git => 'https://github.com/kycdao/kydcao-ios-sdk.git', :branch => 'develop' }
+  s.source           = { :git => 'https://github.com/kycdao/kydcao-ios-sdk.git', :branch => 'main' }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
   s.ios.deployment_target = '13.0'
@@ -38,9 +38,9 @@ TODO: Add long description of the pod here.
 
   # s.public_header_files = 'Pod/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
-  s.dependency 'web3.swift', '~> 1.2.0'
+  s.dependency 'web3.swift', '~> 1.3.0'
   s.dependency 'WalletConnectSwift', '~> 1.7.0'
   s.dependency 'PersonaInquirySDK2', '~> 2.3.0'
-  s.dependency 'CombineExt', '~> 1.7.0'
+  s.dependency 'CombineExt', '~> 1.8.1'
   s.swift_versions = '5.0'
 end

@@ -15,7 +15,7 @@ or
 add this to your `Package.swift` file:
 
 ```swift
-.package(url: "https://github.com/kycdao/kycdao-ios-sdk", from: "1.0.0")
+.package(url: "https://github.com/kycdao/kycdao-ios-sdk", from: "0.1.0")
 ```
 
 ## CocoaPods
