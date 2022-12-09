@@ -110,14 +110,14 @@ To wait for the identity verification to complete, use ``VerificationSession/res
 ```swift
 if verificationSession.verificationStatus == .processing {
     
-    try await verificationSession.resumeWhenIdentified()
+    try await verificationSession.resumeOnVerificationCompleted()
     
 } else if verificationSession.verificationStatus == .notVerified {
     
     let identityFlow = try await verificationSession.startIdentification(fromViewController: self)
     
     if identityFlow == .completed {
-        try await verificationSession.resumeWhenIdentified()
+        try await verificationSession.resumeOnVerificationCompleted()
     }
 }
 ```
@@ -228,14 +228,14 @@ if !verificationSession.emailConfirmed {
 
 if verificationSession.verificationStatus == .processing {
     
-    try await verificationSession.resumeWhenIdentified()
+    try await verificationSession.resumeOnVerificationCompleted()
     
 } else if verificationSession.verificationStatus == .notVerified {
     
     let identityFlow = try await verificationSession.startIdentification(fromViewController: self)
     
     if identityFlow == .completed {
-        try await verificationSession.resumeWhenIdentified()
+        try await verificationSession.resumeOnVerificationCompleted()
     } else {
         //Handle cancellation, provide the user the ability to relaunch the identity verification
     }

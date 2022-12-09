@@ -263,8 +263,7 @@ public class VerificationSession: Identifiable {
         
         //Proper error: email can only be updated after personal data have been set up
         guard requiredInformationProvided,
-              let residency,
-              let isLegalEntity
+              let residency
         else {
             throw KycDaoError.genericError
         }
