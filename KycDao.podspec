@@ -41,6 +41,6 @@ TODO: Add long description of the pod here.
   s.dependency 'web3.swift', '~> 1.4.0'
   s.dependency 'WalletConnectSwift', '~> 1.7.0'
   s.dependency 'PersonaInquirySDK2', '~> 2.3.0'
-  s.dependency 'CombineExt', '~> 1.8.1'
+  s.dependency 'CombineExt', '~> 1.8.0'
   s.swift_versions = '5.0'
 end
