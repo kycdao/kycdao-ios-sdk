@@ -82,14 +82,14 @@ public struct PriceEstimation: Codable {
     public let paymentAmount: BigUInt
     
     /// Gas fee estimation
-    public let gasFee: BigUInt?
+    public let gasFee: BigUInt
     
     /// The currency used by the network
     public let currency: CurrencyData
     
     /// The full price of the transaction
     public var fullPrice: BigUInt {
-        paymentAmount + (gasFee ?? 0)
+        paymentAmount + gasFee
     }
     
     /// `paymentAmount` in an easy to display string representation including currency symbol
@@ -100,8 +100,7 @@ public struct PriceEstimation: Codable {
     }
     
     /// Gas fee estimation in an easy to display string representation including currency symbol
-    public var gasFeeText: String? {
-        guard let gasFee else { return nil }
+    public var gasFeeText: String {
         let baseToNativeDivisor = currency.baseToNativeDivisor
         let symbol = currency.symbol
         return gasFee.decimalText(divisor: baseToNativeDivisor) + " \(symbol)"

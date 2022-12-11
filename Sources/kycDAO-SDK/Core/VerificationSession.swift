@@ -18,34 +18,57 @@ public class VerificationSession: Identifiable {
     
     /// A unique identifier for the session
     public let id = UUID().uuidString
-    
-    private var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
-    
-    private var sessionData: BackendSessionData
-    
     /// Wallet address used to create the session
     public var walletAddress: String
+    /// A wallet session associated with this VerificationSession
+    public let walletSession: WalletSessionProtocol
+    /// A disclaimer text to show to the users
+    public let disclaimerText = Constants.disclaimerText
+    /// Terms of service link to show
+    public let termsOfService = URL(string: "https://kycdao.xyz/terms-and-conditions")!
+    /// Privacy policy link to show
+    public let privacyPolicy = URL(string: "https://kycdao.xyz/privacy-policy")!
+    /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
+    public var chainId: String { networkMetadata.caip2id }
+    /// The login state of the user in this session
+    public var loggedIn: Bool { user != nil }
+    /// Email confirmation status of the user
+    public var emailConfirmed: Bool { user?.emailConfirmed?.isEmpty == false }
+    /// Disclaimer acceptance status of the user
+    public var disclaimerAccepted: Bool { user?.disclaimerAccepted?.isEmpty == false }
+    /// Indicates that the user provided every information required to continue with identity verification
+    public var requiredInformationProvided: Bool {
+        residencyProvided && emailProvided && user?.legalEntity != nil
+    }
     
+    /// The membership status of the user
+    ///
+    /// For users that are already members, you should skip the membership purchase step
+    public var hasMembership: Bool {
+        guard let expiry = sessionData.user?.subscriptionExpiry else { return false }
+        return expiry.timeIntervalSinceReferenceDate > Date().timeIntervalSinceReferenceDate
+    }
+    
+    private var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
+    private var sessionData: BackendSessionData
+    private let networkMetadata: NetworkMetadata
+    private let networkConfig: AppliedNetworkConfig
+    private let ethereumClient: EthereumHttpClient
     private var kycConfig: SmartContractConfig?
     private var accreditedConfig: SmartContractConfig?
     
-    private var loginProof: String {
-        "kycDAO-login-\(sessionData.nonce)"
-    }
+    //Internal state
+    private var authCode: String?
+    private var personaSessionData: PersonaSessionData?
     
-    private var user: User? {
-        sessionData.user
-    }
-    
-    /// The login state of the user in this session
-    public var loggedIn: Bool {
-        user != nil
-    }
-    
-    /// Email address associated with the user
-    private var emailAddress: String? {
-        user?.email
-    }
+    //Derived internal
+    private var loginProof: String { "kycDAO-login-\(sessionData.nonce)" }
+    private var user: User? { sessionData.user }
+    private var emailAddress: String? { user?.email }
+    private var residency: String? { user?.residency }
+    private var isLegalEntity: Bool? { user?.legalEntity }
+    private var residencyProvided: Bool { residency?.isEmpty == false }
+    private var emailProvided: Bool { emailAddress?.isEmpty == false }
     
     private var personaStatus: PersonaStatus {
         get async throws {
@@ -59,50 +82,6 @@ public class VerificationSession: Identifiable {
             return personaStatus
         }
     }
-    
-    /// Email confirmation status of the user
-    public var emailConfirmed: Bool {
-        user?.emailConfirmed?.isEmpty == false
-    }
-    
-    /// Country of residency of the user
-    ///
-    /// Contains the country of residency in [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-2) format.
-    /// ##### Example
-    /// ISO 3166-2 Code | Country name
-    /// --- | ---
-    /// `BE` | Belgium
-    /// `ES` | Spain
-    /// `FR` | France
-    /// `US` | United States of America
-    private var residency: String? {
-        user?.residency
-    }
-    
-    private var isLegalEntity: Bool? {
-        user?.legalEntity
-    }
-    
-    private var residencyProvided: Bool {
-        residency?.isEmpty == false
-    }
-    
-    private var emailProvided: Bool {
-        emailAddress?.isEmpty == false
-    }
-    
-    /// Disclaimer acceptance status of the user
-    public var disclaimerAccepted: Bool {
-        user?.disclaimerAccepted?.isEmpty == false
-    }
-    
-    /// Indicates that the user provided every information required to continue with identity verification
-    public var requiredInformationProvided: Bool {
-        residencyProvided && emailProvided && user?.legalEntity != nil
-    }
-    
-    private var authCode: String?
-    private var personaSessionData: PersonaSessionData?
     
     /// Verification status of the user
     public var verificationStatus: VerificationStatus {
@@ -124,33 +103,6 @@ public class VerificationSession: Identifiable {
         
         return .notVerified
     }
-    
-    /// The membership status of the user
-    ///
-    /// For users that are already members, you should skip the membership purchase step
-    public var hasMembership: Bool {
-        guard let expiry = sessionData.user?.subscriptionExpiry else { return false }
-        return expiry.timeIntervalSinceReferenceDate > Date().timeIntervalSinceReferenceDate
-    }
-    
-    /// A disclaimer text to show to the users
-    public let disclaimerText = Constants.disclaimerText
-    /// Terms of service link to show
-    public let termsOfService = URL(string: "https://kycdao.xyz/terms-and-conditions")!
-    /// Privacy policy link to show
-    public let privacyPolicy = URL(string: "https://kycdao.xyz/privacy-policy")!
-    
-    /// A wallet session associated with this VerificationSession
-    public let walletSession: WalletSessionProtocol
-    private let networkMetadata: NetworkMetadata
-    private let networkConfig: AppliedNetworkConfig
-    
-    /// The ID of the chain used specified in [CAIP-2 format](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md)
-    public var chainId: String {
-        networkMetadata.caip2id
-    }
-    
-    private let ethereumClient: EthereumHttpClient
     
     init(walletAddress: String,
          walletSession: WalletSessionProtocol,
@@ -197,6 +149,18 @@ public class VerificationSession: Identifiable {
         let updatedUser = User(dto: result.data)
         sessionData.user = updatedUser
         return updatedUser
+        
+    }
+    
+    @discardableResult
+    private func refreshSession() async throws -> BackendSessionData {
+        
+        let result = try await ApiConnection.call(endPoint: .session,
+                                                  method: .GET,
+                                                  output: BackendSessionDataDTO.self)
+        let updatedSession = BackendSessionData(dto: result.data)
+        sessionData = updatedSession
+        return updatedSession
         
     }
     
@@ -385,7 +349,7 @@ public class VerificationSession: Identifiable {
     
     /// Use it for displaying annual membership cost to the user
     /// - Returns: The cost of membership per year
-    public func getMembershipCostPerYear() async throws -> BigUInt {
+    public func getMembershipCostPerYear() async throws -> UInt32 {
         
         guard let resolvedContractAddress = kycConfig?.address
         else {
@@ -538,7 +502,7 @@ public class VerificationSession: Identifiable {
     ///
     /// - Important: Can only be called after the user was authorized for minting with a selected image and membership duration with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``
     @discardableResult
-    public func mint() async throws -> MintingResult? {
+    public func mint() async throws -> MintingResult {
         
         print("MINTING...")
         
@@ -612,6 +576,7 @@ public class VerificationSession: Identifiable {
     /// - Parameter yearsPurchased: Number of years to purchase a membership for
     /// - Returns: The payment estimation
     public func estimatePayment(yearsPurchased: UInt32) async throws -> PaymentEstimation {
+        try await refreshSession()
         let membershipPayment = try await getRequiredMintCostForYears(yearsPurchased)
         let discountYears = sessionData.discountYears ?? 0
         

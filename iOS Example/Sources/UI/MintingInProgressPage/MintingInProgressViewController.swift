@@ -124,7 +124,7 @@ class MintingInProgressViewController: UIViewController {
                 bottomActionButton.isHidden = false
                 bottomActionButton.setTitle("Exit", for: .normal)
                 
-                guard let txURL = result?.explorerURL else {
+                guard let txURL = result.explorerURL else {
                     mintingResult = .success(nil)
                     return
                 }

@@ -29,7 +29,7 @@ extension BigUInt {
             return "\(fullUnit)," + String(repeating: "0", count: missingLeadingZeroCount) + remainderText
         }
         
-        return "\(fullUnit)"
+        return "\(fullUnit)," + remainderText
         
     }
     

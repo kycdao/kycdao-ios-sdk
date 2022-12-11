@@ -100,8 +100,8 @@ struct KYCGetSubscriptionCostPerYearUSDFunction: ABIFunction {
 }
 
 internal struct KYCGetSubscriptionCostPerYearUSDResponse: ABIResponse, MulticallDecodableResponse {
-    internal static var types: [ABIType.Type] = [ BigUInt.self ]
-    internal let value: BigUInt
+    internal static var types: [ABIType.Type] = [ UInt32.self ]
+    internal let value: UInt32
 
     internal init?(values: [ABIDecoder.DecodedValue]) throws {
         self.value = try values[0].decoded()
