@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/WalletConnect/WalletConnectSwift", .upToNextMajor(from: "1.7.0")),
-        .package(url: "https://github.com/argentlabs/web3.swift", .upToNextMajor(from: "1.3.0")),
+        .package(url: "https://github.com/argentlabs/web3.swift", .upToNextMajor(from: "1.4.0")),
         .package(url: "https://github.com/persona-id/inquiry-ios-2", .upToNextMajor(from: "2.3.0")),
         .package(url: "https://github.com/CombineCommunity/CombineExt.git", .upToNextMajor(from: "1.8.1"))
     ],
