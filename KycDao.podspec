@@ -21,11 +21,11 @@ Pod::Spec.new do |s|
 TODO: Add long description of the pod here.
                        DESC
 
-  s.homepage         = 'https://github.com/kycdao/kydcao-ios-sdk.git'
+  s.homepage         = 'https://github.com/kycdao/kycdao-ios-sdk'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'Cydie' => 'robin.vekety@gmail.com' }
-  s.source           = { :git => 'https://github.com/kycdao/kydcao-ios-sdk.git', :branch => 'main' }
+  s.source           = { :git => 'https://github.com/kycdao/kycdao-ios-sdk', :branch => 'main' }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
   s.ios.deployment_target = '13.0'
