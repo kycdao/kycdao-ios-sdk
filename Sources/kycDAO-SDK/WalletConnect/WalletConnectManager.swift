@@ -201,9 +201,9 @@ public class WalletConnectManager {
     /// If the wallet is not installed, it will launch the AppStore where the user can download it.
     /// - Parameter wallet: The selected wallet you want to connect with
     ///
-    /// - Note: This method should only be called from the **main thread**.
+    /// - Warning: This method should only be called from the **main thread**.
     ///
-    /// When a wallet in the WalletConnect registry does not have an associated *universal link*, and only provides a *deep link*, if the user does not have the selected wallet installed, this method will do nothing
+    /// When a wallet in the WalletConnect registry does not have an associated *universal link*, and only provides a *deep link*, and the user does not have the selected wallet installed, this method will do nothing
     public func connect(withWallet wallet: Wallet) throws {
         
         guard isListening else { throw KycDaoError.genericError }

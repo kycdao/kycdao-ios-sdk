@@ -348,7 +348,7 @@ public class VerificationSession: Identifiable {
     }
     
     /// Use it for displaying annual membership cost to the user
-    /// - Returns: The cost of membership per year
+    /// - Returns: The cost of membership per year in USD
     public func getMembershipCostPerYear() async throws -> UInt32 {
         
         guard let resolvedContractAddress = kycConfig?.address
