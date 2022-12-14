@@ -35,7 +35,7 @@ public protocol WalletSessionProtocol {
     ///   - walletAddress: The public address of the wallet we want to send the minting transaction with
     ///   - mintingProperties: Data that describes a transaction used for minting
     /// - Returns: The transaction hash
-    func sendMintingTransaction(walletAddress: String, mintingProperties: MintingProperties) async throws -> String
+    func sendMintingTransaction(walletAddress: String, mintingProperties: MintingProperties) async throws -> MintingTransactionResult
     
 }
 
@@ -111,7 +111,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
         return try await WalletConnectManager.shared.sign(account: walletAddress, message: message, url: wcSession.url)
     }
     
-    public func sendMintingTransaction(walletAddress: String, mintingProperties: MintingProperties) async throws -> String {
+    public func sendMintingTransaction(walletAddress: String, mintingProperties: MintingProperties) async throws -> MintingTransactionResult {
         
         let transaction =  WalletConnectSwift.Client.Transaction(from: walletAddress,
                                                                  to: mintingProperties.contractAddress,
@@ -127,11 +127,12 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
                                                                  maxFeePerGas: nil)
         
         if let wallet = self.wallet {
-            return try await WalletConnectManager.shared.sendTransaction(transaction: transaction, wallet: wallet)
+            let txHash =  try await WalletConnectManager.shared.sendTransaction(transaction: transaction, wallet: wallet)
+            return MintingTransactionResult(txHash: txHash)
         }
         
-        return try await WalletConnectManager.shared.sendTransaction(transaction: transaction, url: wcSession.url)
-        
+        let txHash = try await WalletConnectManager.shared.sendTransaction(transaction: transaction, url: wcSession.url)
+        return MintingTransactionResult(txHash: txHash)
     }
 }
 

@@ -513,26 +513,26 @@ public class VerificationSession: Identifiable {
         let mintingFunction = try kycMintingFunction(authCode: authCode)
         let mintingTransaction = try mintingFunction.transaction(value: requiredMintCost)
         let props = try await transactionProperties(forTransaction: mintingTransaction)
-        let txHash = try await walletSession.sendMintingTransaction(walletAddress: walletAddress, mintingProperties: props)
-        let receipt = try await resumeWhenTransactionFinished(txHash: txHash)
+        let txRes = try await walletSession.sendMintingTransaction(walletAddress: walletAddress, mintingProperties: props)
+        let receipt = try await resumeWhenTransactionFinished(txHash: txRes.txHash)
         
         guard let event = receipt.lookForEvent(event: ERC721Events.Transfer.self)
         else { throw KycDaoError.genericError }
         
-        let tokenDetails = try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txHash)
+        let tokenDetails = try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txRes.txHash)
         
         self.authCode = nil
         
-        guard let transactionURL = URL(string: networkMetadata.explorer.url.absoluteString + networkMetadata.explorer.transactionPath + txHash)
+        guard let transactionURL = URL(string: networkMetadata.explorer.url.absoluteString + networkMetadata.explorer.transactionPath + txRes.txHash)
         else {
             return MintingResult(explorerURL: nil,
-                                 transactionId: txHash,
+                                 transactionId: txRes.txHash,
                                  tokenId: "\(event.tokenId)",
                                  imageURL: tokenDetails.image_url?.asURL)
         }
         
         return MintingResult(explorerURL: transactionURL,
-                             transactionId: txHash,
+                             transactionId: txRes.txHash,
                              tokenId: "\(event.tokenId)",
                              imageURL: tokenDetails.image_url?.asURL)
         

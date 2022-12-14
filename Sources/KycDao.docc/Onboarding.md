@@ -95,9 +95,9 @@ The Persona identity verification process will launch a modal, which has to be a
 let status = try await verificationSession.startIdentification(fromViewController: self)
 switch status {
 case .completed:
-    //User completed Persona
+    // User completed Persona
 case .cancelled:
-    //Persona was cancelled by the user
+    // Persona was cancelled by the user
 }
 ```
 
@@ -114,10 +114,14 @@ if verificationSession.verificationStatus == .processing {
     
 } else if verificationSession.verificationStatus == .notVerified {
     
-    let identityFlow = try await verificationSession.startIdentification(fromViewController: self)
+    let result = try await verificationSession.startIdentification(fromViewController: self)
     
-    if identityFlow == .completed {
+    switch result {
+    case .completed:
         try await verificationSession.resumeOnVerificationCompleted()
+    case .cancelled:
+        // Persona was cancelled by the user
+        // Handle it gracefully, user should be able to relaunch the identification
     }
 }
 ```
