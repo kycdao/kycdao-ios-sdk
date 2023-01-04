@@ -60,11 +60,17 @@ class ApiConnection {
         print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
+            let backendError = try? JSONDecoder().decode(BackendErrorResponse.self, from: data)
+            
+            if let backendError {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .backendError(backendError))
+            } else {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .raw(data))
+            }
         }
         
         return (httpResponse, try JSONDecoder().decode(O.self, from: data))
@@ -95,11 +101,17 @@ class ApiConnection {
         print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
+            let backendError = try? JSONDecoder().decode(BackendErrorResponse.self, from: data)
+            
+            if let backendError {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .backendError(backendError))
+            } else {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .raw(data))
+            }
         }
         
         return (httpResponse, data)
@@ -123,11 +135,17 @@ class ApiConnection {
         print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
+            let backendError = try? JSONDecoder().decode(BackendErrorResponse.self, from: data)
+            
+            if let backendError {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .backendError(backendError))
+            } else {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .raw(data))
+            }
         }
         
         return (httpResponse, try JSONDecoder().decode(O.self, from: data))
@@ -151,11 +169,17 @@ class ApiConnection {
         print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KycDaoError.httpStatusCode(response: httpResponse, data: data)
+            let backendError = try? JSONDecoder().decode(BackendErrorResponse.self, from: data)
+            
+            if let backendError {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .backendError(backendError))
+            } else {
+                throw KycDaoError.urlRequestError(response: httpResponse, data: .raw(data))
+            }
         }
         
         return (httpResponse, data)

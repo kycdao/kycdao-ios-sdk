@@ -57,11 +57,11 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
             $0.chainId == chainId
         }
         
-        let mergedConfig = defaultForCurrent.map { defaultConfig -> AppliedNetworkConfig in
-            
-            let thisConfig = configuration.networkConfigs.first {
-                $0.chainId == chainId
-            }
+        let thisConfig = configuration.networkConfigs.first {
+            $0.chainId == chainId
+        }
+        
+        var mergedConfig = defaultForCurrent.map { defaultConfig -> AppliedNetworkConfig in
             
             let appliedConfig = thisConfig.map {
                 AppliedNetworkConfig(chainId: $0.chainId,
@@ -71,9 +71,13 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
             return appliedConfig ?? defaultConfig.asAppliedNetworkConfig
         }
         
+        if mergedConfig == nil, let rpc = thisConfig?.rpcURL {
+            mergedConfig = AppliedNetworkConfig(chainId: chainId, rpcURL: rpc)
+        }
+        
         guard let mergedConfig else {
-            //Replace with config error, missing default option set for selected chain, not supported by current SDK version
-            throw KycDaoError.genericError
+            // Config error, network does not have default configs in the SDK and no custom configs can be found for it
+            throw KycDaoError.missingNetworkConfiguration
         }
         
         return mergedConfig

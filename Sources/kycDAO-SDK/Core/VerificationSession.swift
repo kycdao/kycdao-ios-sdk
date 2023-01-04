@@ -76,7 +76,7 @@ public class VerificationSession: Identifiable {
             
             guard let personaStatus = apiStatus.persona
             else {
-                throw KycDaoError.genericError
+                throw KycDaoError.internal(.unknown)
             }
             
             return personaStatus
@@ -131,12 +131,23 @@ public class VerificationSession: Identifiable {
         let signatureInput = SignatureDTO(signature: signature,
                                           public_key: nil)
         
-        let result = try await ApiConnection.call(endPoint: .user,
-                                                  method: .POST,
-                                                  input: signatureInput,
-                                                  output: UserDTO.self)
-        
-        sessionData.user = User(dto: result.data)
+        do {
+            
+            let result = try await ApiConnection.call(endPoint: .user,
+                                                      method: .POST,
+                                                      input: signatureInput,
+                                                      output: UserDTO.self)
+            
+            sessionData.user = User(dto: result.data)
+            
+        } catch KycDaoError.urlRequestError(let response, data: .backendError(let backendError)) {
+            if backendError.errorCode == .userAlreadyLoggedIn {
+                throw KycDaoError.userAlreadyLoggedIn
+            }
+            throw KycDaoError.urlRequestError(response: response, data: .backendError(backendError))
+        } catch let error {
+            throw error
+        }
         
     }
     
@@ -167,24 +178,20 @@ public class VerificationSession: Identifiable {
     /// Used for signaling that the logged in user accepts kycDAO's disclaimer
     public func acceptDisclaimer() async throws {
         
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        
         do {
         
-            let _ = try await ApiConnection.call(endPoint: .disclaimer, method: .POST)
+            try await ApiConnection.call(endPoint: .disclaimer, method: .POST)
         
-        } catch KycDaoError.httpStatusCode(_, let data) {
-        
-            let serverError = try JSONDecoder().decode(BackendErrorResponse.self, from: data)
+            // Absorb .disclaimerAlreadyAccepted error and treat it as a non-error
+        } catch KycDaoError.urlRequestError(let response, .backendError(let backendError)) {
             
-            guard let errorCode = serverError.error_code else {
-                throw KycDaoError.genericError
+            guard let errorCode = backendError.errorCode,
+                  errorCode == .disclaimerAlreadyAccepted
+            else {
+                throw KycDaoError.urlRequestError(response: response, data: .backendError(backendError))
             }
-            
-            switch errorCode {
-            case .disclaimerAlreadyAccepted:
-                return
-            }
-            
-            throw KycDaoError.genericError
             
         } catch let error {
             throw error
@@ -202,7 +209,8 @@ public class VerificationSession: Identifiable {
     /// - Important: After setting personal data a confirmation email will be sent out to the user automatically
     public func setPersonalData(_ personalData: PersonalData) async throws {
         
-        //TODO: Fail if disclaimer not set, send confirm email
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
         
         let result = try await ApiConnection.call(endPoint: .user,
                                                   method: .PUT,
@@ -219,13 +227,13 @@ public class VerificationSession: Identifiable {
     public func updateEmail(_ newEmail: String) async throws {
         
         //Throw user not logged in error
-        guard user != nil else { throw KycDaoError.genericError }
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         
-        //Proper error: email can only be updated after personal data have been set up
-        guard requiredInformationProvided,
-              let residency
+        guard let residency
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.requiredInformationNotProvided
         }
         
         let personalData = PersonalData(email: newEmail,
@@ -245,11 +253,18 @@ public class VerificationSession: Identifiable {
     ///
     /// - Important: If the email address is already confirmed or an email address is not set for the user, then throws an error
     public func resendConfirmationEmail() async throws {
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
+        
         try await ApiConnection.call(endPoint: .emailConfirmation, method: .POST)
     }
     
     /// Suspends the current async task and continues execution when email address becomes confirmed.
     public func resumeOnEmailConfirmed() async throws {
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         
         var emailConfirmed = false
         
@@ -272,19 +287,21 @@ public class VerificationSession: Identifiable {
     @MainActor
     public func startIdentification(fromViewController viewController: UIViewController) async throws -> IdentityFlowResult {
         
-        //TODO: block if data needed
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         
         guard let referenceId = sessionData.user?.extId else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
-        guard requiredInformationProvided else { throw KycDaoError.genericError }
+        guard requiredInformationProvided else { throw KycDaoError.internal(.unknown) }
         
         let personaStatus = try await personaStatus
         
         guard let templateId = personaStatus.template_id
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         let environment = personaStatus.sandbox == false ? Environment.production : Environment.sandbox
@@ -320,6 +337,9 @@ public class VerificationSession: Identifiable {
     
     /// A function which awaits until the user's identity becomes successfuly verified
     public func resumeOnVerificationCompleted() async throws {
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         
         var identified = false
         
@@ -349,18 +369,31 @@ public class VerificationSession: Identifiable {
     
     /// Use it for displaying annual membership cost to the user
     /// - Returns: The cost of membership per year in USD
-    public func getMembershipCostPerYear() async throws -> UInt32 {
+    public func getMembershipCostPerYear() async throws -> String {
         
         guard let resolvedContractAddress = kycConfig?.address
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.missingContractAddress)
         }
         
         let contractAddress = EthereumAddress(resolvedContractAddress)
         let getSubscriptionCostFunction = KYCGetSubscriptionCostPerYearUSDFunction(contract: contractAddress)
-        let result = try await getSubscriptionCostFunction.call(withClient: ethereumClient, responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
+        let subscriptionCostResult = try await getSubscriptionCostFunction.call(withClient: ethereumClient,
+                                                                                responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
         
-        return result.value
+        let subscriptionCostBase = subscriptionCostResult.value
+        
+        let getSubscriptionCostDecimalsFunction = KYCGetSubscriptionCostDecimals(contract: contractAddress)
+        
+        let subscriptionCostDecimalsResult = try await getSubscriptionCostDecimalsFunction.call(withClient: ethereumClient,
+                                                                                                responseType: KYCGetSubscriptionCostDecimalsResponse.self)
+        
+        let subscriptionCostDecimals = subscriptionCostDecimalsResult.value
+        let subscriptionCostDivisor = BigUInt(integerLiteral: 10).power(subscriptionCostDecimals)
+        
+        let subscriptionCost = subscriptionCostBase.decimalText(divisor: subscriptionCostDivisor)
+        
+        return subscriptionCost
     }
     
     /// Requesting minting authorization for a selected image and membership duration
@@ -370,8 +403,13 @@ public class VerificationSession: Identifiable {
     /// You can get the list of available images from ``KycDao/VerificationSession/getNFTImages()``
     public func requestMinting(selectedImageId: String, membershipDuration: UInt32) async throws {
         
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
+        try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
+        
         guard let accountId = sessionData.user?.blockchainAccounts?.first?.id
-        else { throw KycDaoError.genericError }
+        else { throw KycDaoError.internal(.missingBlockchainAccount) }
         
         let mintAuthInput = MintRequestDTO(accountId: accountId,
                                            network: networkMetadata.id,
@@ -385,7 +423,7 @@ public class VerificationSession: Identifiable {
         let mintAuth = result.data
         
         guard let code = mintAuth.code, let txHash = mintAuth.tx_hash else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         authCode = code
@@ -417,7 +455,7 @@ public class VerificationSession: Identifiable {
             }
         }
         
-        throw KycDaoError.genericError
+        throw KycDaoError.internal(.unknown)
         
     }
     
@@ -430,7 +468,7 @@ public class VerificationSession: Identifiable {
         guard let authCodeNumber = UInt32(authCode),
               let resolvedContractAddress = kycConfig?.address
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         let contractAddress = EthereumAddress(resolvedContractAddress)
@@ -448,7 +486,7 @@ public class VerificationSession: Identifiable {
         guard let authCodeNumber = UInt32(authCode),
               let resolvedContractAddress = kycConfig?.address
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         let contractAddress = EthereumAddress(resolvedContractAddress)
@@ -478,7 +516,7 @@ public class VerificationSession: Identifiable {
         //Would be nice: throw different error for less than 1 year
         guard let resolvedContractAddress = kycConfig?.address, years >= 1
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         let discountYears = sessionData.discountYears ?? 0
@@ -493,7 +531,6 @@ public class VerificationSession: Identifiable {
                                                                    responseType: KYCGetRequiredMintCostForSecondsResponse.self)
         
         return result.value
-        
     }
     
     
@@ -503,6 +540,11 @@ public class VerificationSession: Identifiable {
     /// - Important: Can only be called after the user was authorized for minting with a selected image and membership duration with ``VerificationSession/requestMinting(selectedImageId:membershipDuration:)``
     @discardableResult
     public func mint() async throws -> MintingResult {
+        
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
+        try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
         
         print("MINTING...")
         
@@ -517,7 +559,7 @@ public class VerificationSession: Identifiable {
         let receipt = try await resumeWhenTransactionFinished(txHash: txRes.txHash)
         
         guard let event = receipt.lookForEvent(event: ERC721Events.Transfer.self)
-        else { throw KycDaoError.genericError }
+        else { throw KycDaoError.internal(.unknown) }
         
         let tokenDetails = try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txRes.txHash)
         
@@ -543,7 +585,7 @@ public class VerificationSession: Identifiable {
         let estimation = try await estimateGas(forTransaction: transaction)
         guard let transactionData = transaction.data?.web3.hexString
         else {
-            throw KycDaoError.genericError
+            throw KycDaoError.internal(.unknown)
         }
         
         return MintingProperties(contractAddress: transaction.to.value,
@@ -558,6 +600,11 @@ public class VerificationSession: Identifiable {
     /// - Returns: The price estimation
     /// - Warning: Only call this function after you requested minting by calling ``KycDao/VerificationSession/requestMinting(selectedImageId:membershipDuration:)`` at some point, otherwise you will receive a ``KycDaoError/unauthorizedMinting`` error
     public func getMintingPrice() async throws -> PriceEstimation {
+        
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
+        try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
         
         guard let authCode = authCode
         else { throw KycDaoError.unauthorizedMinting }
@@ -576,6 +623,12 @@ public class VerificationSession: Identifiable {
     /// - Parameter yearsPurchased: Number of years to purchase a membership for
     /// - Returns: The payment estimation
     public func estimatePayment(yearsPurchased: UInt32) async throws -> PaymentEstimation {
+        
+        try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
+        try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
+        try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
+        try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
+        
         try await refreshSession()
         let membershipPayment = try await getRequiredMintCostForYears(yearsPurchased)
         let discountYears = sessionData.discountYears ?? 0

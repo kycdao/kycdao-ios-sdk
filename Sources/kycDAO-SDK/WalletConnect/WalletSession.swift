@@ -82,7 +82,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
     
     internal init(session: WalletConnectSwift.Session, wallet: Wallet?) throws {
         
-        guard let walletInfo = session.walletInfo else { throw KycDaoError.walletConnect(.sessionFailed) }
+        guard let walletInfo = session.walletInfo else { throw WalletConnectError.sessionFailed }
         
         let caip2Id = "eip155:\(walletInfo.chainId)"
         
@@ -94,7 +94,7 @@ public class WalletConnectSession: Codable, Identifiable, WalletSessionProtocol 
     
     internal func updateSession(_ session: WCSession) throws {
         
-        guard let walletInfo = session.walletInfo else { throw KycDaoError.walletConnect(.sessionFailed) }
+        guard let walletInfo = session.walletInfo else { throw WalletConnectError.sessionFailed }
         let caip2Id = "eip155:\(walletInfo.chainId)"
         
         self.wcSession = session

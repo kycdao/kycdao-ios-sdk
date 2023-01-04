@@ -49,7 +49,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
                 
                 nftImages = verificationSession.getNFTImages()
                 
-                guard nftImages.count >= 3 else { throw KycDaoError.genericError }
+                guard nftImages.count >= 3 else { throw KycDaoError.internal(.unknown) }
                 
                 let nftImage1 = nftImages[0]
                 let nftImage2 = nftImages[1]
