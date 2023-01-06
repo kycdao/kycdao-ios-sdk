@@ -513,7 +513,6 @@ public class VerificationSession: Identifiable {
     
     private func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
         
-        //Would be nice: throw different error for less than 1 year
         guard let resolvedContractAddress = kycConfig?.address, years >= 1
         else {
             throw KycDaoError.internal(.unknown)

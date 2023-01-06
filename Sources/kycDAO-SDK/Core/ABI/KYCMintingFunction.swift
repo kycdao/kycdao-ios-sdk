@@ -211,7 +211,7 @@ struct KYCGetSubscriptionCostDecimals: ABIFunction {
     
 }
 
-public struct KYCGetSubscriptionCostDecimalsResponse: ABIResponse, MulticallDecodableResponse {
+internal struct KYCGetSubscriptionCostDecimalsResponse: ABIResponse, MulticallDecodableResponse {
     public static var types: [ABIType.Type] = [ BigUInt.self ]
     public let value: Int
     
