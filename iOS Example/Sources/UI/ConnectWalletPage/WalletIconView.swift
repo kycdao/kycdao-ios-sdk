@@ -11,7 +11,7 @@ import UIKit
 class WalletIconView : UIImageView {
     override var image: UIImage? {
         didSet {
-            if let image = image {
+            if image != nil {
                 backgroundColor = nil
             } else {
                 backgroundColor = .systemGray

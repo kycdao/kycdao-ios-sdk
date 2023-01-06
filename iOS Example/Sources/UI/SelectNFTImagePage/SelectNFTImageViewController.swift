@@ -22,6 +22,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
     let scrollView = UIScrollView()
     let scrollContentView = UIView()
     let selectNFTButton = SimpleButton()
+    let refreshImagesButton = SimpleButton(style: .outline)
     
     private var walletSession: WalletConnectSession
     private var verificationSession: VerificationSession
@@ -44,10 +45,12 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.delegate = self
         
-        Task { @MainActor in
+        Task {
             do {
                 
-                nftImages = verificationSession.getNFTImages()
+                nftImages = try await verificationSession.getNFTImages()
+                    .prefix(upTo: 3)
+                    .asArray
                 
                 guard nftImages.count >= 3 else { throw KycDaoError.internal(.unknown) }
                 
@@ -93,6 +96,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
         scrollContentView.addSubview(svgWebView2)
         scrollContentView.addSubview(svgWebView3)
         containerView.addSubview(selectNFTButton)
+        containerView.addSubview(refreshImagesButton)
         
         containerView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -103,6 +107,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
         svgWebView3.translatesAutoresizingMaskIntoConstraints = false
         imageTitle.translatesAutoresizingMaskIntoConstraints = false
         selectNFTButton.translatesAutoresizingMaskIntoConstraints = false
+        refreshImagesButton.translatesAutoresizingMaskIntoConstraints = false
         
         let spacingQuarter = (UIScreen.main.bounds.width - UIScreen.main.bounds.width * 0.8) / 4
         let spacingSixteenth = (UIScreen.main.bounds.width - UIScreen.main.bounds.width * 0.8) / 16
@@ -159,13 +164,23 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
             selectNFTButton.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor),
             selectNFTButton.heightAnchor.constraint(equalToConstant: 40),
             selectNFTButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
-            selectNFTButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            
+            refreshImagesButton.topAnchor.constraint(equalTo: selectNFTButton.bottomAnchor, constant: 16),
+            refreshImagesButton.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            refreshImagesButton.leadingAnchor.constraint(greaterThanOrEqualTo: containerView.leadingAnchor),
+            refreshImagesButton.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor),
+            refreshImagesButton.heightAnchor.constraint(equalToConstant: 40),
+            refreshImagesButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
+            refreshImagesButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
         
         imageTitle.text = "Choose your kycNFT"
         
         selectNFTButton.setTitle("Select", for: .normal)
         selectNFTButton.addTarget(self, action: #selector(selectNFTTap(_:)), for: .touchUpInside)
+        
+        refreshImagesButton.setTitle("Regenerate images", for: .normal)
+        refreshImagesButton.addTarget(self, action: #selector(regenerateImagesTap(_:)), for: .touchUpInside)
         
         pageControl.addTarget(self, action: #selector(changePage), for: .valueChanged)
         pageControl.transform = CGAffineTransform(scaleX: 2, y: 2)
@@ -176,9 +191,7 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
     }
     
     @objc func selectNFTTap(_ sender: Any) {
-        
         Task {
-            
             if nftImages.count >= pageControl.currentPage {
                 let selectedImage = nftImages[pageControl.currentPage]
                 Page.currentPage.send(.authorizeMinting(walletSession: walletSession,
@@ -186,6 +199,27 @@ class SelectNFTImageViewController: UIViewController, UIScrollViewDelegate {
                                                         selectedImage: selectedImage,
                                                         membershipDuration: membershipDuration))
             }
+        }
+    }
+    
+    @objc func regenerateImagesTap(_ sender: Any) {
+        
+        Task {
+            
+            nftImages = try await verificationSession.regenerateNFTImages()
+                .prefix(upTo: 3)
+                .asArray
+            
+            guard nftImages.count >= 3 else { throw KycDaoError.internal(.unknown) }
+            
+            let nftImage1 = nftImages[0]
+            let nftImage2 = nftImages[1]
+            let nftImage3 = nftImages[2]
+            
+            // UI unresponsiveness warnings should be ignored, as this is a bug https://developer.apple.com/forums/thread/714467?answerId=734799022#734799022
+            svgWebView1.setImageURL(imageURL: nftImage1.url)
+            svgWebView2.setImageURL(imageURL: nftImage2.url)
+            svgWebView3.setImageURL(imageURL: nftImage3.url)
             
         }
         

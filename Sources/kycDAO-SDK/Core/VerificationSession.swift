@@ -360,11 +360,27 @@ public class VerificationSession: Identifiable {
     
     /// Provides the selectable kycNFT images
     /// - Returns: A list of image related data
-    public func getNFTImages() -> [TokenImage] {
+    public func getNFTImages() async throws -> [TokenImage] {
         print(sessionData.user?.availableImages ?? [:])
         
         return sessionData.user?.availableImages
-            .filter { $0.imageType == .identicon } ?? []
+            .filter { $0.imageType == .identicon }
+            .sorted(by: { $0.id > $1.id }) ?? []
+        
+    }
+    
+    public func regenerateNFTImages() async throws -> [TokenImage] {
+        print(sessionData.user?.availableImages ?? [:])
+        
+//        let icons = try await ApiConnection.call(endPoint: .identicon, method: .GET, output: String.self)
+//        print("icons ", icons)
+        
+        try await ApiConnection.call(endPoint: .identicon, method: .POST)
+        try await refreshUser()
+        
+        return sessionData.user?.availableImages
+            .filter { $0.imageType == .identicon }
+            .sorted(by: { $0.id > $1.id }) ?? []
         
     }
     

@@ -167,22 +167,22 @@ class ConfirmEmailViewController : UIViewController, UITextFieldDelegate {
         
         activityIndicator.startAnimating()
         
-//        Task {
-//            try await verificationSession.resumeOnEmailConfirmed()
-//            
-//            switch verificationSession.verificationStatus {
-//            case .verified:
-//                if verificationSession.hasMembership {
-//                    Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession, membershipDuration: 0))
-//                } else {
-//                    Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
-//                }
-//            case .processing:
-//                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
-//            case .notVerified:
-//                Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
-//            }
-//        }
+        Task {
+            try await verificationSession.resumeOnEmailConfirmed()
+            
+            switch verificationSession.verificationStatus {
+            case .verified:
+                if verificationSession.hasMembership {
+                    Page.currentPage.send(.selectNFTImage(walletSession: walletSession, verificationSession: verificationSession, membershipDuration: 0))
+                } else {
+                    Page.currentPage.send(.selectMembership(walletSession: walletSession, verificationSession: verificationSession))
+                }
+            case .processing:
+                Page.currentPage.send(.personaCompletePage(walletSession: walletSession, verificationSession: verificationSession))
+            case .notVerified:
+                Page.currentPage.send(.personaVerification(walletSession: walletSession, verificationSession: verificationSession))
+            }
+        }
     }
     
     @objc func resendEmailTap(_ sender: Any) {

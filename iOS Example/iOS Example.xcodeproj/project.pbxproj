@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BE2CC06129684D4700C5F022 /* ArraySlice.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE2CC06029684D4700C5F022 /* ArraySlice.swift */; };
 		BE314BA629400D7600B54249 /* KycDaoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9D29400CD000B54249 /* KycDaoViewController.swift */; };
 		BE314BA729400D7B00B54249 /* StartMintingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9C29400CD000B54249 /* StartMintingViewController.swift */; };
 		BE314BA829400D7E00B54249 /* MintNFTViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9A29400CD000B54249 /* MintNFTViewController.swift */; };
@@ -38,6 +39,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BE2CC06029684D4700C5F022 /* ArraySlice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArraySlice.swift; sourceTree = "<group>"; };
 		BE314B8929400CD000B54249 /* PersonaViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaViewController.swift; sourceTree = "<group>"; };
 		BE314B8B29400CD000B54249 /* SelectAccountViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectAccountViewController.swift; sourceTree = "<group>"; };
 		BE314B8D29400CD000B54249 /* ConnectWalletViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWalletViewController.swift; sourceTree = "<group>"; };
@@ -214,6 +216,7 @@
 		BE314BB729400E9700B54249 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				BE2CC06029684D4700C5F022 /* ArraySlice.swift */,
 				BE314BB829400EA900B54249 /* UIButton.swift */,
 				BE314BBC29400FD300B54249 /* Collection.swift */,
 				BE314BBE2940105000B54249 /* NSMutableAttributedString.swift */,
@@ -351,6 +354,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE2CC06129684D4700C5F022 /* ArraySlice.swift in Sources */,
 				BE314BAB29400D8A00B54249 /* NFTPreviewImage.swift in Sources */,
 				BE314BAE29400D9C00B54249 /* PersonaViewController.swift in Sources */,
 				BE314BB629400DAC00B54249 /* SelectMembershipViewController.swift in Sources */,

@@ -48,6 +48,7 @@ class NFTPreviewImage: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    @MainActor
     func setImageURL(imageURL: URL?) {
         
         guard let imageURL = imageURL else {
