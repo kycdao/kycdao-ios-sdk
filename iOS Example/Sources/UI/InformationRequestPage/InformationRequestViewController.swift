@@ -172,7 +172,7 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
             continueButton.topAnchor.constraint(greaterThanOrEqualTo: disclaimerAcceptance.bottomAnchor, constant: 20)
         ])
         
-        emailField.placeholder = "Email Address"
+        emailField.placeholder = "Email address"
         emailField.keyboardType = .emailAddress
         
         residencyField.placeholder = "Residency"

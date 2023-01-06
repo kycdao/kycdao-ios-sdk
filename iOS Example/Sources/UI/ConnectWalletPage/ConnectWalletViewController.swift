@@ -250,9 +250,8 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
                 
                 do {
                     
-                    let verificationSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
-                    Page.currentPage.send(.createSignature(walletSession: walletSession, verificationSession: verificationSession))
-                    return
+                    let verificationSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount,
+                                                                                                 walletSession: walletSession)
                     
                     if verificationSession.loggedIn {
                         

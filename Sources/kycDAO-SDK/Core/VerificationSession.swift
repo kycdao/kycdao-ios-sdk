@@ -40,6 +40,8 @@ public class VerificationSession: Identifiable {
     public var requiredInformationProvided: Bool {
         residencyProvided && emailProvided && user?.legalEntity != nil
     }
+    /// Email address of the user
+    public var emailAddress: String? { user?.email }
     
     /// The membership status of the user
     ///
@@ -64,7 +66,6 @@ public class VerificationSession: Identifiable {
     //Derived internal
     private var loginProof: String { "kycDAO-login-\(sessionData.nonce)" }
     private var user: User? { sessionData.user }
-    private var emailAddress: String? { user?.email }
     private var residency: String? { user?.residency }
     private var isLegalEntity: Bool? { user?.legalEntity }
     private var residencyProvided: Bool { residency?.isEmpty == false }
@@ -251,7 +252,7 @@ public class VerificationSession: Identifiable {
     ///
     /// Initial confirmation email is sent out automatically after setting or updating email address
     ///
-    /// - Important: If the email address is already confirmed or an email address is not set for the user, then throws an error
+    /// - Important: If the email address is already confirmed or an email is not set for the user, then throws an error
     public func resendConfirmationEmail() async throws {
         try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
         try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
