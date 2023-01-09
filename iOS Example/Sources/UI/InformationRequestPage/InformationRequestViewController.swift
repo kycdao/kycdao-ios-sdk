@@ -9,15 +9,20 @@ import Foundation
 import UIKit
 import Combine
 import KycDao
+import SafariServices
 
 struct Country {
     let isoCode: String
     let name: String
 }
 
+// By starting the verification you accept Privacy Policy and Terms & Conditions.
+
 class InformationRequestViewController : UIViewController, UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate, UIGestureRecognizerDelegate {
     
     private var disposeBag = Set<AnyCancellable>()
+    private let privacyPolicy = "Privacy Policy"
+    private let tos = "Terms & Conditions"
     
     private var walletSession: WalletConnectSession
     private var verificationSession: VerificationSession
@@ -40,6 +45,9 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
     let residencyField = UITextField()
     let residencySeparator = UIView()
     let legalEntityStatusCheck = UIButton()
+    let disclaimerTitle = UILabel()
+    let disclaimerText = UITextView()
+    let tosAndPpText = UILabel()
     let disclaimerAcceptance = UIButton()
     let continueButton = SimpleButton()
     
@@ -104,6 +112,15 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         legalEntityStatusCheck.setTitleColor(.secondaryLabel, for: .normal)
         legalEntityStatusCheck.titleLabel?.font = .systemFont(ofSize: 15)
         
+        disclaimerTitle.font = .systemFont(ofSize: 18, weight: .semibold)
+        disclaimerTitle.textAlignment = .center
+        
+        disclaimerText.font = .systemFont(ofSize: 13)
+        
+        tosAndPpText.font = .systemFont(ofSize: 15)
+        tosAndPpText.numberOfLines = 0
+        tosAndPpText.lineBreakMode = .byWordWrapping
+        
         let iconSizeConfig = UIImage.SymbolConfiguration(pointSize: 24)
         
         let notSelectedImage = UIImage(systemName: "circle",
@@ -127,6 +144,9 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         view.addSubview(residencyField)
         view.addSubview(residencySeparator)
         view.addSubview(legalEntityStatusCheck)
+        view.addSubview(disclaimerTitle)
+        view.addSubview(disclaimerText)
+        view.addSubview(tosAndPpText)
         view.addSubview(disclaimerAcceptance)
         view.addSubview(continueButton)
         
@@ -135,6 +155,9 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         residencyField.translatesAutoresizingMaskIntoConstraints = false
         residencySeparator.translatesAutoresizingMaskIntoConstraints = false
         legalEntityStatusCheck.translatesAutoresizingMaskIntoConstraints = false
+        disclaimerTitle.translatesAutoresizingMaskIntoConstraints = false
+        disclaimerText.translatesAutoresizingMaskIntoConstraints = false
+        tosAndPpText.translatesAutoresizingMaskIntoConstraints = false
         disclaimerAcceptance.translatesAutoresizingMaskIntoConstraints = false
         continueButton.translatesAutoresizingMaskIntoConstraints = false
         
@@ -160,6 +183,21 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
             legalEntityStatusCheck.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             legalEntityStatusCheck.topAnchor.constraint(equalTo: residencySeparator.bottomAnchor, constant: 26),
             
+            disclaimerTitle.topAnchor.constraint(equalTo: legalEntityStatusCheck.bottomAnchor, constant: 16),
+            disclaimerTitle.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
+            disclaimerTitle.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
+            disclaimerTitle.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            disclaimerText.topAnchor.constraint(equalTo: disclaimerTitle.bottomAnchor, constant: 4),
+            disclaimerText.bottomAnchor.constraint(equalTo: tosAndPpText.topAnchor, constant: -16),
+            disclaimerText.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 14),
+            disclaimerText.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -14),
+            
+            tosAndPpText.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            tosAndPpText.bottomAnchor.constraint(equalTo: disclaimerAcceptance.topAnchor, constant: -16),
+            tosAndPpText.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            tosAndPpText.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
             disclaimerAcceptance.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             disclaimerAcceptance.bottomAnchor.constraint(equalTo: continueButton.topAnchor, constant: -16),
             
@@ -184,6 +222,22 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         legalEntityStatusCheck.addTarget(self, action: #selector(legalEntityCheckTap(_:)), for: .touchUpInside)
         disclaimerAcceptance.addTarget(self, action: #selector(disclaimerAcceptanceTap(_:)), for: .touchUpInside)
         continueButton.addTarget(self, action: #selector(continueTap(_:)), for: .touchUpInside)
+        
+        let text = "By starting the verification you accept \(privacyPolicy) and \(tos)."
+        let privacyPolicyRange = (text as NSString).range(of: privacyPolicy)
+        let tosRange = (text as NSString).range(of: tos)
+        let attributedString = NSMutableAttributedString(attributedString: NSAttributedString(string: text))
+        attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: privacyPolicyRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor.systemBlue, range: tosRange)
+        
+        tosAndPpText.attributedText = attributedString
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ppOrTosTap))
+        tosAndPpText.addGestureRecognizer(tapGesture)
+        tosAndPpText.isUserInteractionEnabled = true
+        
+        disclaimerTitle.text = "Disclaimer"
+        disclaimerText.text = verificationSession.disclaimerText
         
     }
     
@@ -217,6 +271,23 @@ class InformationRequestViewController : UIViewController, UIPickerViewDelegate,
         }
         
     }
+    
+    @objc func ppOrTosTap(gesture: UITapGestureRecognizer) {
+            
+            if gesture.didTapAttributedString(privacyPolicy, in: tosAndPpText) {
+                
+                let safariVC = SFSafariViewController(url: verificationSession.privacyPolicy)
+                safariVC.modalPresentationStyle = .currentContext
+                self.present(safariVC, animated: true)
+                
+            } else if gesture.didTapAttributedString(tos, in: tosAndPpText) {
+                
+                let safariVC = SFSafariViewController(url: verificationSession.termsOfService)
+                safariVC.modalPresentationStyle = .currentContext
+                self.present(safariVC, animated: true)
+                
+            }
+        }
     
     func checkCompletion() {
         

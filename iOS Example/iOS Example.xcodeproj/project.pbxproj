@@ -34,6 +34,7 @@
 		BE4844F9285C976800B3A6F7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844F8285C976800B3A6F7 /* AppDelegate.swift */; };
 		BE4844FB285C977C00B3A6F7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */; };
 		BE4844FE285C9A2A00B3A6F7 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844FD285C9A2A00B3A6F7 /* MainViewController.swift */; };
+		BE52F91929686B9B004440D1 /* UITapGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE52F91829686B9B004440D1 /* UITapGestureRecognizer.swift */; };
 		D95C08BC277D8AA20016A10F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D95C08BB277D8AA20016A10F /* Assets.xcassets */; };
 		D95C08BF277D8AA20016A10F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D95C08BE277D8AA20016A10F /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -66,6 +67,7 @@
 		BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		BE4844FC285C97E000B3A6F7 /* iOS-Example-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "iOS-Example-Info.plist"; sourceTree = "<group>"; };
 		BE4844FD285C9A2A00B3A6F7 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		BE52F91829686B9B004440D1 /* UITapGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITapGestureRecognizer.swift; sourceTree = "<group>"; };
 		D95C08B4277D8AA00016A10F /* iOS Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D95C08BB277D8AA20016A10F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D95C08BE277D8AA20016A10F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -221,6 +223,7 @@
 				BE314BBC29400FD300B54249 /* Collection.swift */,
 				BE314BBE2940105000B54249 /* NSMutableAttributedString.swift */,
 				BE314BC02940106D00B54249 /* String.swift */,
+				BE52F91829686B9B004440D1 /* UITapGestureRecognizer.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -354,6 +357,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE52F91929686B9B004440D1 /* UITapGestureRecognizer.swift in Sources */,
 				BE2CC06129684D4700C5F022 /* ArraySlice.swift in Sources */,
 				BE314BAB29400D8A00B54249 /* NFTPreviewImage.swift in Sources */,
 				BE314BAE29400D9C00B54249 /* PersonaViewController.swift in Sources */,
