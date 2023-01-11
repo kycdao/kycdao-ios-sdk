@@ -52,12 +52,8 @@ class ApiConnection {
         
         request.httpBody = try JSONEncoder().encode(input)
         
-        print(request.cURL())
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        print(response)
-        let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
+//        let responseString = String(data: data, encoding: .utf8)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.internal(.unknown)
@@ -92,13 +88,8 @@ class ApiConnection {
         ]
         
         request.httpBody = try JSONEncoder().encode(input)
-        
-        print(request.cURL())
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        print(response)
-        let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
+//        let responseString = String(data: data, encoding: .utf8)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.internal(.unknown)
@@ -127,12 +118,8 @@ class ApiConnection {
         var request = URLRequest(url: URL(string: baseURL + endPoint.rawValue)!)
         request.httpMethod = method.rawValue
         
-        print(request.cURL())
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        print(response)
-        let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
+//        let responseString = String(data: data, encoding: .utf8)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.internal(.unknown)
@@ -160,13 +147,8 @@ class ApiConnection {
         
         var request = URLRequest(url: URL(string: baseURL + endPoint.rawValue)!)
         request.httpMethod = method.rawValue
-        
-        print(request.cURL())
         let (data, response) = try await URLSession.shared.data(for: request)
-        
-        print(response)
-        let responseString = String(data: data, encoding: .utf8)
-        print("KYC \(endPoint.rawValue) \(method.rawValue) result: \(responseString ?? "")")
+//        let responseString = String(data: data, encoding: .utf8)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KycDaoError.internal(.unknown)

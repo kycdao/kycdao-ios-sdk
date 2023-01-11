@@ -51,19 +51,20 @@ public class VerificationSession: Identifiable {
         return expiry.timeIntervalSinceReferenceDate > Date().timeIntervalSinceReferenceDate
     }
     
-    private var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
-    private var sessionData: BackendSessionData
-    private let networkMetadata: NetworkMetadata
+    internal var sessionData: BackendSessionData
+    internal let networkMetadata: NetworkMetadata
+    internal let ethereumClient: EthereumHttpClient
+    internal var kycConfig: SmartContractConfig?
+    internal var accreditedConfig: SmartContractConfig?
+    internal var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
+    
     private let networkConfig: AppliedNetworkConfig
-    private let ethereumClient: EthereumHttpClient
-    private var kycConfig: SmartContractConfig?
-    private var accreditedConfig: SmartContractConfig?
     
     //Internal state
+    internal var personaSessionData: PersonaSessionData?
     private var authCode: String?
-    private var personaSessionData: PersonaSessionData?
     
-    //Derived internal
+    //Derived internal data
     private var loginProof: String { "kycDAO-login-\(sessionData.nonce)" }
     private var user: User? { sessionData.user }
     private var residency: String? { user?.residency }
@@ -149,30 +150,6 @@ public class VerificationSession: Identifiable {
         } catch let error {
             throw error
         }
-        
-    }
-    
-    @discardableResult
-    private func refreshUser() async throws -> User {
-        
-        let result = try await ApiConnection.call(endPoint: .user,
-                                                  method: .GET,
-                                                  output: UserDTO.self)
-        let updatedUser = User(dto: result.data)
-        sessionData.user = updatedUser
-        return updatedUser
-        
-    }
-    
-    @discardableResult
-    private func refreshSession() async throws -> BackendSessionData {
-        
-        let result = try await ApiConnection.call(endPoint: .session,
-                                                  method: .GET,
-                                                  output: BackendSessionDataDTO.self)
-        let updatedSession = BackendSessionData(dto: result.data)
-        sessionData = updatedSession
-        return updatedSession
         
     }
     
@@ -357,10 +334,9 @@ public class VerificationSession: Identifiable {
         }
     }
     
-    /// Provides the selectable kycNFT images
+    /// Provides the available kycNFT images the user can choose from
     /// - Returns: A list of image related data
     public func getNFTImages() async throws -> [TokenImage] {
-        print(sessionData.user?.availableImages ?? [:])
         
         return sessionData.user?.availableImages
             .filter { $0.imageType == .identicon }
@@ -368,11 +344,9 @@ public class VerificationSession: Identifiable {
         
     }
     
+    /// Regenerates and returns the available NFT images the user can choose from
+    /// - Returns: A list of image related data
     public func regenerateNFTImages() async throws -> [TokenImage] {
-        print(sessionData.user?.availableImages ?? [:])
-        
-//        let icons = try await ApiConnection.call(endPoint: .identicon, method: .GET, output: String.self)
-//        print("icons ", icons)
         
         try await ApiConnection.call(endPoint: .identicon, method: .POST)
         try await refreshUser()
@@ -448,106 +422,6 @@ public class VerificationSession: Identifiable {
         
     }
     
-    @discardableResult
-    func resumeWhenTransactionFinished(txHash: String) async throws -> EthereumTransactionReceipt {
-        
-        let transactionStatus: EthereumTransactionReceiptStatus = .notProcessed
-        
-        while transactionStatus != .success {
-            
-            // Delay the task by 1 second
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            
-            do {
-                
-                let receipt = try await getTransactionReceipt(txHash: txHash)
-                print("receipt \(receipt)")
-                return receipt
-                
-            } catch EthereumClientError.unexpectedReturnValue {
-                continue
-            } catch let error {
-                throw error
-            }
-        }
-        
-        throw KycDaoError.internal(.unknown)
-        
-    }
-    
-    func getTransactionReceipt(txHash: String) async throws -> EthereumTransactionReceipt {
-        return try await ethereumClient.eth_getTransactionReceipt(txHash: txHash)
-    }
-    
-    func kycMintingFunction(authCode: String) throws -> KYCMintingFunction {
-        
-        guard let authCodeNumber = UInt32(authCode),
-              let resolvedContractAddress = kycConfig?.address
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
-        
-        let contractAddress = EthereumAddress(resolvedContractAddress)
-        let ethWalletAddress = EthereumAddress(walletAddress)
-        
-        return KYCMintingFunction(contract: contractAddress,
-                                  authCode: authCodeNumber,
-                                  from: ethWalletAddress,
-                                  gasPrice: nil,
-                                  gasLimit: nil)
-    }
-    
-    private func getRawRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
-        
-        guard let authCodeNumber = UInt32(authCode),
-              let resolvedContractAddress = kycConfig?.address
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
-        
-        let contractAddress = EthereumAddress(resolvedContractAddress)
-        let ethWalletAddress = EthereumAddress(walletAddress)
-        let getRequiredMintingCostFunction = KYCGetRequiredMintCostForCodeFunction(contract: contractAddress,
-                                                                                    authCode: authCodeNumber,
-                                                                                    destination: ethWalletAddress)
-        
-        let result = try await getRequiredMintingCostFunction.call(withClient: ethereumClient,
-                                                                   responseType: KYCGetRequiredMintCostForCodeResponse.self)
-        
-        return result.value
-    }
-    
-    private func getRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
-        let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
-        
-        //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
-        let result = mintingCost.quotientAndRemainder(dividingBy: 10)
-        let slippage = result.quotient
-        
-        return mintingCost + slippage
-    }
-    
-    private func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
-        
-        guard let resolvedContractAddress = kycConfig?.address, years >= 1
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
-        
-        let discountYears = sessionData.discountYears ?? 0
-        let yearsToPayFor = years - discountYears
-        let yearsInSeconds = yearsToPayFor * 365 * 24 * 60 * 60
-        
-        let contractAddress = EthereumAddress(resolvedContractAddress)
-        let getRequiredMintingCostFunction = KYCGetRequiredMintCostForSecondsFunction(contract: contractAddress,
-                                                                                      seconds: yearsInSeconds)
-        
-        let result = try await getRequiredMintingCostFunction.call(withClient: ethereumClient,
-                                                                   responseType: KYCGetRequiredMintCostForSecondsResponse.self)
-        
-        return result.value
-    }
-    
     
     /// Used for minting the kycNFT
     /// - Returns: Successful minting related data
@@ -595,22 +469,6 @@ public class VerificationSession: Identifiable {
         
     }
     
-    func transactionProperties(forTransaction transaction: EthereumTransaction) async throws -> MintingProperties {
-        
-        let estimation = try await estimateGas(forTransaction: transaction)
-        guard let transactionData = transaction.data?.web3.hexString
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
-        
-        return MintingProperties(contractAddress: transaction.to.value,
-                                 contractABI: transactionData,
-                                 gasAmount: estimation.amount.web3.hexString,
-                                 gasPrice: estimation.price.web3.hexString,
-                                 paymentAmount: transaction.value == 0 ? nil : transaction.value?.web3.hexString)
-        
-    }
-    
     /// Use it for estimating minting price, including gas fees and payment for membership
     /// - Returns: The price estimation
     /// - Warning: Only call this function after you requested minting by calling ``KycDao/VerificationSession/requestMinting(selectedImageId:membershipDuration:)`` at some point, otherwise you will receive a ``KycDaoError/unauthorizedMinting`` error
@@ -651,74 +509,6 @@ public class VerificationSession: Identifiable {
         return PaymentEstimation(paymentAmount: membershipPayment,
                                  discountYears: discountYears,
                                  currency: networkMetadata.nativeCurrency)
-    }
-    
-    func estimateGas(forTransaction transaction: EthereumTransaction) async throws -> GasEstimation {
-            
-        //price in wei
-        let ethGasPrice = try await ethereumClient.eth_gasPrice()
-        let minGasPrice = BigUInt(50).gwei
-        let price = max(ethGasPrice, minGasPrice)
-        
-        print("ethGasPrice \(ethGasPrice)")
-        print("minGasPrice \(minGasPrice)")
-        print("price \(price)")
-        
-        let amount = try await ethereumClient.eth_estimateGas(transaction)
-        
-        print("amount: \(amount)")
-        
-        let estimation = GasEstimation(gasCurrency: networkMetadata.nativeCurrency,
-                                       amount: amount,
-                                       price: ethGasPrice)
-        
-        print("fee: \(estimation.fee)")
-        
-        return estimation
-    }
-    
-    func tokenMinted(authCode: String, tokenId: String, txHash: String) async throws -> TokenDetailsDTO {
-        
-        let mintResultInput = MintResultUploadDTO(authCode: authCode,
-                                                  tokenId: tokenId,
-                                                  txHash: txHash)
-        
-        let result = try await ApiConnection.call(endPoint: .token,
-                                                  method: .POST,
-                                                  input: mintResultInput,
-                                                  output: TokenDetailsDTO.self)
-        
-        return result.data
-        
-    }
-    
-}
-
-extension VerificationSession: InquiryDelegate {
-    
-    public func inquiryComplete(inquiryId: String, status: String, fields: [String : InquiryField]) {
-        print("Persona completed")
-        personaSessionData = nil
-        identificationContinuation?.resume(returning: .completed)
-        identificationContinuation = nil
-    }
-    
-    public func inquiryCanceled(inquiryId: String?, sessionToken: String?) {
-        print("Persona canceled")
-        
-        if let inquiryId, let sessionToken, let referenceId = sessionData.user?.extId {
-            personaSessionData = PersonaSessionData(referenceId: referenceId, inquiryId: inquiryId, sessionToken: sessionToken)
-        }
-        
-        identificationContinuation?.resume(returning: .cancelled)
-        identificationContinuation = nil
-    }
-    
-    public func inquiryError(_ error: Error) {
-        print("Inquiry error")
-        personaSessionData = nil
-        identificationContinuation?.resume(throwing: KycDaoError.persona(error))
-        identificationContinuation = nil
     }
     
 }

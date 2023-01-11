@@ -51,7 +51,7 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
     }
     
     internal static var networkConfigs: [AppliedNetworkConfig] {
-        var appliedDefault = Set(
+        let appliedDefault = Set(
             DefaultNetworkConfig.allCases.map {
                 AppliedNetworkConfig(chainId: $0.chainId, rpcURL: $0.rpcURL)
             }
@@ -239,12 +239,12 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
         
     }
     
-    /// Checks on-chain whether the wallet has a valid token for the verification type
+    /// Checks the verification status on all the available Ethereum networks
+    /// An Ethereum network is available to use if the SDK has config for it by default or one is provided by setting it with ``NetworkConfig`` manually, AND kycDAO has a smart contract deployed on the given network.
     /// - Parameters:
     ///   - verificationType: The type of verification we want to find a valid token for
     ///   - walletAddress: The address of the wallet the token belongs to
-    ///   - chainId: [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain id of the network to use
-    /// - Returns: True, when the wallet has a valid token for the selected verification type on the given network
+    /// - Returns: A dictionary of verification statuses (`Bool`) keyed by [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain ids as `String`s for all the networks the SDK has configurations for (default and custom).
     public func checkVerifiedNetworks(
         verificationType: VerificationType,
         walletAddress: String
