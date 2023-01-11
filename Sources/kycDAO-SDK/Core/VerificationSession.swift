@@ -227,7 +227,6 @@ public class VerificationSession: Identifiable {
     /// - Important: Email confirmation is automatically sent, if the email is not confirmed yet.
     public func updateEmail(_ newEmail: String) async throws {
         
-        //Throw user not logged in error
         try precondition(loggedIn, throws: KycDaoError.userNotLoggedIn)
         try precondition(disclaimerAccepted, throws: KycDaoError.disclaimerNotAccepted)
         try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
@@ -386,7 +385,7 @@ public class VerificationSession: Identifiable {
     
     /// Use it for displaying annual membership cost to the user
     /// - Returns: The cost of membership per year in USD
-    public func getMembershipCostPerYear() async throws -> String {
+    public func getMembershipCostPerYearText() async throws -> String {
         
         guard let resolvedContractAddress = kycConfig?.address
         else {
