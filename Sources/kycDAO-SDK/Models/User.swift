@@ -90,9 +90,15 @@ struct User: Equatable {
                                 status: verificationRequestData.status.simplified)
         }
         self.availableImages = dto.available_images.map { key, value in
-            TokenImage(id: key,
-                       imageType: value.image_type,
-                       url: value.url.asURL)
+            if let userId = dto.ext_id {
+                return TokenImage(id: key,
+                                  imageType: value.image_type,
+                                  url: (value.url + "?user_id=\(userId)").asURL)
+            } else {
+                return TokenImage(id: key,
+                                  imageType: value.image_type,
+                                  url: value.url.asURL)
+            }
         }
         self.subscriptionExpiry = dto.subscription_expiry
     }
