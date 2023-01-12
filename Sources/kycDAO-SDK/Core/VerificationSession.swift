@@ -336,7 +336,7 @@ public class VerificationSession: Identifiable {
     
     /// Provides the available kycNFT images the user can choose from
     /// - Returns: A list of image related data
-    public func getNFTImages() async throws -> [TokenImage] {
+    public func getNFTImages() -> [TokenImage] {
         
         return sessionData.user?.availableImages
             .filter { $0.imageType == .identicon }
@@ -344,7 +344,7 @@ public class VerificationSession: Identifiable {
         
     }
     
-    /// Regenerates and returns the available NFT images the user can choose from
+    /// Regenerates and returns the available kycNFT images the user can choose from
     /// - Returns: A list of image related data
     public func regenerateNFTImages() async throws -> [TokenImage] {
         
