@@ -34,6 +34,8 @@ class MainViewController: UIViewController, UITextFieldDelegate {
     let hasValidToken2 = SimpleButton()
     let hasValidTokenLabel2 = UILabel()
     
+    let checkVerifications = SimpleButton()
+    
     //@Published
     var latestWalletSession: WalletConnectSession? {
         didSet {
@@ -60,6 +62,7 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         view.addSubview(connectedWalletAddress)
         view.addSubview(hasValidToken2)
         view.addSubview(hasValidTokenLabel2)
+        view.addSubview(checkVerifications)
         
         verificationSectionLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -91,6 +94,8 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         hasValidToken2.translatesAutoresizingMaskIntoConstraints = false
         
         hasValidTokenLabel2.translatesAutoresizingMaskIntoConstraints = false
+        
+        checkVerifications.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             verificationSectionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -166,6 +171,14 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             hasValidTokenLabel2.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             hasValidTokenLabel2.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor),
             hasValidTokenLabel2.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
+            
+            checkVerifications.topAnchor.constraint(equalTo: hasValidTokenLabel2.bottomAnchor, constant: 20),
+            checkVerifications.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            checkVerifications.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor),
+            checkVerifications.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
+            checkVerifications.heightAnchor.constraint(equalToConstant: 40),
+            checkVerifications.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
+            
         ])
         
         verificationSectionLabel.text = "Verification flow"
@@ -203,6 +216,9 @@ class MainViewController: UIViewController, UITextFieldDelegate {
         hasValidToken2.addTarget(self, action: #selector(hasValidTokenWC(_:)), for: .touchUpInside)
         
         hasValidTokenLabel2.text = "Connect a wallet to check token"
+        
+        checkVerifications.setTitle("Check verifications", for: .normal)
+        checkVerifications.addTarget(self, action: #selector(checkVerifications(_:)), for: .touchUpInside)
         
         WalletConnectManager.shared.startListening()
         WalletConnectManager.shared.sessionStart
@@ -256,12 +272,40 @@ class MainViewController: UIViewController, UITextFieldDelegate {
             blinkView(hasValidTokenLabel2)
             return
         }
+        
         Task {
             let hasValidToken = try await VerificationManager.shared.hasValidToken(verificationType: .kyc,
                                                                           walletAddress: firstAccount,
                                                                           walletSession: walletSession)
             hasValidTokenLabel2.text = hasValidToken ? "Wallet has a valid verification token" : "Wallet does NOT have a valid verification token"
             print("hasValidToken: \(hasValidToken)")
+        }
+    }
+    
+    @objc func checkVerifications(_ sender: Any) {
+        guard let walletSession = latestWalletSession,
+              let firstAccount = walletSession.accounts.first else {
+            blinkView(hasValidTokenLabel2)
+            return
+        }
+        
+        Task {
+            let verifiedNetworks = try await VerificationManager.shared.checkVerifiedNetworks(verificationType: .kyc,
+                                                                                              walletAddress: firstAccount)
+            
+            let statusMessage = verifiedNetworks.map { key, value in
+                "\(value ? "verified" : "not verified") on \(key)"
+            }.joined(separator: "\n")
+            
+            let alertViewController = UIAlertController(title: "Wallet verification status on the available networks",
+                                                        message: statusMessage,
+                                                        preferredStyle: .alert)
+            let okAction = UIAlertAction(title: "Ok",
+                                         style: .cancel,
+                                         handler: nil)
+            alertViewController.addAction(okAction)
+            
+            self.present(alertViewController, animated: true)
         }
     }
     

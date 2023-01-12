@@ -50,6 +50,24 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
         }
     }
     
+    internal static var networkConfigs: [AppliedNetworkConfig] {
+        let appliedDefault = Set(
+            DefaultNetworkConfig.allCases.map {
+                AppliedNetworkConfig(chainId: $0.chainId, rpcURL: $0.rpcURL)
+            }
+        )
+        
+        let appliedCustom: Set<AppliedNetworkConfig> = Set(
+            Self.configuration.networkConfigs.compactMap {
+                guard let customRPCURL = $0.rpcURL else { return nil }
+                return AppliedNetworkConfig(chainId: $0.chainId, rpcURL: customRPCURL)
+            }
+        )
+        
+        let missingDefault = appliedDefault.subtracting(appliedCustom)
+        return Array(appliedCustom.union(missingDefault))
+    }
+    
     //Currently not throwing neither async but once default RPC URLs will be provided from backend, it will require booth
     internal static func networkConfig(forChainId chainId: String) async throws -> AppliedNetworkConfig {
         
@@ -57,11 +75,11 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
             $0.chainId == chainId
         }
         
-        let mergedConfig = defaultForCurrent.map { defaultConfig -> AppliedNetworkConfig in
-            
-            let thisConfig = configuration.networkConfigs.first {
-                $0.chainId == chainId
-            }
+        let thisConfig = configuration.networkConfigs.first {
+            $0.chainId == chainId
+        }
+        
+        var mergedConfig = defaultForCurrent.map { defaultConfig -> AppliedNetworkConfig in
             
             let appliedConfig = thisConfig.map {
                 AppliedNetworkConfig(chainId: $0.chainId,
@@ -71,9 +89,13 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
             return appliedConfig ?? defaultConfig.asAppliedNetworkConfig
         }
         
+        if mergedConfig == nil, let rpc = thisConfig?.rpcURL {
+            mergedConfig = AppliedNetworkConfig(chainId: chainId, rpcURL: rpc)
+        }
+        
         guard let mergedConfig else {
-            //Replace with config error, missing default option set for selected chain, not supported by current SDK version
-            throw KycDaoError.genericError
+            // Config error, network does not have default configs in the SDK and no custom configs can be found for it
+            throw KycDaoError.missingNetworkConfiguration
         }
         
         return mergedConfig
@@ -214,6 +236,56 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
         let result = try await mintingFunction.call(withClient: client, responseType: KYCHasValidTokenResponse.self)
         
         return result.value
+        
+    }
+    
+    /// Checks the verification status on all the available Ethereum networks
+    /// An Ethereum network is available to use if the SDK has config for it by default or one is provided by setting it with ``NetworkConfig`` manually, AND kycDAO has a smart contract deployed on the given network.
+    /// - Parameters:
+    ///   - verificationType: The type of verification we want to find a valid token for
+    ///   - walletAddress: The address of the wallet the token belongs to
+    /// - Returns: A dictionary of verification statuses (`Bool`) keyed by [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md) chain ids as `String`s for all the networks the SDK has configurations for (default and custom).
+    public func checkVerifiedNetworks(
+        verificationType: VerificationType,
+        walletAddress: String
+    ) async throws -> [String: Bool] {
+        
+        let networkConfigs = Self.networkConfigs
+        let networks = try await Self.networks
+        let apiStatus = try await apiStatus()
+        var verifications: [String: Bool] = [:]
+        
+        for networkConfig in networkConfigs {
+            
+            guard let selectedNetworkMetadata = networks.first(where: { $0.caip2id == networkConfig.chainId }),
+                  apiStatus.smartContractsInfo.contains(where: { $0.network == selectedNetworkMetadata.id })
+            else {
+                verifications[networkConfig.chainId] = false
+                continue
+            }
+            
+            let contractConfig = apiStatus.smartContractsInfo.first {
+                $0.network == selectedNetworkMetadata.id
+                && $0.verificationType == verificationType
+            }
+            
+            guard let contractConfig
+            else {
+                verifications[networkConfig.chainId] = false
+                continue
+            }
+            
+            let client = EthereumHttpClient(url: networkConfig.rpcURL)
+            let contractAddress = EthereumAddress(contractConfig.address)
+            let ethWalletAddress = EthereumAddress(walletAddress)
+            let mintingFunction = KYCHasValidTokenFunction(contract: contractAddress, address: ethWalletAddress)
+            let result = try await mintingFunction.call(withClient: client, responseType: KYCHasValidTokenResponse.self)
+            
+            verifications[networkConfig.chainId] = result.value
+            
+        }
+        
+        return verifications
         
     }
     

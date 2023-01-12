@@ -10,7 +10,7 @@ import BigInt
 
 extension BigUInt {
     
-    func decimalText(divisor: BigUInt) -> String {
+    func decimalText(divisor: BigUInt, digitsAfterZeros: Int = 3) -> String {
         
         let result = self.quotientAndRemainder(dividingBy: divisor)
         let fullUnit = result.quotient
@@ -20,10 +20,20 @@ extension BigUInt {
         
         var remainderText = "\(remainder)"
     
-        //keep at least 3 digit accuracy after initial zeros
-        if remainderText.count > 3 {
-            remainderText = String(remainderText.dropLast(remainderText.count - 3))
+        //keep at least X digit accuracy after initial zeros
+        if remainderText.count > digitsAfterZeros {
+            remainderText = String(remainderText.dropLast(remainderText.count - digitsAfterZeros))
         }
+        
+        //drop unnecessary zeros from last digits, recursive
+        func dropLastZeros(fromNumberText text: String) -> String {
+            if text.last == "0" {
+                return dropLastZeros(fromNumberText: String(text.dropLast(1)))
+            }
+            return text
+        }
+        
+        remainderText = dropLastZeros(fromNumberText: remainderText)
         
         if missingLeadingZeroCount > 0 {
             return "\(fullUnit)," + String(repeating: "0", count: missingLeadingZeroCount) + remainderText

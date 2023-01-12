@@ -98,16 +98,14 @@ public class WalletConnectManager {
         let (data, response) = try await URLSession.shared.data(from: URL(string: "https://registry.walletconnect.com/api/v1/wallets?entries=1000&page=1")!)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw KycDaoError.genericError
+            throw WalletConnectError.failedToFetchWalletList
         }
         
         guard 200 ... 299 ~= httpResponse.statusCode else {
-            throw KycDaoError.genericError
+            throw KycDaoError.urlRequestError(response: httpResponse, data: .raw(data))
         }
         
         let listingsDto = try JSONDecoder().decode(ListingsDTO.self, from: data)
-        
-        print(listingsDto)
         
         guard let listingValues = listingsDto.listings?.values else { return [] }
         let listings = Array(listingValues)
@@ -170,6 +168,7 @@ public class WalletConnectManager {
         
         if isListening {
             isListening = false
+            pendingSession = nil
             pendingSessionURISubject.send(nil)
         }
         
@@ -205,16 +204,14 @@ public class WalletConnectManager {
     ///
     /// When a wallet in the WalletConnect registry does not have an associated *universal link*, and only provides a *deep link*, and the user does not have the selected wallet installed, this method will do nothing
     public func connect(withWallet wallet: Wallet) throws {
-        
-        guard isListening else { throw KycDaoError.genericError }
-
+        guard isListening else { throw WalletConnectError.notListening }
         try openWallet(wallet)
     }
     
     func openWallet(_ wallet: Wallet) throws {
         guard let connectionURL = pendingSession?.url.absoluteString
         else {
-            throw KycDaoError.genericError
+            throw WalletConnectError.notListening
         }
         
         #warning("""
@@ -237,7 +234,7 @@ public class WalletConnectManager {
             baseURL = wallet.deepLinkBase ?? wallet.universalLinkBase
         }
         
-        guard let baseURL else { throw KycDaoError.genericError }
+        guard let baseURL else { throw KycDaoError.internal(.unknown) }
         
         if let url = URL(string: "\(baseURL)?uri=\(connectionURL)") {
             UIApplication.shared.open(url)
@@ -259,11 +256,11 @@ public class WalletConnectManager {
                             continuation.resume(returning: signature)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: WalletConnectError.failedToSign(error.localizedDescription))
                     }
                 }
             } catch let error {
-                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: WalletConnectError.failedToSign(error.localizedDescription))
             }
         }
     }
@@ -271,7 +268,7 @@ public class WalletConnectManager {
     func sign(account: String, message: String, wallet: Wallet) async throws -> String {
         
         let session = sessionRepo.getSession(walletId: wallet.id)
-        guard let url = session?.url else { throw KycDaoError.genericError }
+        guard let url = session?.url else { throw WalletConnectError.sessionNotFoundForWallet }
         
         return try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<String, Error>) in
             do {
@@ -284,21 +281,21 @@ public class WalletConnectManager {
                             continuation.resume(returning: signature)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: WalletConnectError.failedToSign(error.localizedDescription))
                     }
                 }
                 
                 // safe to use deep link first as connecting with an universal link prooved that the user already installed the app
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
                       let linkURL = URL(string: "\(link)") else {
-                    throw KycDaoError.genericError
+                    throw KycDaoError.internal(.unknown)
                 }
                 
                 Task { @MainActor in
                     UIApplication.shared.open(linkURL)
                 }
             } catch let error {
-                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: WalletConnectError.failedToSign(error.localizedDescription))
             }
         }
     }
@@ -316,11 +313,11 @@ public class WalletConnectManager {
                             continuation.resume(returning: transactionResult)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: WalletConnectError.failedToSendTransaction(error.localizedDescription))
                     }
                 }
             } catch let error {
-                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: WalletConnectError.failedToSendTransaction(error.localizedDescription))
             }
         }
     }
@@ -328,7 +325,7 @@ public class WalletConnectManager {
     func sendTransaction(transaction: Client.Transaction, wallet: Wallet) async throws -> String {
         
         let session = sessionRepo.getSession(walletId: wallet.id)
-        guard let url = session?.url else { throw KycDaoError.genericError }
+        guard let url = session?.url else { throw WalletConnectError.sessionNotFoundForWallet }
         
         return try await withCheckedThrowingContinuation { [weak self] (continuation: CheckedContinuation<String, Error>) in
             do {
@@ -341,21 +338,21 @@ public class WalletConnectManager {
                             continuation.resume(returning: transactionResult)
                         }
                     } catch let error {
-                        continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                        continuation.resume(throwing: WalletConnectError.failedToSendTransaction(error.localizedDescription))
                     }
                 }
                 
                 // safe to use deep link first as connecting with an universal link prooved that the user already installed the app
                 guard let link = wallet.deepLinkBase ?? wallet.universalLinkBase,
                       let linkURL = URL(string: "\(link)") else {
-                    throw KycDaoError.genericError
+                    throw KycDaoError.internal(.unknown)
                 }
                 
                 Task { @MainActor in
                     UIApplication.shared.open(linkURL)
                 }
             } catch let error {
-                continuation.resume(throwing: KycDaoError.walletConnect(.signingError(error.localizedDescription)))
+                continuation.resume(throwing: WalletConnectError.failedToSendTransaction(error.localizedDescription))
             }
         }
     }

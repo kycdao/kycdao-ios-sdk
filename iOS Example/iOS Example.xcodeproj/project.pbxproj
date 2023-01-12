@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BE2CC06129684D4700C5F022 /* ArraySlice.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE2CC06029684D4700C5F022 /* ArraySlice.swift */; };
 		BE314BA629400D7600B54249 /* KycDaoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9D29400CD000B54249 /* KycDaoViewController.swift */; };
 		BE314BA729400D7B00B54249 /* StartMintingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9C29400CD000B54249 /* StartMintingViewController.swift */; };
 		BE314BA829400D7E00B54249 /* MintNFTViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE314B9A29400CD000B54249 /* MintNFTViewController.swift */; };
@@ -33,11 +34,13 @@
 		BE4844F9285C976800B3A6F7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844F8285C976800B3A6F7 /* AppDelegate.swift */; };
 		BE4844FB285C977C00B3A6F7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */; };
 		BE4844FE285C9A2A00B3A6F7 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4844FD285C9A2A00B3A6F7 /* MainViewController.swift */; };
+		BE52F91929686B9B004440D1 /* UITapGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE52F91829686B9B004440D1 /* UITapGestureRecognizer.swift */; };
 		D95C08BC277D8AA20016A10F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D95C08BB277D8AA20016A10F /* Assets.xcassets */; };
 		D95C08BF277D8AA20016A10F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D95C08BE277D8AA20016A10F /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BE2CC06029684D4700C5F022 /* ArraySlice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArraySlice.swift; sourceTree = "<group>"; };
 		BE314B8929400CD000B54249 /* PersonaViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaViewController.swift; sourceTree = "<group>"; };
 		BE314B8B29400CD000B54249 /* SelectAccountViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectAccountViewController.swift; sourceTree = "<group>"; };
 		BE314B8D29400CD000B54249 /* ConnectWalletViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWalletViewController.swift; sourceTree = "<group>"; };
@@ -64,6 +67,7 @@
 		BE4844FA285C977C00B3A6F7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		BE4844FC285C97E000B3A6F7 /* iOS-Example-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "iOS-Example-Info.plist"; sourceTree = "<group>"; };
 		BE4844FD285C9A2A00B3A6F7 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		BE52F91829686B9B004440D1 /* UITapGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITapGestureRecognizer.swift; sourceTree = "<group>"; };
 		D95C08B4277D8AA00016A10F /* iOS Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D95C08BB277D8AA20016A10F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D95C08BE277D8AA20016A10F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -214,10 +218,12 @@
 		BE314BB729400E9700B54249 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				BE2CC06029684D4700C5F022 /* ArraySlice.swift */,
 				BE314BB829400EA900B54249 /* UIButton.swift */,
 				BE314BBC29400FD300B54249 /* Collection.swift */,
 				BE314BBE2940105000B54249 /* NSMutableAttributedString.swift */,
 				BE314BC02940106D00B54249 /* String.swift */,
+				BE52F91829686B9B004440D1 /* UITapGestureRecognizer.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -351,6 +357,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE52F91929686B9B004440D1 /* UITapGestureRecognizer.swift in Sources */,
+				BE2CC06129684D4700C5F022 /* ArraySlice.swift in Sources */,
 				BE314BAB29400D8A00B54249 /* NFTPreviewImage.swift in Sources */,
 				BE314BAE29400D9C00B54249 /* PersonaViewController.swift in Sources */,
 				BE314BB629400DAC00B54249 /* SelectMembershipViewController.swift in Sources */,
@@ -506,7 +514,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Sources/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6HRLMQGMGT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS-Example-Info.plist";
@@ -537,7 +545,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Sources/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6HRLMQGMGT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "iOS-Example-Info.plist";

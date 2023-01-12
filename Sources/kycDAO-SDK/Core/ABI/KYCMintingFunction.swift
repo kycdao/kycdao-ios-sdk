@@ -100,8 +100,8 @@ struct KYCGetSubscriptionCostPerYearUSDFunction: ABIFunction {
 }
 
 internal struct KYCGetSubscriptionCostPerYearUSDResponse: ABIResponse, MulticallDecodableResponse {
-    internal static var types: [ABIType.Type] = [ UInt32.self ]
-    internal let value: UInt32
+    internal static var types: [ABIType.Type] = [ BigUInt.self ]
+    internal let value: BigUInt
 
     internal init?(values: [ABIDecoder.DecodedValue]) throws {
         self.value = try values[0].decoded()
@@ -185,5 +185,40 @@ internal struct KYCGetRequiredMintCostForSecondsResponse: ABIResponse, Multicall
 
     internal init?(values: [ABIDecoder.DecodedValue]) throws {
         self.value = try values[0].decoded()
+    }
+}
+
+struct KYCGetSubscriptionCostDecimals: ABIFunction {
+    
+    public static let name = "SUBSCRIPTION_COST_DECIMALS"
+    public let gasPrice: BigUInt?
+    public let gasLimit: BigUInt?
+    public var contract: EthereumAddress
+    public let from: EthereumAddress?
+    
+    public init(contract: EthereumAddress,
+                from: EthereumAddress? = nil,
+                gasPrice: BigUInt? = nil,
+                gasLimit: BigUInt? = nil) {
+        self.contract = contract
+        self.from = from
+        self.gasPrice = gasPrice
+        self.gasLimit = gasLimit
+    }
+    
+    public func encode(to encoder: ABIFunctionEncoder) throws {
+    }
+    
+}
+
+internal struct KYCGetSubscriptionCostDecimalsResponse: ABIResponse, MulticallDecodableResponse {
+    public static var types: [ABIType.Type] = [ BigUInt.self ]
+    public let value: Int
+    
+    public init?(values: [ABIDecoder.DecodedValue]) throws {
+        let bigValue: BigUInt = try values[0].decoded()
+        //The number of decimals received should not be greater than 256, it should be safely casted to Int
+        guard bigValue < 256 else { throw KycDaoError.internal(.unknown) }
+        self.value = Int(bigValue)
     }
 }

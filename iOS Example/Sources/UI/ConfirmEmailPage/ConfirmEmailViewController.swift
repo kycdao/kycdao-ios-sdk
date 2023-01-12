@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 import KycDao
 
-class ConfirmEmailViewController : UIViewController {
+class ConfirmEmailViewController : UIViewController, UITextFieldDelegate {
     
     private var walletSession: WalletConnectSession
     private var verificationSession: VerificationSession
@@ -18,9 +18,13 @@ class ConfirmEmailViewController : UIViewController {
     let titleLabel = UILabel()
     let messageLabel = UILabel()
     let activityIndicator = UIActivityIndicatorView()
+    let emailField = UITextField()
+    let emailSeparator = UIView()
+    let emailChangeSuccessSign = UIImageView(image: UIImage(systemName: "checkmark.circle"))
     
     let notReceivingEmailLabel = UILabel()
-    let resendEmailButton = SimpleButton(style: .outline)
+    let resendEmailButton = SimpleButton(style: .filled)
+    let changeEmailButton = SimpleButton(style: .outline)
     
     init(walletSession: WalletConnectSession, verificationSession: VerificationSession) {
         self.walletSession = walletSession
@@ -49,19 +53,33 @@ class ConfirmEmailViewController : UIViewController {
         notReceivingEmailLabel.font = .systemFont(ofSize: 12)
         notReceivingEmailLabel.textColor = .systemGray2
         
+        emailSeparator.backgroundColor = .systemGray5
+        emailChangeSuccessSign.tintColor = .systemGreen
+        emailChangeSuccessSign.isHidden = true
+        
+        emailField.delegate = self
+        
         view.addSubview(containerView)
         containerView.addSubview(titleLabel)
         containerView.addSubview(messageLabel)
+        containerView.addSubview(emailField)
+        containerView.addSubview(emailChangeSuccessSign)
+        containerView.addSubview(emailSeparator)
         containerView.addSubview(activityIndicator)
         
         view.addSubview(notReceivingEmailLabel)
         view.addSubview(resendEmailButton)
+        view.addSubview(changeEmailButton)
         
         containerView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        emailField.translatesAutoresizingMaskIntoConstraints = false
+        emailChangeSuccessSign.translatesAutoresizingMaskIntoConstraints = false
+        emailSeparator.translatesAutoresizingMaskIntoConstraints = false
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         resendEmailButton.translatesAutoresizingMaskIntoConstraints = false
+        changeEmailButton.translatesAutoresizingMaskIntoConstraints = false
         notReceivingEmailLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
@@ -81,24 +99,45 @@ class ConfirmEmailViewController : UIViewController {
             messageLabel.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor),
             messageLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             
-            activityIndicator.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 20),
+            emailField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            emailField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            emailField.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 20),
+            
+            emailChangeSuccessSign.centerYAnchor.constraint(equalTo: emailField.centerYAnchor),
+            emailChangeSuccessSign.trailingAnchor.constraint(equalTo: emailField.trailingAnchor),
+            emailChangeSuccessSign.widthAnchor.constraint(equalToConstant: 22),
+            emailChangeSuccessSign.heightAnchor.constraint(equalToConstant: 22),
+            
+            emailSeparator.widthAnchor.constraint(equalTo: containerView.widthAnchor, constant: -32),
+            emailSeparator.topAnchor.constraint(equalTo: emailField.bottomAnchor, constant: 4),
+            emailSeparator.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            emailSeparator.heightAnchor.constraint(equalToConstant: 1),
+            
+            activityIndicator.topAnchor.constraint(equalTo: emailSeparator.bottomAnchor, constant: 20),
             activityIndicator.leadingAnchor.constraint(greaterThanOrEqualTo: containerView.leadingAnchor),
             activityIndicator.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor),
             activityIndicator.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             activityIndicator.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
             
+            notReceivingEmailLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
+            notReceivingEmailLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: 16),
+            notReceivingEmailLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            notReceivingEmailLabel.topAnchor.constraint(greaterThanOrEqualTo: containerView.bottomAnchor, constant: 20),
+            
             resendEmailButton.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor),
             resendEmailButton.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
-            resendEmailButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             resendEmailButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             resendEmailButton.heightAnchor.constraint(equalToConstant: 40),
             resendEmailButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
-            resendEmailButton.topAnchor.constraint(greaterThanOrEqualTo: containerView.bottomAnchor, constant: 20),
+            resendEmailButton.topAnchor.constraint(equalTo: notReceivingEmailLabel.bottomAnchor, constant: 12),
             
-            notReceivingEmailLabel.bottomAnchor.constraint(equalTo: resendEmailButton.topAnchor, constant: -12),
-            notReceivingEmailLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 16),
-            notReceivingEmailLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: 16),
-            notReceivingEmailLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            changeEmailButton.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor),
+            changeEmailButton.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor),
+            changeEmailButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            changeEmailButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            changeEmailButton.heightAnchor.constraint(equalToConstant: 40),
+            changeEmailButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
+            changeEmailButton.topAnchor.constraint(equalTo: resendEmailButton.bottomAnchor, constant: 16),
         ])
         
         titleLabel.text = "Confirm your email address"
@@ -110,11 +149,21 @@ class ConfirmEmailViewController : UIViewController {
 //            + ". Please check your inbox and open the link"
 //        }
         
+        emailField.placeholder = "Email address"
+        emailField.textAlignment = .center
+        emailField.keyboardType = .emailAddress
+        emailField.text = verificationSession.emailAddress
+        emailField.returnKeyType = .done
+        emailField.isEnabled = false
+        emailField.alpha = 0.7
+        
         notReceivingEmailLabel.text = "Not receiving email?"
         
         resendEmailButton.setTitle("Resend email", for: .normal)
-        
         resendEmailButton.addTarget(self, action: #selector(resendEmailTap(_:)), for: .touchUpInside)
+        
+        changeEmailButton.setTitle("Change email address", for: .normal)
+        changeEmailButton.addTarget(self, action: #selector(changeEmailTap(_:)), for: .touchUpInside)
         
         activityIndicator.startAnimating()
         
@@ -140,5 +189,42 @@ class ConfirmEmailViewController : UIViewController {
         Task {
             try await verificationSession.resendConfirmationEmail()
         }
+    }
+    
+    @objc func changeEmailTap(_ sender: Any) {
+        emailField.isEnabled = true
+        emailField.alpha = 1
+        emailField.becomeFirstResponder()
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        emailChangeSuccessSign.isHidden = true
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
+        guard let text = textField.text,
+              !text.isEmpty
+        else {
+            return false
+        }
+        
+        Task {
+            do {
+                try await verificationSession.updateEmail(text)
+                emailChangeSuccessSign.image = UIImage(systemName: "checkmark.circle")
+                emailChangeSuccessSign.tintColor = .systemGreen
+            } catch let error {
+                print(error)
+                emailChangeSuccessSign.image = UIImage(systemName: "exclamationmark.octagon.fill")
+                emailChangeSuccessSign.tintColor = .systemRed
+            }
+            emailChangeSuccessSign.isHidden = false
+            textField.alpha = 0.7
+            textField.resignFirstResponder()
+            textField.isEnabled = false
+        }
+        
+        return true
     }
 }

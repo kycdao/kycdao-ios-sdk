@@ -109,7 +109,8 @@ public class KycDaoViewController: UIViewController {
                                                                               verificationSession: verificationSession),
                                              animated: true)
             
-        case .confirmEmail(walletSession: let walletSession, verificationSession: let verificationSession):
+        case .confirmEmail(walletSession: let walletSession,
+                           verificationSession: let verificationSession):
             
             navController.pushViewController(ConfirmEmailViewController(walletSession: walletSession,
                                                                         verificationSession: verificationSession),

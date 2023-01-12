@@ -100,14 +100,16 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
         let barItem = UIBarButtonItem(customView: segmentControl)
         toolbar.setItems([barItem], animated: false)
         
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Close", style: .done, target: self, action: #selector(backButtonAction))
+        
         qrCopyURI.addTarget(self, action: #selector(copyURITap(_:)), for: .touchUpInside)
         
         WalletConnectManager.shared.startListening()
         
         WalletConnectManager.shared.pendingSessionURI
             .receive(on: DispatchQueue.main)
-            .sink { uri in
-                self.uri = uri
+            .sink { [weak self] uri in
+                self?.uri = uri
             }.store(in: &disposeBag)
     }
     
@@ -250,7 +252,8 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
                 
                 do {
                     
-                    let verificationSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount, walletSession: walletSession)
+                    let verificationSession = try await VerificationManager.shared.createSession(walletAddress: singleAccount,
+                                                                                                 walletSession: walletSession)
                     
                     if verificationSession.loggedIn {
                         
@@ -367,6 +370,10 @@ class ConnectWalletViewController: UIViewController, UICollectionViewDelegate, U
             print("wallet grid size: \(self.walletGrid.contentSize.height > 0) \(self.walletGrid.contentSize.height)")
             self.contentHeightConstraint?.constant = self.walletGrid.contentSize.height > 0 ? self.walletGrid.contentSize.height : self.view.frame.height
         }
+    }
+    
+    @IBAction func backButtonAction(_ sender: UIButton) {
+        Page.currentPage.send(.exit)
     }
     
 }

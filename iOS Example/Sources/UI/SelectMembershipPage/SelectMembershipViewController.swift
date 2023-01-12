@@ -169,7 +169,7 @@ class SelectMembershipViewController: UIViewController {
         membershipPeriodStepper.addTarget(self, action: #selector(stepperValueChanged(_:)), for: .valueChanged)
         
         Task {
-            let price = try await verificationSession.getMembershipCostPerYear()
+            let price = try await verificationSession.getMembershipCostPerYearText()
             membershipPrice.text = "$\(price) / year"
             await updateTotalCost(years: 1)
         }

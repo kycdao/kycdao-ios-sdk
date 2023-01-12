@@ -7,7 +7,9 @@
 
 import Foundation
 
+/// Result of a minting transaction
 public struct MintingTransactionResult: Codable {
+    /// Transaction hash
     public let txHash: String
     
     public init(txHash: String) {
