@@ -54,6 +54,7 @@ public class VerificationSession: Identifiable {
     internal var sessionData: BackendSessionData
     internal let networkMetadata: NetworkMetadata
     internal let ethereumClient: EthereumHttpClient
+    internal let kycContract: KYCDaoContract
     internal var kycConfig: SmartContractConfig?
     internal var accreditedConfig: SmartContractConfig?
     internal var identificationContinuation: CheckedContinuation<IdentityFlowResult, Error>?
@@ -112,7 +113,8 @@ public class VerificationSession: Identifiable {
          accreditedConfig: SmartContractConfig?,
          data: BackendSessionData,
          networkMetadata: NetworkMetadata,
-         networkConfig: AppliedNetworkConfig) {
+         networkConfig: AppliedNetworkConfig) throws {
+        guard let kycContractAddress = kycConfig?.address else { throw KycDaoError.internal(.missingContractAddress) }
         self.walletAddress = walletAddress
         self.sessionData = data
         self.walletSession = walletSession
@@ -121,6 +123,8 @@ public class VerificationSession: Identifiable {
         self.networkMetadata = networkMetadata
         self.networkConfig = networkConfig
         self.ethereumClient = EthereumHttpClient(url: networkConfig.rpcURL)
+        self.kycContract = KYCDaoContract(contractAddress: EthereumAddress(kycContractAddress),
+                                          client: self.ethereumClient)
     }
     
     /// Logs in the user to the current session
@@ -361,29 +365,14 @@ public class VerificationSession: Identifiable {
     /// - Returns: The cost of membership per year in USD
     public func getMembershipCostPerYearText() async throws -> String {
         
-        guard let resolvedContractAddress = kycConfig?.address
-        else {
-            throw KycDaoError.internal(.missingContractAddress)
-        }
-        
-        let contractAddress = EthereumAddress(resolvedContractAddress)
-        let getSubscriptionCostFunction = KYCGetSubscriptionCostPerYearUSDFunction(contract: contractAddress)
-        let subscriptionCostResult = try await getSubscriptionCostFunction.call(withClient: ethereumClient,
-                                                                                responseType: KYCGetSubscriptionCostPerYearUSDResponse.self)
-        
-        let subscriptionCostBase = subscriptionCostResult.value
-        
-        let getSubscriptionCostDecimalsFunction = KYCGetSubscriptionCostDecimals(contract: contractAddress)
-        
-        let subscriptionCostDecimalsResult = try await getSubscriptionCostDecimalsFunction.call(withClient: ethereumClient,
-                                                                                                responseType: KYCGetSubscriptionCostDecimalsResponse.self)
-        
-        let subscriptionCostDecimals = subscriptionCostDecimalsResult.value
+        let subscriptionCostBase = try await kycContract.getSubscriptionCostPerYearUSD()
+        let subscriptionCostDecimals = try await kycContract.subscriptionCostDecimals
         let subscriptionCostDivisor = BigUInt(integerLiteral: 10).power(subscriptionCostDecimals)
         
         let subscriptionCost = subscriptionCostBase.decimalText(divisor: subscriptionCostDivisor)
         
         return subscriptionCost
+        
     }
     
     /// Requesting minting authorization for a selected image and membership duration
@@ -435,14 +424,14 @@ public class VerificationSession: Identifiable {
         try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
         
-        print("MINTING...")
-        
-        guard let authCode = authCode
+        guard let authCode = authCode,
+              let authCodeNum = UInt32(authCode)
         else { throw KycDaoError.unauthorizedMinting }
         
         let requiredMintCost = try await getRequiredMintCostForCode(authCode: authCode)
-        let mintingFunction = try kycMintingFunction(authCode: authCode)
-        let mintingTransaction = try mintingFunction.transaction(value: requiredMintCost)
+        let mintingTransaction = try kycContract.mintWithCode(authorizationCode: authCodeNum,
+                                                              walletAddress: EthereumAddress(walletAddress),
+                                                              cost: requiredMintCost)
         let props = try await transactionProperties(forTransaction: mintingTransaction)
         let txRes = try await walletSession.sendMintingTransaction(walletAddress: walletAddress, mintingProperties: props)
         let receipt = try await resumeWhenTransactionFinished(txHash: txRes.txHash)
@@ -479,12 +468,14 @@ public class VerificationSession: Identifiable {
         try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
         
-        guard let authCode = authCode
+        guard let authCode = authCode,
+              let authCodeNum = UInt32(authCode)
         else { throw KycDaoError.unauthorizedMinting }
         
-        let mintingFunction = try kycMintingFunction(authCode: authCode)
         let requiredMintCost = try await getRequiredMintCostForCode(authCode: authCode)
-        let mintingTransaction = try mintingFunction.transaction(value: requiredMintCost)
+        let mintingTransaction = try kycContract.mintWithCode(authorizationCode: authCodeNum,
+                                                              walletAddress: EthereumAddress(walletAddress),
+                                                              cost: requiredMintCost)
         let gasEstimation = try await estimateGas(forTransaction: mintingTransaction)
         
         return PriceEstimation(paymentAmount: requiredMintCost,

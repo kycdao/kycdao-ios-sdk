@@ -66,42 +66,18 @@ extension VerificationSession {
         return try await ethereumClient.eth_getTransactionReceipt(txHash: txHash)
     }
     
-    func kycMintingFunction(authCode: String) throws -> KYCMintingFunction {
-        
-        guard let authCodeNumber = UInt32(authCode),
-              let resolvedContractAddress = kycConfig?.address
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
-        
-        let contractAddress = EthereumAddress(resolvedContractAddress)
-        let ethWalletAddress = EthereumAddress(walletAddress)
-        
-        return KYCMintingFunction(contract: contractAddress,
-                                  authCode: authCodeNumber,
-                                  from: ethWalletAddress,
-                                  gasPrice: nil,
-                                  gasLimit: nil)
-    }
-    
     func getRawRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
         
-        guard let authCodeNumber = UInt32(authCode),
-              let resolvedContractAddress = kycConfig?.address
+        guard let authCodeNumber = UInt32(authCode)
         else {
             throw KycDaoError.internal(.unknown)
         }
         
-        let contractAddress = EthereumAddress(resolvedContractAddress)
         let ethWalletAddress = EthereumAddress(walletAddress)
-        let getRequiredMintingCostFunction = KYCGetRequiredMintCostForCodeFunction(contract: contractAddress,
-                                                                                    authCode: authCodeNumber,
-                                                                                    destination: ethWalletAddress)
+        let mintCost = try await kycContract.getRequiredMintCostForCode(authorizationCode: authCodeNumber,
+                                                                        destination: ethWalletAddress)
         
-        let result = try await getRequiredMintingCostFunction.call(withClient: ethereumClient,
-                                                                   responseType: KYCGetRequiredMintCostForCodeResponse.self)
-        
-        return result.value
+        return mintCost
     }
     
     func getRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
@@ -116,23 +92,14 @@ extension VerificationSession {
     
     func getRequiredMintCostForYears(_ years: UInt32) async throws -> BigUInt {
         
-        guard let resolvedContractAddress = kycConfig?.address, years >= 1
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
+        guard years >= 1
+        else { throw KycDaoError.internal(.unknown) }
         
         let discountYears = sessionData.discountYears ?? 0
         let yearsToPayFor = years - discountYears
         let yearsInSeconds = yearsToPayFor * 365 * 24 * 60 * 60
         
-        let contractAddress = EthereumAddress(resolvedContractAddress)
-        let getRequiredMintingCostFunction = KYCGetRequiredMintCostForSecondsFunction(contract: contractAddress,
-                                                                                      seconds: yearsInSeconds)
-        
-        let result = try await getRequiredMintingCostFunction.call(withClient: ethereumClient,
-                                                                   responseType: KYCGetRequiredMintCostForSecondsResponse.self)
-        
-        return result.value
+        return try await kycContract.getRequiredMintCostForSeconds(seconds: yearsInSeconds)
     }
     
     func transactionProperties(forTransaction transaction: EthereumTransaction) async throws -> MintingProperties {
@@ -155,9 +122,6 @@ extension VerificationSession {
             
         //price in wei
         let ethGasPrice = try await ethereumClient.eth_gasPrice()
-        let minGasPrice = BigUInt(50).gwei
-        let price = max(ethGasPrice, minGasPrice)
-        
         let amount = try await ethereumClient.eth_estimateGas(transaction)
         
         let estimation = GasEstimation(gasCurrency: networkMetadata.nativeCurrency,

@@ -159,13 +159,13 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
         
         let networkConfig = try await Self.networkConfig(forChainId: selectedNetworkMetadata.caip2id)
         
-        return VerificationSession(walletAddress: walletAddress,
-                                   walletSession: walletSession,
-                                   kycConfig: kycContractConfig,
-                                   accreditedConfig: accreditedInvestorContractConfig,
-                                   data: sessionData,
-                                   networkMetadata: selectedNetworkMetadata,
-                                   networkConfig: networkConfig)
+        return try VerificationSession(walletAddress: walletAddress,
+                                       walletSession: walletSession,
+                                       kycConfig: kycContractConfig,
+                                       accreditedConfig: accreditedInvestorContractConfig,
+                                       data: sessionData,
+                                       networkMetadata: selectedNetworkMetadata,
+                                       networkConfig: networkConfig)
         
     }
     
@@ -229,13 +229,11 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
             throw KycDaoError.unsupportedNetwork
         }
         
-        let client = EthereumHttpClient(url: rpcURL)
         let contractAddress = EthereumAddress(contractConfig.address)
+        let contract = KYCDaoContract(contractAddress: contractAddress, rpcURL: rpcURL)
         let ethWalletAddress = EthereumAddress(walletAddress)
-        let mintingFunction = KYCHasValidTokenFunction(contract: contractAddress, address: ethWalletAddress)
-        let result = try await mintingFunction.call(withClient: client, responseType: KYCHasValidTokenResponse.self)
         
-        return result.value
+        return try await contract.hasValidToken(walletAddress: ethWalletAddress)
         
     }
     
@@ -275,13 +273,11 @@ Call VerificationManager.configure(_:) before you start using the SDK to resolve
                 continue
             }
             
-            let client = EthereumHttpClient(url: networkConfig.rpcURL)
             let contractAddress = EthereumAddress(contractConfig.address)
+            let contract = KYCDaoContract(contractAddress: contractAddress, rpcURL: networkConfig.rpcURL)
             let ethWalletAddress = EthereumAddress(walletAddress)
-            let mintingFunction = KYCHasValidTokenFunction(contract: contractAddress, address: ethWalletAddress)
-            let result = try await mintingFunction.call(withClient: client, responseType: KYCHasValidTokenResponse.self)
-            
-            verifications[networkConfig.chainId] = result.value
+            let hasValidToken = try await contract.hasValidToken(walletAddress: ethWalletAddress)
+            verifications[networkConfig.chainId] = hasValidToken
             
         }
         
