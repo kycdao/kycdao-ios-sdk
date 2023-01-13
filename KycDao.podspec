@@ -24,7 +24,7 @@ TODO: Add long description of the pod here.
   s.homepage         = 'https://github.com/kycdao/kycdao-ios-sdk'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'Cydie' => 'robin.vekety@gmail.com' }
+  s.author           = { 'kycDAO' => 'hello@kycdao.xyz' }
   s.source           = { :git => 'https://github.com/kycdao/kycdao-ios-sdk', :branch => 'main' }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
