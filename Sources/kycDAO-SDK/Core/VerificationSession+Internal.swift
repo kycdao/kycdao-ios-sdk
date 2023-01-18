@@ -66,21 +66,16 @@ extension VerificationSession {
         return try await ethereumClient.eth_getTransactionReceipt(txHash: txHash)
     }
     
-    func getRawRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
-        
-        guard let authCodeNumber = UInt32(authCode)
-        else {
-            throw KycDaoError.internal(.unknown)
-        }
+    func getRawRequiredMintCostForCode(authCode: UInt32) async throws -> BigUInt {
         
         let ethWalletAddress = EthereumAddress(walletAddress)
-        let mintCost = try await kycContract.getRequiredMintCostForCode(authorizationCode: authCodeNumber,
+        let mintCost = try await kycContract.getRequiredMintCostForCode(authorizationCode: authCode,
                                                                         destination: ethWalletAddress)
         
         return mintCost
     }
     
-    func getRequiredMintCostForCode(authCode: String) async throws -> BigUInt {
+    func getRequiredMintCostForCode(authCode: UInt32) async throws -> BigUInt {
         let mintingCost = try await getRawRequiredMintCostForCode(authCode: authCode)
         
         //Adding 10% slippage (no floating point operation for multiplying BigUInt with 1.1)
@@ -131,10 +126,10 @@ extension VerificationSession {
         return estimation
     }
     
-    func tokenMinted(authCode: String, tokenId: String, txHash: String) async throws -> TokenDetailsDTO {
+    func tokenMinted(authCode: UInt32, tokenId: BigUInt, txHash: String) async throws -> TokenDetailsDTO {
         
-        let mintResultInput = MintResultUploadDTO(authCode: authCode,
-                                                  tokenId: tokenId,
+        let mintResultInput = MintResultUploadDTO(authCode: "\(authCode)",
+                                                  tokenId: "\(tokenId)",
                                                   txHash: txHash)
         
         let result = try await ApiConnection.call(endPoint: .token,

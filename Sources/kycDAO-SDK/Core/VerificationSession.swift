@@ -63,7 +63,7 @@ public class VerificationSession: Identifiable {
     
     //Internal state
     internal var personaSessionData: PersonaSessionData?
-    private var authCode: String?
+    private var authCode: UInt32?
     
     //Derived internal data
     private var loginProof: String { "kycDAO-login-\(sessionData.nonce)" }
@@ -401,11 +401,14 @@ public class VerificationSession: Identifiable {
                                                   output: MintAuthorizationDTO.self)
         let mintAuth = result.data
         
-        guard let code = mintAuth.code, let txHash = mintAuth.tx_hash else {
+        guard let txHash = mintAuth.token?.authorization_tx_id,
+              let code = mintAuth.token?.authorization_code,
+              let authCodeNumber = UInt32(code)
+        else {
             throw KycDaoError.internal(.unknown)
         }
         
-        authCode = code
+        authCode = authCodeNumber
         
         try await resumeWhenTransactionFinished(txHash: txHash)
         
@@ -424,12 +427,11 @@ public class VerificationSession: Identifiable {
         try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
         
-        guard let authCode = authCode,
-              let authCodeNum = UInt32(authCode)
+        guard let authCode = authCode
         else { throw KycDaoError.unauthorizedMinting }
         
         let requiredMintCost = try await getRequiredMintCostForCode(authCode: authCode)
-        let mintingTransaction = try kycContract.mintWithCode(authorizationCode: authCodeNum,
+        let mintingTransaction = try kycContract.mintWithCode(authorizationCode: authCode,
                                                               walletAddress: EthereumAddress(walletAddress),
                                                               cost: requiredMintCost)
         let props = try await transactionProperties(forTransaction: mintingTransaction)
@@ -439,7 +441,9 @@ public class VerificationSession: Identifiable {
         guard let event = receipt.lookForEvent(event: ERC721Events.Transfer.self)
         else { throw KycDaoError.internal(.unknown) }
         
-        let tokenDetails = try await tokenMinted(authCode: authCode, tokenId: "\(event.tokenId)", txHash: txRes.txHash)
+        let tokenDetails = try await tokenMinted(authCode: authCode,
+                                                 tokenId: event.tokenId,
+                                                 txHash: txRes.txHash)
         
         self.authCode = nil
         
@@ -468,12 +472,11 @@ public class VerificationSession: Identifiable {
         try precondition(requiredInformationProvided, throws: KycDaoError.requiredInformationNotProvided)
         try precondition(verificationStatus == .verified, throws: KycDaoError.identityNotVerified)
         
-        guard let authCode = authCode,
-              let authCodeNum = UInt32(authCode)
+        guard let authCode = authCode
         else { throw KycDaoError.unauthorizedMinting }
         
         let requiredMintCost = try await getRequiredMintCostForCode(authCode: authCode)
-        let mintingTransaction = try kycContract.mintWithCode(authorizationCode: authCodeNum,
+        let mintingTransaction = try kycContract.mintWithCode(authorizationCode: authCode,
                                                               walletAddress: EthereumAddress(walletAddress),
                                                               cost: requiredMintCost)
         let gasEstimation = try await estimateGas(forTransaction: mintingTransaction)

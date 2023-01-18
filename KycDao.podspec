@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'KycDao'
-  s.version          = '0.1.0'
+  s.version          = '0.1.1'
   s.summary          = 'iOS SDK for kycDAO'
 
 # This description is used to generate tags and improve search results.
@@ -23,12 +23,12 @@ kycDAO is the first interoperable web3 native compliance framework.
 kycDAO links existing CeFi accounts to self hosted wallets with a soulbound kycNFT. dApps, smart-contracts, and web3 services use these compliant proofs to create trusted ecosystems.
                        DESC
 
-  s.homepage         = 'https://github.com/kycdao/kycdao-ios-sdk'
+  s.homepage         = 'https://kycdao.xyz/'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   # s.license          = { :type => 'UNLICENSED' }
   s.author           = { 'kycDAO' => 'hello@kycdao.xyz' }
   s.source           = { :git => 'https://github.com/kycdao/kycdao-ios-sdk.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
+  s.social_media_url = 'https://twitter.com/kycdao'
 
   s.ios.deployment_target = '13.0'
 

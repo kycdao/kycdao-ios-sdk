@@ -8,12 +8,13 @@
 import Foundation
 
 struct MintAuthorizationDTO: Decodable {
-    let code: String?
-    let tx_hash: String?
+    let token: TokenDetailsDTO?
 }
 
 struct TokenDetailsDTO: Decodable {
     let image_url: String?
+    let authorization_code: String?
+    let authorization_tx_id: String?
 }
 
 struct TokenImageDTO: Decodable {
