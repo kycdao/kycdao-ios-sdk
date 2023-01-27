@@ -92,4 +92,4 @@ Celo | Celo Alfajores
 The SDK is also available on other mobile platforms (Android, React Native) and Web. 
 You can browse our available SDKs [here](https://docs.kycdao.xyz/)
 
-You can learn about [smart contract gating here](https://docs.kycdao.xyz/smartcontracts/onchaingating/)
+You can learn about [smart contract gating here](https://docs.kycdao.xyz/smartcontracts/)
