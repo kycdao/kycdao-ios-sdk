@@ -34,7 +34,7 @@ https://github.com/kycdao/kycdao-ios-sdk
 or add this to your `Package.swift` file:
 
 ```swift
-.package(url: "https://github.com/kycdao/kycdao-ios-sdk", from: "0.1.0")
+.package(url: "https://github.com/kycdao/kycdao-ios-sdk", from: "0.1.1")
 ```
 
 #### CocoaPods
