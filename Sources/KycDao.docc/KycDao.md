@@ -37,11 +37,11 @@ Celo | Celo Alfajores
 
 ### Other platforms
 
-The mobile SDK is also available on [Android](https://docs.kycdao.xyz/buidl/sdks/mobilesdk/android-sdk/) and [React Native](https://docs.kycdao.xyz/buidl/sdks/mobilesdk/react-native-sdk/)
+The mobile SDK is also available on [Android](https://docs.kycdao.xyz/mobilesdk/android-sdk/) and [React Native](https://docs.kycdao.xyz/mobilesdk/ios-sdk/)
 
-For web based solutions check out the [UI](https://docs.kycdao.xyz/buidl/sdks/uisdk/) or the [Core SDK](https://docs.kycdao.xyz/buidl/sdks/coresdk/)
+For web based solutions check out the [UI](https://docs.kycdao.xyz/widget/) or the [Core SDK](https://docs.kycdao.xyz/coresdk/)
 
-You can learn about [smart contract gating here](https://docs.kycdao.xyz/buidl/smartcontractgating/)
+You can learn about [smart contract gating here](https://docs.kycdao.xyz/smartcontracts/)
 
 ## Topics
 
